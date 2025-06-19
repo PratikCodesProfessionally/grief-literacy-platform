@@ -6,15 +6,16 @@ import express from 'express';
  * @param app Express application instance
  */
 export function setupStaticServing(app: express.Application) {
-  // Serve static files from the public directory
-  app.use(express.static(path.join(process.cwd(), 'public')));
+  const staticDir = path.join(process.cwd(), 'dist', 'public');
 
-  // For any other routes, serve the index.html file
-  app.get('/{*splat}', (req, res, next) => {
-    // Skip API routes
+  // Serve static assets (JS, CSS, etc.)
+  app.use(express.static(staticDir));
+
+  // Fallback to index.html for client-side routing (e.g., React Router)
+  app.get('/*', (req, res, next) => {
     if (req.path.startsWith('/api/')) {
       return next();
     }
-    res.sendFile(path.join(process.cwd(), 'public', 'index.html'));
+    res.sendFile(path.join(staticDir, 'index.html'));
   });
 }
