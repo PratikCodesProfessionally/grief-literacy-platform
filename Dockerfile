@@ -40,8 +40,9 @@ FROM base
 # Copy built application
 COPY --from=build /app/dist /app/dist
 
+# Copy node_modules from build stage
+COPY --from=build /app/node_modules /app/node_modules
 
-# Start the server by default, this can be overwritten at runtime
 EXPOSE 3000
 CMD ["node", "dist/server/index.mjs"]
 
