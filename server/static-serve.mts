@@ -5,7 +5,7 @@ import express from 'express';
  * Sets up static file serving for the Express app
  * @param app Express application instance
  */
-export function setupStaticServing(app: express.Application) {
+export function setupStaticServing(app: import('express').Application): void {
   const staticDir = path.join(process.cwd(), 'dist', 'public');
 
   // Serve static assets (JS, CSS, etc.)
