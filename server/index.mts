@@ -16,7 +16,7 @@ app.use(express.urlencoded({ extended: true }));
 // });
 
 // Export a function to start the server
-export async function startServer(port) {
+export async function startServer(port: number | string) {
   try {
     if (process.env.NODE_ENV === 'production') {
       setupStaticServing(app);
