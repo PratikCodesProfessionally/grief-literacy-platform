@@ -13,7 +13,7 @@ export function setupStaticServing(app: import('express').Application): void {
 
   console.log('Registering fallback route for /*');
   // Fallback to index.html for client-side routing (e.g., React Router)
-  app.get('/*', (req, res, next) => {
+  app.get('/:splat(*)', (req, res, next) => {
     if (req.path.startsWith('/api/')) {
       return next();
     }
