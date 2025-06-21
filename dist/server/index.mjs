@@ -1,6 +1,6 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import { setupStaticServing } from './static-serve.js';
+import { setupStaticServing } from './static-serve.mjs';
 dotenv.config();
 const app = express();
 // Body parsing middleware
