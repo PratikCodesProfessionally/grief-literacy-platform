@@ -6,8 +6,9 @@ import express from 'express';
  */
 export function setupStaticServing(app) {
     const staticDir = path.join(process.cwd(), 'dist', 'public');
-    // Serve static assets (JS, CSS, etc.)
+    console.log('Registering static assets at:', staticDir);
     app.use(express.static(staticDir));
+    console.log('Registering fallback route for /*');
     // Fallback to index.html for client-side routing (e.g., React Router)
     app.get('/*', (req, res, next) => {
         if (req.path.startsWith('/api/')) {
