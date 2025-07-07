@@ -12,7 +12,9 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true,
+    "noEmit": false,
+    "outDir": "dist/server",
+    "rootDir": "server",
     "allowImportingTsExtensions": true,
     "baseUrl": ".",
     "paths": {
