@@ -6,17 +6,18 @@ import express from 'express';
  * @param app Express application instance
  */
 export function setupStaticServing(app: import('express').Application): void {
-  const staticDir = path.join(process.cwd(), 'dist', 'public');
+  const staticDir = path.join(process.cwd(), 'dist');
 
   console.log('Registering static assets at:', staticDir);
   app.use(express.static(staticDir));
 
-  console.log('Registering fallback route for /*');
-  // Fallback to index.html for client-side routing (e.g., React Router)
-  app.get('/client/*', (req, res, next) => {
-    if (req.path.startsWith('/api/')) {
+  // Fallback-Route für SPA-Routing, aber keine API-Routen überschreiben
+  app.use((req, res, next) => {
+    if (req.method !== 'GET' || req.path.startsWith('/api/')) {
       return next();
     }
-    res.sendFile(path.join(staticDir, 'index.html'));
+    res.sendFile(path.join(staticDir, 'index.html'), err => {
+      if (err) next();
+    });
   });
 }
