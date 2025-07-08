@@ -12,7 +12,7 @@ export function setupStaticServing(app: import('express').Application): void {
   app.use(express.static(staticDir));
 
   // Fallback-Route für SPA-Routing, aber keine API-Routen überschreiben
-  app.use((req, res, next) => {
+  /*app.use((req, res, next) => {
     if (req.method !== 'GET' || req.path.startsWith('/api/')) {
       return next();
     }
@@ -20,4 +20,11 @@ export function setupStaticServing(app: import('express').Application): void {
       if (err) next();
     });
   });
+}*/
+  // Fallback-Route NUR in Produktion
+  if (process.env.NODE_ENV === 'production') {
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(staticDir, 'index.html'));
+    });
+  }
 }
