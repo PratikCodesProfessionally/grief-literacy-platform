@@ -5,14 +5,20 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, Play, Pause, Volume2, VolumeX, Mic, MicOff, Download, Heart, Plus, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Play, Pause, Volume2, VolumeX, Mic, MicOff, Download, Plus, AlertTriangle } from 'lucide-react';
 
 export function MusicTherapyPage() {
+  const audioRef = React.useRef<HTMLAudioElement | null>(null);
+
   const [currentTrack, setCurrentTrack] = React.useState<string | null>(null);
   const [isPlaying, setIsPlaying] = React.useState(false);
   const [volume, setVolume] = React.useState(50);
   const [isMuted, setIsMuted] = React.useState(false);
-  const [progress, setProgress] = React.useState(0);
+
+  const [progress, setProgress] = React.useState(0);          // 0..100 (%)
+  const [duration, setDuration] = React.useState(0);          // seconds
+  const [currentTime, setCurrentTime] = React.useState(0);    // seconds
+
   const [isRecording, setIsRecording] = React.useState(false);
   const [recordingTime, setRecordingTime] = React.useState(0);
   const [recordings, setRecordings] = React.useState<string[]>([]);
@@ -53,64 +59,107 @@ export function MusicTherapyPage() {
   ];
 
   const activities = [
-    {
-      id: 'playlist',
-      title: "Create a playlist for your loved one",
-      description: "Build a musical tribute to their memory"
-    },
-    {
-      id: 'journal',
-      title: "Listen to their favorite song and write about it",
-      description: "Reflect on memories through music"
-    },
-    {
-      id: 'sing',
-      title: "Sing or hum a meaningful melody",
-      description: "Express yourself through voice"
-    },
-    {
-      id: 'rhythm',
-      title: "Use rhythm to express your emotions",
-      description: "Let the beat guide your feelings"
-    },
+    { id: 'playlist', title: "Create a playlist for your loved one", description: "Build a musical tribute to their memory" },
+    { id: 'journal',  title: "Listen to their favorite song and write about it", description: "Reflect on memories through music" },
+    { id: 'sing',     title: "Sing or hum a meaningful melody", description: "Express yourself through voice" },
+    { id: 'rhythm',   title: "Use rhythm to express your emotions", description: "Let the beat guide your feelings" },
   ];
 
-  // Simulate audio progress
-  React.useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isPlaying && currentTrack) {
-      interval = setInterval(() => {
-        setProgress(prev => {
-          const newProgress = prev + 1;
-          if (newProgress >= 100) {
-            setIsPlaying(false);
-            return 0;
-          }
-          return newProgress;
-        });
-      }, 300); // Simulate 30-second track
-    }
-    return () => clearInterval(interval);
-  }, [isPlaying, currentTrack]);
+  // --- Helpers ---------------------------------------------------------------
 
-  // Recording timer
+  // From "Ocean Waves (AI Generated)" -> "/audio/ocean-waves.mp3"
+  const trackToSrc = (track: string) => {
+    const base = track.replace(/\(.*?\)/g, '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    return `/audio/${base}.mp3`;
+  };
+
+  const formatTime = (secs: number) => {
+    if (!isFinite(secs)) return '0:00';
+    const m = Math.floor(secs / 60);
+    const s = Math.floor(secs % 60);
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
+
+  // --- Audio wiring ----------------------------------------------------------
+
+  // Set src + play/pause when currentTrack or isPlaying changes
   React.useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isRecording) {
-      interval = setInterval(() => {
-        setRecordingTime(prev => prev + 1);
-      }, 1000);
+    const audio = audioRef.current;
+    if (!audio || !currentTrack) return;
+
+    // ensure correct src for selected track
+    const nextSrc = trackToSrc(currentTrack);
+    if (audio.getAttribute('data-src') !== nextSrc) {
+      audio.src = nextSrc;
+      audio.setAttribute('data-src', nextSrc);
+      // after setting src, we wait for metadata before we can seek/display duration
     }
-    return () => clearInterval(interval);
+
+    // set volume/mute state on every change
+    audio.volume = Math.min(1, Math.max(0, volume / 100));
+    audio.muted = isMuted;
+
+    if (isPlaying) {
+      // browsers require a user gesture (your button click satisfies it)
+      audio.play().catch((err) => {
+        console.warn('Playback failed:', err);
+        setIsPlaying(false);
+      });
+    } else {
+      audio.pause();
+    }
+  }, [currentTrack, isPlaying, volume, isMuted]);
+
+  // Attach time/duration listeners once
+  React.useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const onLoaded = () => {
+      setDuration(audio.duration || 0);
+    };
+    const onTime = () => {
+      setCurrentTime(audio.currentTime || 0);
+      const d = audio.duration || 0;
+      setProgress(d > 0 ? (audio.currentTime / d) * 100 : 0);
+    };
+    const onEnded = () => {
+      setIsPlaying(false);
+      setProgress(0);
+      setCurrentTime(0);
+    };
+
+    audio.addEventListener('loadedmetadata', onLoaded);
+    audio.addEventListener('timeupdate', onTime);
+    audio.addEventListener('ended', onEnded);
+
+    return () => {
+      audio.removeEventListener('loadedmetadata', onLoaded);
+      audio.removeEventListener('timeupdate', onTime);
+      audio.removeEventListener('ended', onEnded);
+    };
+  }, []);
+
+  // --- Recording timer (unchanged) ------------------------------------------
+
+  React.useEffect(() => {
+    let id: ReturnType<typeof setInterval> | undefined;
+    if (isRecording) {
+      id = setInterval(() => setRecordingTime((p) => p + 1), 1000);
+    }
+    return () => id && clearInterval(id);
   }, [isRecording]);
 
+  // --- UI handlers -----------------------------------------------------------
+
   const handlePlay = (track: string) => {
-    if (currentTrack === track && isPlaying) {
-      setIsPlaying(false);
+    if (currentTrack === track) {
+      setIsPlaying((p) => !p); // toggle play/pause
     } else {
       setCurrentTrack(track);
       setIsPlaying(true);
       setProgress(0);
+      setCurrentTime(0);
     }
   };
 
@@ -119,8 +168,15 @@ export function MusicTherapyPage() {
     setIsMuted(newVolume === 0);
   };
 
-  const toggleMute = () => {
-    setIsMuted(!isMuted);
+  const toggleMute = () => setIsMuted((m) => !m);
+
+  const seekToPercent = (percent: number) => {
+    const audio = audioRef.current;
+    if (!audio || !duration || percent < 0 || percent > 100) return;
+    const t = (percent / 100) * duration;
+    audio.currentTime = t;
+    setProgress(percent);
+    setCurrentTime(t);
   };
 
   const startRecording = () => {
@@ -130,21 +186,13 @@ export function MusicTherapyPage() {
 
   const stopRecording = () => {
     setIsRecording(false);
-    const recordingName = `Recording ${recordings.length + 1} (${Math.floor(recordingTime / 60)}:${(recordingTime % 60).toString().padStart(2, '0')})`;
-    setRecordings([...recordings, recordingName]);
+    const name = `Recording ${recordings.length + 1} (${formatTime(recordingTime)})`;
+    setRecordings((r) => [...r, name]);
     setRecordingTime(0);
   };
 
   const addToPlaylist = (track: string) => {
-    if (!customPlaylist.includes(track)) {
-      setCustomPlaylist([...customPlaylist, track]);
-    }
-  };
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    setCustomPlaylist((p) => (p.includes(track) ? p : [...p, track]));
   };
 
   const renderActivity = () => {
@@ -171,11 +219,7 @@ export function MusicTherapyPage() {
                     {customPlaylist.map((track, index) => (
                       <div key={index} className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded">
                         <span className="text-sm">{track}</span>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handlePlay(track)}
-                        >
+                        <Button size="sm" variant="outline" onClick={() => handlePlay(track)}>
                           {currentTrack === track && isPlaying ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
                         </Button>
                       </div>
@@ -213,8 +257,13 @@ export function MusicTherapyPage() {
     }
   };
 
+  // --- Render ----------------------------------------------------------------
+
   return (
     <div className="space-y-6">
+      {/* hidden audio element */}
+      <audio ref={audioRef} preload="metadata" playsInline />
+
       <div className="flex items-center space-x-4">
         <Link to="/therapy">
           <Button variant="outline" size="sm">
@@ -222,9 +271,7 @@ export function MusicTherapyPage() {
             Back to Therapy
           </Button>
         </Link>
-        <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
-          🎵 Music Therapy
-        </h1>
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-white">🎵 Music Therapy</h1>
       </div>
 
       {/* AI Generated Content Disclaimer */}
@@ -235,7 +282,7 @@ export function MusicTherapyPage() {
             <div>
               <h4 className="font-medium text-amber-800 dark:text-amber-200">AI Generated Music Content</h4>
               <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
-                All music tracks and audio content are AI-generated for demonstration purposes. This is not actual copyrighted music. 
+                All music tracks and audio content are AI-generated for demonstration purposes. This is not actual copyrighted music.
                 The therapeutic concepts are based on established music therapy practices.
               </p>
             </div>
@@ -243,25 +290,21 @@ export function MusicTherapyPage() {
         </CardContent>
       </Card>
 
-      {/* Now Playing Section */}
+      {/* Now Playing */}
       {currentTrack && (
         <Card className="bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/20 border-purple-200 dark:border-purple-800">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>Now Playing: {currentTrack}</span>
               <div className="flex items-center space-x-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={toggleMute}
-                >
+                <Button size="sm" variant="outline" onClick={toggleMute}>
                   {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
                 </Button>
                 <div className="flex items-center space-x-2 w-24">
                   <input
                     type="range"
-                    min="0"
-                    max="100"
+                    min={0}
+                    max={100}
                     value={isMuted ? 0 : volume}
                     onChange={(e) => handleVolumeChange(Number(e.target.value))}
                     className="w-full"
@@ -273,31 +316,27 @@ export function MusicTherapyPage() {
           <CardContent>
             <div className="space-y-4">
               <Progress value={progress} className="h-2" />
+              {/* Seek slider */}
+              <div className="flex items-center gap-3">
+                <span className="text-xs tabular-nums text-gray-600 dark:text-gray-400">{formatTime(currentTime)}</span>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  value={progress}
+                  onChange={(e) => seekToPercent(Number(e.target.value))}
+                  className="w-full"
+                  aria-label="Seek"
+                />
+                <span className="text-xs tabular-nums text-gray-600 dark:text-gray-400">{formatTime(duration)}</span>
+              </div>
+
               <div className="flex items-center justify-center space-x-4">
-                <Button
-                  size="lg"
-                  onClick={() => setProgress(0)}
-                  variant="outline"
-                >
-                  ⏮
-                </Button>
-                <Button
-                  size="lg"
-                  onClick={() => handlePlay(currentTrack)}
-                  className="rounded-full w-16 h-16"
-                >
+                <Button size="lg" onClick={() => seekToPercent(0)} variant="outline">⏮</Button>
+                <Button size="lg" onClick={() => handlePlay(currentTrack)} className="rounded-full w-16 h-16">
                   {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
                 </Button>
-                <Button
-                  size="lg"
-                  onClick={() => setProgress(100)}
-                  variant="outline"
-                >
-                  ⏭
-                </Button>
-              </div>
-              <div className="text-center text-sm text-gray-600 dark:text-gray-400">
-                {Math.floor(progress * 30 / 100)}:00 / 0:30 (Simulated AI Audio)
+                <Button size="lg" onClick={() => seekToPercent(100)} variant="outline">⏭</Button>
               </div>
             </div>
           </CardContent>
@@ -331,16 +370,8 @@ export function MusicTherapyPage() {
                         >
                           <Plus className="h-4 w-4" />
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handlePlay(track)}
-                        >
-                          {currentTrack === track && isPlaying ? (
-                            <Pause className="h-4 w-4" />
-                          ) : (
-                            <Play className="h-4 w-4" />
-                          )}
+                        <Button size="sm" variant="outline" onClick={() => handlePlay(track)}>
+                          {currentTrack === track && isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                         </Button>
                       </div>
                     </div>
@@ -355,9 +386,7 @@ export function MusicTherapyPage() {
           <Card>
             <CardHeader>
               <CardTitle>Music Activities</CardTitle>
-              <CardDescription>
-                Interactive ways to engage with music therapy
-              </CardDescription>
+              <CardDescription>Interactive ways to engage with music therapy</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               {activities.map((activity, index) => (
@@ -369,9 +398,7 @@ export function MusicTherapyPage() {
                 >
                   <div>
                     <div className="font-medium">{activity.title}</div>
-                    <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                      {activity.description}
-                    </div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">{activity.description}</div>
                   </div>
                 </Button>
               ))}
@@ -384,9 +411,7 @@ export function MusicTherapyPage() {
                 <Mic className="h-5 w-5" />
                 <span>Voice Recording</span>
               </CardTitle>
-              <CardDescription>
-                Record your voice sharing memories or singing
-              </CardDescription>
+              <CardDescription>Record your voice sharing memories or singing</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="text-center space-y-4">
@@ -409,20 +434,16 @@ export function MusicTherapyPage() {
                   </div>
                 )}
               </div>
-              
+
               {recordings.length > 0 && (
                 <div className="space-y-2">
                   <h4 className="font-medium">Your Recordings:</h4>
-                  {recordings.map((recording, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
-                      <span className="text-sm">{recording}</span>
+                  {recordings.map((rec, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                      <span className="text-sm">{rec}</span>
                       <div className="space-x-1">
-                        <Button size="sm" variant="ghost">
-                          <Play className="h-3 w-3" />
-                        </Button>
-                        <Button size="sm" variant="ghost">
-                          <Download className="h-3 w-3" />
-                        </Button>
+                        <Button size="sm" variant="ghost"><Play className="h-3 w-3" /></Button>
+                        <Button size="sm" variant="ghost"><Download className="h-3 w-3" /></Button>
                       </div>
                     </div>
                   ))}
