@@ -8,8 +8,11 @@ import { MoodSelector } from '@/components/ui/mood-selector';
 import { ArrowLeft, CheckCircle, Clock, Palette, Sparkles, Users, Mic } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// Import the updated subcomponent
+// Activity modals (same folder)
 import { EmotionColorMapping } from './EmotionColorMapping';
+import { MemoryCollage } from './MemoryCollage';
+import { SymbolicDrawing } from './SymbolicDrawing';
+import { HealingMandala } from './HealingMandala';
 
 interface ActivityProgress {
   [key: string]: 'not-started' | 'in-progress' | 'completed';
@@ -19,12 +22,18 @@ export function ArtTherapyPage() {
   const [showMoodSelector, setShowMoodSelector] = React.useState(false);
   const [selectedActivity, setSelectedActivity] = React.useState<string | null>(null);
   const [currentMood, setCurrentMood] = React.useState<string>('');
-  const [showEmotionMapping, setShowEmotionMapping] = React.useState(false);
+
+  const [modals, setModals] = React.useState({
+    emotion: false,
+    collage: false,
+    drawing: false,
+    mandala: false,
+  });
 
   const [activityProgress, setActivityProgress] = React.useState<ActivityProgress>({
     'emotion-color': 'not-started',
-    'memory-collage': 'in-progress',
-    'symbolic-drawing': 'completed',
+    'memory-collage': 'not-started',
+    'symbolic-drawing': 'not-started',
     'healing-mandala': 'not-started',
   });
 
@@ -107,30 +116,29 @@ export function ArtTherapyPage() {
     setShowMoodSelector(true);
   };
 
-  const handleMoodSelect = (mood: string) => {
-    if (!selectedActivity) return;
-
-    setCurrentMood(mood);
-    setShowMoodSelector(false);
-
-    // mark in-progress unless already completed
+  const openModalForActivity = (activityId: string) => {
     setActivityProgress((prev) => ({
       ...prev,
-      [selectedActivity]: prev[selectedActivity] === 'completed' ? 'completed' : 'in-progress',
+      [activityId]: prev[activityId] === 'completed' ? 'completed' : 'in-progress',
     }));
-
-    // open the appropriate UI
-    if (selectedActivity === 'emotion-color') {
-      setShowEmotionMapping(true);
-    } else {
-      console.log(`Starting ${selectedActivity} with mood: ${mood}`);
-    }
+    setModals({
+      emotion: activityId === 'emotion-color',
+      collage: activityId === 'memory-collage',
+      drawing: activityId === 'symbolic-drawing',
+      mandala: activityId === 'healing-mandala',
+    });
   };
 
-  const handleEmotionMappingComplete = () => {
-    // flip progress to completed and close modal
-    setActivityProgress((prev) => ({ ...prev, 'emotion-color': 'completed' }));
-    setShowEmotionMapping(false);
+  const handleMoodSelect = (mood: string) => {
+    if (!selectedActivity) return;
+    setCurrentMood(mood);
+    setShowMoodSelector(false);
+    openModalForActivity(selectedActivity);
+  };
+
+  const complete = (activityId: keyof typeof activityProgress) => {
+    setActivityProgress((prev) => ({ ...prev, [activityId]: 'completed' }));
+    setModals({ emotion: false, collage: false, drawing: false, mandala: false });
   };
 
   const completedCount = Object.values(activityProgress).filter((s) => s === 'completed').length;
@@ -159,9 +167,7 @@ export function ArtTherapyPage() {
               <Sparkles className="h-5 w-5 text-purple-600" />
               <span>Your Art Therapy Journey</span>
             </CardTitle>
-            <CardDescription>
-              {completedCount} of {artActivities.length} activities completed
-            </CardDescription>
+            <CardDescription>{completedCount} of {artActivities.length} activities completed</CardDescription>
           </CardHeader>
           <CardContent>
             <Progress value={overallProgress} className="h-3" />
@@ -178,7 +184,7 @@ export function ArtTherapyPage() {
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <MoodSelector
               title="How are you feeling right now?"
-              description="Taking a moment to check in with yourself before creating"
+              description="Take a breath and check in before creating"
               moods={moods}
               selectedMood={currentMood}
               onMoodSelect={handleMoodSelect}
@@ -187,12 +193,33 @@ export function ArtTherapyPage() {
           </div>
         )}
 
-        {/* Emotion Color Mapping Modal */}
-        {showEmotionMapping && selectedActivity === 'emotion-color' && (
+        {/* Activity Modals */}
+        {modals.emotion && (
           <EmotionColorMapping
             mood={currentMood}
-            onClose={() => setShowEmotionMapping(false)}
-            onComplete={handleEmotionMappingComplete} // ⬅️ NEW
+            onClose={() => setModals((m) => ({ ...m, emotion: false }))}
+            onComplete={() => complete('emotion-color')}
+          />
+        )}
+        {modals.collage && (
+          <MemoryCollage
+            mood={currentMood}
+            onClose={() => setModals((m) => ({ ...m, collage: false }))}
+            onComplete={() => complete('memory-collage')}
+          />
+        )}
+        {modals.drawing && (
+          <SymbolicDrawing
+            mood={currentMood}
+            onClose={() => setModals((m) => ({ ...m, drawing: false }))}
+            onComplete={() => complete('symbolic-drawing')}
+          />
+        )}
+        {modals.mandala && (
+          <HealingMandala
+            mood={currentMood}
+            onClose={() => setModals((m) => ({ ...m, mandala: false }))}
+            onComplete={() => complete('healing-mandala')}
           />
         )}
 
@@ -244,7 +271,7 @@ export function ArtTherapyPage() {
           ))}
         </div>
 
-        {/* Enhanced Digital Art Canvas */}
+        {/* (rest of page unchanged: Digital Art Canvas + Community cards) */}
         <Card className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border-indigo-200 dark:border-indigo-800 shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
@@ -263,44 +290,13 @@ export function ArtTherapyPage() {
                     <div className="w-12 h-12 border-4 border-indigo-300 border-t-indigo-600 rounded-full animate-spin"></div>
                   </div>
                 </div>
-
-                <div className="space-y-3">
-                  <h3 className="text-xl font-semibold text-gray-800 dark:text-white">Advanced Art Studio in Development</h3>
-                  <div className="grid grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-indigo-400 rounded-full"></div>
-                      <span>Multiple brush types</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-indigo-400 rounded-full"></div>
-                      <span>Layered editing</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-indigo-400 rounded-full"></div>
-                      <span>Color palettes</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-indigo-400 rounded-full"></div>
-                      <span>Export options</span>
-                    </div>
-                  </div>
-
-                  <div className="flex space-x-3 justify-center pt-4">
-                    <Button variant="outline" className="border-indigo-300 text-indigo-700 hover:bg-indigo-50">
-                      <Users className="h-4 w-4 mr-2" />
-                      Join Beta List
-                    </Button>
-                    <Button variant="outline" className="border-indigo-300 text-indigo-700 hover:bg-indigo-50">
-                      Try Simple Canvas
-                    </Button>
-                  </div>
-                </div>
+                <h3 className="text-xl font-semibold text-gray-800 dark:text-white">Advanced Art Studio in Development</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Multiple brushes, layers, palettes, and export options.</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Community Features */}
         <div className="grid md:grid-cols-2 gap-6">
           <Card className="bg-gradient-to-br from-green-50 to-teal-50 dark:from-green-900/20 dark:to-teal-900/20 border-green-200 dark:border-green-800">
             <CardHeader>
