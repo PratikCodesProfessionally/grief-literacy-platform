@@ -8,6 +8,9 @@ import { MoodSelector } from '@/components/ui/mood-selector';
 import { ArrowLeft, CheckCircle, Clock, Palette, Sparkles, Users, Mic } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+// Import the updated subcomponent
+import { EmotionColorMapping } from './EmotionColorMapping';
+
 interface ActivityProgress {
   [key: string]: 'not-started' | 'in-progress' | 'completed';
 }
@@ -16,6 +19,8 @@ export function ArtTherapyPage() {
   const [showMoodSelector, setShowMoodSelector] = React.useState(false);
   const [selectedActivity, setSelectedActivity] = React.useState<string | null>(null);
   const [currentMood, setCurrentMood] = React.useState<string>('');
+  const [showEmotionMapping, setShowEmotionMapping] = React.useState(false);
+
   const [activityProgress, setActivityProgress] = React.useState<ActivityProgress>({
     'emotion-color': 'not-started',
     'memory-collage': 'in-progress',
@@ -35,43 +40,43 @@ export function ArtTherapyPage() {
   const artActivities = [
     {
       id: 'emotion-color',
-      title: "Emotion Color Mapping",
-      description: "Use colors to express different feelings about your grief",
-      icon: "🎨",
-      themeColor: "from-red-100 to-orange-100 dark:from-red-900/20 dark:to-orange-900/20",
-      borderColor: "border-red-200 dark:border-red-800",
-      iconBg: "bg-red-50 dark:bg-red-900/30",
-      detailedDescription: "Choose colors that represent your emotions and create a visual map of your feelings"
+      title: 'Emotion Color Mapping',
+      description: 'Use colors to express different feelings about your grief',
+      icon: '🎨',
+      themeColor: 'from-red-100 to-orange-100 dark:from-red-900/20 dark:to-orange-900/20',
+      borderColor: 'border-red-200 dark:border-red-800',
+      iconBg: 'bg-red-50 dark:bg-red-900/30',
+      detailedDescription: 'Choose colors that represent your emotions and create a visual map of your feelings',
     },
     {
       id: 'memory-collage',
-      title: "Memory Collage",
-      description: "Create a visual representation of cherished memories",
-      icon: "📸",
-      themeColor: "from-blue-100 to-cyan-100 dark:from-blue-900/20 dark:to-cyan-900/20",
-      borderColor: "border-blue-200 dark:border-blue-800",
-      iconBg: "bg-blue-50 dark:bg-blue-900/30",
-      detailedDescription: "Combine photos, text, and drawings to honor special moments you shared"
+      title: 'Memory Collage',
+      description: 'Create a visual representation of cherished memories',
+      icon: '📸',
+      themeColor: 'from-blue-100 to-cyan-100 dark:from-blue-900/20 dark:to-cyan-900/20',
+      borderColor: 'border-blue-200 dark:border-blue-800',
+      iconBg: 'bg-blue-50 dark:bg-blue-900/30',
+      detailedDescription: 'Combine photos, text, and drawings to honor special moments you shared',
     },
     {
       id: 'symbolic-drawing',
-      title: "Symbolic Drawing",
-      description: "Draw symbols that represent your journey through grief",
-      icon: "🖼️",
-      themeColor: "from-green-100 to-emerald-100 dark:from-green-900/20 dark:to-emerald-900/20",
-      borderColor: "border-green-200 dark:border-green-800",
-      iconBg: "bg-green-50 dark:bg-green-900/30",
-      detailedDescription: "Express your grief journey through meaningful symbols and metaphors"
+      title: 'Symbolic Drawing',
+      description: 'Draw symbols that represent your journey through grief',
+      icon: '🖼️',
+      themeColor: 'from-green-100 to-emerald-100 dark:from-green-900/20 dark:to-emerald-900/20',
+      borderColor: 'border-green-200 dark:border-green-800',
+      iconBg: 'bg-green-50 dark:bg-green-900/30',
+      detailedDescription: 'Express your grief journey through meaningful symbols and metaphors',
     },
     {
       id: 'healing-mandala',
-      title: "Healing Mandala",
-      description: "Create circular patterns that promote inner peace",
-      icon: "🔮",
-      themeColor: "from-purple-100 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/20",
-      borderColor: "border-purple-200 dark:border-purple-800",
-      iconBg: "bg-purple-50 dark:bg-purple-900/30",
-      detailedDescription: "Design intricate circular patterns that help center your mind and emotions"
+      title: 'Healing Mandala',
+      description: 'Create circular patterns that promote inner peace',
+      icon: '🔮',
+      themeColor: 'from-purple-100 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/20',
+      borderColor: 'border-purple-200 dark:border-purple-800',
+      iconBg: 'bg-purple-50 dark:bg-purple-900/30',
+      detailedDescription: 'Design intricate circular patterns that help center your mind and emotions',
     },
   ];
 
@@ -103,18 +108,32 @@ export function ArtTherapyPage() {
   };
 
   const handleMoodSelect = (mood: string) => {
+    if (!selectedActivity) return;
+
     setCurrentMood(mood);
     setShowMoodSelector(false);
-    // Update progress to in-progress
-    setActivityProgress(prev => ({
+
+    // mark in-progress unless already completed
+    setActivityProgress((prev) => ({
       ...prev,
-      [selectedActivity!]: 'in-progress'
+      [selectedActivity]: prev[selectedActivity] === 'completed' ? 'completed' : 'in-progress',
     }));
-    // Here you would navigate to the actual activity
-    console.log(`Starting ${selectedActivity} with mood: ${mood}`);
+
+    // open the appropriate UI
+    if (selectedActivity === 'emotion-color') {
+      setShowEmotionMapping(true);
+    } else {
+      console.log(`Starting ${selectedActivity} with mood: ${mood}`);
+    }
   };
 
-  const completedCount = Object.values(activityProgress).filter(status => status === 'completed').length;
+  const handleEmotionMappingComplete = () => {
+    // flip progress to completed and close modal
+    setActivityProgress((prev) => ({ ...prev, 'emotion-color': 'completed' }));
+    setShowEmotionMapping(false);
+  };
+
+  const completedCount = Object.values(activityProgress).filter((s) => s === 'completed').length;
   const overallProgress = (completedCount / artActivities.length) * 100;
 
   return (
@@ -128,12 +147,8 @@ export function ArtTherapyPage() {
             </Button>
           </Link>
           <div className="flex-1">
-            <h1 className="text-4xl font-bold text-gray-800 dark:text-white mb-2">
-              🎨 Art Therapy Studio
-            </h1>
-            <p className="text-lg text-gray-600 dark:text-gray-300">
-              Express your emotions through creative visual art
-            </p>
+            <h1 className="text-4xl font-bold text-gray-800 dark:text-white mb-2">🎨 Art Therapy Studio</h1>
+            <p className="text-lg text-gray-600 dark:text-gray-300">Express your emotions through creative visual art</p>
           </div>
         </div>
 
@@ -151,8 +166,9 @@ export function ArtTherapyPage() {
           <CardContent>
             <Progress value={overallProgress} className="h-3" />
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-              {overallProgress === 100 ? "Amazing progress! You've completed all activities." : 
-               `${Math.round(overallProgress)}% complete - Keep exploring your creativity!`}
+              {overallProgress === 100
+                ? "Amazing progress! You've completed all activities."
+                : `${Math.round(overallProgress)}% complete - Keep exploring your creativity!`}
             </p>
           </CardContent>
         </Card>
@@ -171,36 +187,38 @@ export function ArtTherapyPage() {
           </div>
         )}
 
+        {/* Emotion Color Mapping Modal */}
+        {showEmotionMapping && selectedActivity === 'emotion-color' && (
+          <EmotionColorMapping
+            mood={currentMood}
+            onClose={() => setShowEmotionMapping(false)}
+            onComplete={handleEmotionMappingComplete} // ⬅️ NEW
+          />
+        )}
+
         {/* Art Activities Grid */}
         <div className="grid md:grid-cols-2 gap-6">
           {artActivities.map((activity) => (
-            <Card 
-              key={activity.id} 
+            <Card
+              key={activity.id}
               className={cn(
-                "group hover:shadow-xl hover:scale-[1.02] transition-all duration-300 overflow-hidden",
-                "bg-gradient-to-br",
+                'group hover:shadow-xl hover:scale-[1.02] transition-all duration-300 overflow-hidden',
+                'bg-gradient-to-br',
                 activity.themeColor,
                 activity.borderColor,
-                "border-2"
+                'border-2'
               )}
             >
               <CardHeader className="relative">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-4">
-                    <div className={cn(
-                      "p-3 rounded-xl text-2xl transition-transform group-hover:scale-110",
-                      activity.iconBg
-                    )}>
+                    <div className={cn('p-3 rounded-xl text-2xl transition-transform group-hover:scale-110', activity.iconBg)}>
                       {activity.icon}
                     </div>
                     <div className="flex-1">
                       <CardTitle className="text-xl mb-1">{activity.title}</CardTitle>
-                      <CardDescription className="text-sm mb-3">
-                        {activity.description}
-                      </CardDescription>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">
-                        {activity.detailedDescription}
-                      </p>
+                      <CardDescription className="text-sm mb-3">{activity.description}</CardDescription>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">{activity.detailedDescription}</p>
                     </div>
                   </div>
                   <div className="flex flex-col items-end space-y-2">
@@ -210,14 +228,16 @@ export function ArtTherapyPage() {
                 </div>
               </CardHeader>
               <CardContent className="pt-0">
-                <Button 
+                <Button
                   className="w-full group-hover:shadow-md transition-shadow"
                   onClick={() => handleActivityStart(activity.id)}
                   disabled={activityProgress[activity.id] === 'completed'}
                 >
-                  {activityProgress[activity.id] === 'completed' ? 'Completed' :
-                   activityProgress[activity.id] === 'in-progress' ? 'Continue Activity' :
-                   'Start Activity'}
+                  {activityProgress[activity.id] === 'completed'
+                    ? 'Completed'
+                    : activityProgress[activity.id] === 'in-progress'
+                    ? 'Continue Activity'
+                    : 'Start Activity'}
                 </Button>
               </CardContent>
             </Card>
@@ -230,13 +250,9 @@ export function ArtTherapyPage() {
             <CardTitle className="flex items-center space-x-2">
               <Palette className="h-6 w-6 text-indigo-600" />
               <span>Digital Art Canvas</span>
-              <Badge className="bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200">
-                Coming Soon
-              </Badge>
+              <Badge className="bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200">Coming Soon</Badge>
             </CardTitle>
-            <CardDescription>
-              Professional-grade digital art tools for grief expression
-            </CardDescription>
+            <CardDescription>Professional-grade digital art tools for grief expression</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="bg-white/50 dark:bg-gray-800/50 border-2 border-dashed border-indigo-300 dark:border-indigo-600 rounded-xl p-8">
@@ -247,11 +263,9 @@ export function ArtTherapyPage() {
                     <div className="w-12 h-12 border-4 border-indigo-300 border-t-indigo-600 rounded-full animate-spin"></div>
                   </div>
                 </div>
-                
+
                 <div className="space-y-3">
-                  <h3 className="text-xl font-semibold text-gray-800 dark:text-white">
-                    Advanced Art Studio in Development
-                  </h3>
+                  <h3 className="text-xl font-semibold text-gray-800 dark:text-white">Advanced Art Studio in Development</h3>
                   <div className="grid grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto">
                     <div className="flex items-center space-x-2">
                       <div className="w-2 h-2 bg-indigo-400 rounded-full"></div>
@@ -270,7 +284,7 @@ export function ArtTherapyPage() {
                       <span>Export options</span>
                     </div>
                   </div>
-                  
+
                   <div className="flex space-x-3 justify-center pt-4">
                     <Button variant="outline" className="border-indigo-300 text-indigo-700 hover:bg-indigo-50">
                       <Users className="h-4 w-4 mr-2" />
@@ -294,9 +308,7 @@ export function ArtTherapyPage() {
                 <Users className="h-5 w-5 text-green-600" />
                 <span>Community Gallery</span>
               </CardTitle>
-              <CardDescription>
-                See inspiring artwork from others on their healing journey (anonymous)
-              </CardDescription>
+              <CardDescription>See inspiring artwork from others on their healing journey (anonymous)</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-center py-6">
@@ -317,9 +329,7 @@ export function ArtTherapyPage() {
                 <Mic className="h-5 w-5 text-amber-600" />
                 <span>Voice Reflection</span>
               </CardTitle>
-              <CardDescription>
-                Record your thoughts and feelings about your artwork
-              </CardDescription>
+              <CardDescription>Record your thoughts and feelings about your artwork</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-center py-6">
