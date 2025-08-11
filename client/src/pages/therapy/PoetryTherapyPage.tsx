@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Heart, Share, Bookmark, Volume2, Mic, MicOff, Save, Download } from 'lucide-react';
+import { read } from 'fs';
 
 export function PoetryTherapyPage() {
   const [selectedPoem, setSelectedPoem] = React.useState('');
@@ -50,6 +51,14 @@ export function PoetryTherapyPage() {
       content: "What I remember\nis how we loved\nthe world, and I think\nthat must be\nwhat the world\nwas for.",
       category: "Love",
       readTime: "30 sec"
+    },
+    {
+      id: 5,
+      title: "Hey, I'm Sorry",
+      author: "Unknown",
+      content: "I know words sometimes cut like knives,\nand knives, sometimes, cut like words\nLike the arrow that has left the archer,\nlike the bullet freed from its muzzle,\nthey sway through the ether,\nkilling identity as they pass—\ndistorting the emptiness\nthat lies between feelings, bodies,\nand quill-feathers.\n\nA life emptied,\nwith a barrel of words.",
+      category: "Guilt",
+      readTime: "30 sec",
     }
   ];
 
