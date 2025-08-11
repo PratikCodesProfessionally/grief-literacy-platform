@@ -7,7 +7,7 @@ export function HomePage() {
   const features = [
     {
       title: 'Therapeutic Approaches',
-      description: 'Explore story, art, poetry, and music therapy options',
+      description: 'Explore story, art, poetry and music therapy options',
       link: '/therapy',
       icon: '🎨',
     },
@@ -19,13 +19,13 @@ export function HomePage() {
     },
     {
       title: 'Healing Tools',
-      description: 'Journaling, meditation, and coping resources',
+      description: 'Journaling, meditation and coping resources',
       link: '/tools',
       icon: '🛠️',
     },
     {
       title: 'Learning Resources',
-      description: 'Books, courses, and educational content',
+      description: 'Books, courses and educational content',
       link: '/resources',
       icon: '📚',
     },
@@ -41,8 +41,8 @@ export function HomePage() {
           Grief Literacy Journey
         </h2>
         <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-          A compassionate space for healing, learning, and growing through grief with therapeutic approaches, 
-          community support, and personalized tools.
+          A compassionate space for healing, learning and growing through grief with therapeutic approaches, 
+          community support and personalized tools.
         </p>
       </div>
 
@@ -69,8 +69,8 @@ export function HomePage() {
         </h3>
         <p className="text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
           Grief is a natural response to loss. This app provides evidence-based therapeutic approaches, 
-          peer support, and practical tools to help you navigate your unique journey. 
-          Remember: healing is not linear, and every feeling is valid.
+          peer support and practical tools to help you navigate your unique journey. 
+          Remember: healing is not linear and every feeling is valid.
         </p>
       </div>
     </div>

@@ -28,7 +28,7 @@ export function TherapyPage() {
     },
     {
       id: 'poetry',
-      title: 'Poetry Therapy',
+      title: 'Therapoetic',
       description: 'Find healing through reading and writing poetry',
       icon: '✍️',
       path: '/therapy/poetry',
@@ -36,7 +36,7 @@ export function TherapyPage() {
     {
       id: 'music',
       title: 'Music Therapy',
-      description: 'Process emotions through music, sound, and rhythm',
+      description: 'Process emotions through music, sound and rhythm',
       icon: '🎵',
       path: '/therapy/music',
     },
