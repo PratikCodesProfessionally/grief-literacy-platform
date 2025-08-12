@@ -14,14 +14,14 @@ export function TherapyPage() {
   const therapyOptions = [
     {
       id: 'story',
-      title: 'Story Therapy',
+      title: 'Storalis',
       description: 'Express and process grief through storytelling and narrative',
       icon: '📖',
       path: '/therapy/story',
     },
     {
       id: 'art',
-      title: 'Art Therapy',
+      title: 'Canvessence',
       description: 'Use visual expression to explore and heal emotional wounds',
       icon: '🎨',
       path: '/therapy/art',
@@ -35,7 +35,7 @@ export function TherapyPage() {
     },
     {
       id: 'music',
-      title: 'Music Therapy',
+      title: 'Euphora',
       description: 'Process emotions through music, sound and rhythm',
       icon: '🎵',
       path: '/therapy/music',
