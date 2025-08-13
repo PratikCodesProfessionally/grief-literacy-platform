@@ -32,7 +32,7 @@ export function MusicTherapyPage() {
       title: "Calming & Peaceful",
       description: "Gentle melodies for quiet reflection",
       icon: "🕊️",
-      tracks: ["Ocean Waves (AI Generated)", "Peaceful Piano (AI Generated)", "Forest Sounds (AI Generated)", "Gentle Rain (AI Generated)", "Mountain Breeze (AI Generated)"],
+      tracks: ["Ocean Waves (AI Generated)", "Peaceful Piano (AI Generated)", "Forest Sounds (AI Generated)", "Gentle Rain (AI Generated)", "Mountain Temple(AI Generated)"],
       color: "from-blue-100 to-cyan-100 dark:from-blue-900/20 dark:to-cyan-900/20"
     },
     {
