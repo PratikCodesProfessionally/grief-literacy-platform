@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { JournalingPage } from './JournalingPage';
 import { MeditationPage } from './MeditationPage';
-import { MemoryGardenPage } from './MemoryGardenPage';
+import MemoryGardenPage from './MemoryGardenPage';
 import { LettersPage } from './LettersPage';
 
 export function ToolsPage() {
