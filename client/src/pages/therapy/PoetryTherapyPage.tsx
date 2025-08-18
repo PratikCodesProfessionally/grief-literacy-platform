@@ -59,6 +59,14 @@ export function PoetryTherapyPage() {
       content: "I know words sometimes cut like knives,\nand knives, sometimes, cut like words\nLike the arrow that has left the archer,\nlike the bullet freed from its muzzle,\nthey sway through the ether,\nkilling identity as they pass—\ndistorting the emptiness\nthat lies between feelings, bodies,\nand quill-feathers.\n\nA life emptied,\nwith a barrel of words.",
       category: "Guilt",
       readTime: "30 sec",
+    },
+    {
+      id: 6,
+      title: "Marmelade morning",
+      author: "Unknown",
+      content: "Peaceful house with no pesky mouse\ndas brauche ich unbedingt - moi aussi\nno smart home but an autark home\n where egos don't burn the entire Rome\n\nA greenish garden, multiple plants\n with minimal conflicts, petty rants\nwhere the marmelade is made\n fresh with love's own aid\nto soothe the burning ail\npeachy tinged in its own shade\n\nA morning sun on hill's turn\nOver the barn by the tavern\n the morning bird shall hymn the urn\nof how peace was won in the long run\nPeaceful house with no pecky mouse\ndas brauche ich unbedingt - moi aussi\n",
+      category: "Simplicity",
+      readTime: "1 min",
     }
   ];
 
