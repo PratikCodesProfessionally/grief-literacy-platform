@@ -4,355 +4,308 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { ArrowLeft, Save, Mail, Heart, Calendar, Download, Trash2, Printer } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ArrowLeft, Plus, Heart, Download, Trash2, Printer, Calendar } from 'lucide-react';
 
-type Letter = {
+// ---- Types ----
+export type Memory = {
   id: number;
-  to: string;
-  subject: string;
-  content: string;
-  date: string;       // human-readable (“Today”, “2 days ago”) or ISO string if you prefer
-  wordCount: number;
-  category: 'Memory' | 'Gratitude' | 'Personal' | string;
+  title: string;
+  description: string;
+  flower: string; // emoji
+  createdAt: number; // epoch ms
+  liked?: boolean;
 };
 
-export function LettersPage() {
-  const [showNewLetter, setShowNewLetter] = React.useState(false);
-  const [letterTo, setLetterTo] = React.useState('');
-  const [letterSubject, setLetterSubject] = React.useState('');
-  const [letterContent, setLetterContent] = React.useState('');
-  const [savedLetters, setSavedLetters] = React.useState<Letter[]>(() => {
-    const fromStorage = localStorage.getItem('gl_letters');
-    if (fromStorage) {
-      try { return JSON.parse(fromStorage) as Letter[]; } catch {}
+// ---- utils ----
+function formatRelative(ms: number) {
+  const diff = Date.now() - ms;
+  const s = Math.floor(diff / 1000);
+  const m = Math.floor(s / 60);
+  const h = Math.floor(m / 60);
+  const d = Math.floor(h / 24);
+  if (d > 0) return d === 1 ? '1 day ago' : `${d} days ago`;
+  if (h > 0) return h === 1 ? '1 hour ago' : `${h} hours ago`;
+  if (m > 0) return m === 1 ? '1 minute ago' : `${m} minutes ago`;
+  return 'just now';
+}
+
+function downloadTextFile(filename: string, content: string) {
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+const STORAGE_KEY = 'gl_memory_garden';
+
+// ✅ Named export (so ToolsPage can `import { MemoryGardenPage } from './MemoryGardenPage'`)
+export function MemoryGardenPage() {
+  // ---- compose form ----
+  const [showAddMemory, setShowAddMemory] = React.useState(false);
+  const [memoryTitle, setMemoryTitle] = React.useState('');
+  const [memoryDescription, setMemoryDescription] = React.useState('');
+  const flowerOptions = ['🌻', '🌹', '🌸', '🌺', '🌷', '🌼', '🌿', '🍀'];
+  const [selectedFlower, setSelectedFlower] = React.useState<string>(flowerOptions[0]);
+
+  // ---- data ----
+  const [memories, setMemories] = React.useState<Memory[]>(() => {
+    const cached = localStorage.getItem(STORAGE_KEY);
+    if (cached) {
+      try { return JSON.parse(cached) as Memory[]; } catch {}
     }
+    const now = Date.now();
     return [
       {
-        id: 1,
-        to: 'Mom',
-        subject: 'Missing your Sunday pancakes',
-        content: 'Dear Mom, I woke up this morning thinking about your pancakes...',
-        date: '2 days ago',
-        wordCount: 247,
-        category: 'Memory'
+        id: now - 1000,
+        title: "Mom's Sunday Pancakes",
+        description: 'Every Sunday morning, the smell of pancakes would fill the house...\nYou showed me that love can be as simple as a warm breakfast and an unhurried morning.',
+        flower: '🌻',
+        createdAt: now - 2 * 24 * 60 * 60 * 1000, // 2 days ago
       },
       {
-        id: 2,
-        to: 'Dad',
-        subject: 'Thank you for teaching me to be strong',
-        content: "Dad, I've been thinking about all the lessons you taught me...",
-        date: '1 week ago',
-        wordCount: 156,
-        category: 'Gratitude'
-      }
+        id: now - 2000,
+        title: 'Teaching Me to Drive',
+        description: "Dad was so patient when I couldn't get parallel parking right...\nYou taught me to breathe, try again, and trust the wheel.",
+        flower: '🌹',
+        createdAt: now - 7 * 24 * 60 * 60 * 1000, // 1 week ago
+      },
+      {
+        id: now - 3000,
+        title: 'Christmas Morning Traditions',
+        description: "The way they'd wake us up at dawn, so excited for our reactions...\nWe still open one small gift the night before, just like you wanted.",
+        flower: '🌸',
+        createdAt: now - 14 * 24 * 60 * 60 * 1000,
+      },
+      {
+        id: now - 4000,
+        title: 'Bedtime Stories',
+        description: "Even when I got older, they'd still tell me stories to help me sleep...\nNow I read those same tales when the nights feel long.",
+        flower: '🌺',
+        createdAt: now - 21 * 24 * 60 * 60 * 1000,
+      },
     ];
   });
 
-  // Persist to localStorage
   React.useEffect(() => {
-    localStorage.setItem('gl_letters', JSON.stringify(savedLetters));
-  }, [savedLetters]);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(memories));
+  }, [memories]);
 
-  // Reader dialog state
+  // ---- reader dialog ----
   const [isReaderOpen, setIsReaderOpen] = React.useState(false);
-  const [activeLetter, setActiveLetter] = React.useState<Letter | null>(null);
+  const [activeMemory, setActiveMemory] = React.useState<Memory | null>(null);
 
-  const letterPrompts = [
-    "Tell them about something wonderful that happened to you recently",
-    "Share a memory that makes you smile",
-    "Ask them the questions you wish you could still ask",
-    "Thank them for a specific lesson they taught you",
-    "Describe how you're honoring their memory",
-    "Tell them about the family news they're missing",
-    "Share your fears and how you're working through them",
-    "Write about a tradition you're continuing because of them"
-  ];
-
-  const handleSaveLetter = () => {
-    if (letterTo.trim() && letterContent.trim()) {
-      const newLetter: Letter = {
-        id: Date.now(),
-        to: letterTo.trim(),
-        subject: letterSubject.trim() || 'Untitled Letter',
-        content: letterContent,
-        date: 'Today',
-        wordCount: letterContent.trim().split(/\s+/).length,
-        category: 'Personal'
-      };
-      setSavedLetters([newLetter, ...savedLetters]);
-      setLetterTo('');
-      setLetterSubject('');
-      setLetterContent('');
-      setShowNewLetter(false);
-    }
-  };
-
-  const deleteLetter = (id: number) => {
-    setSavedLetters(savedLetters.filter(letter => letter.id !== id));
-    if (activeLetter?.id === id) {
-      setIsReaderOpen(false);
-      setActiveLetter(null);
-    }
-  };
-
-  const getCategoryColor = (category: string) => {
-    const colors: Record<string, string> = {
-      'Memory': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-      'Gratitude': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-      'Personal': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
-    };
-    return colors[category] || 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100';
-  };
-
-  const openReader = (letter: Letter) => {
-    setActiveLetter(letter);
+  const openReader = (m: Memory) => {
+    setActiveMemory(m);
     setIsReaderOpen(true);
   };
 
-  const printableHeader = (letter: Letter) => {
-    // You can adjust the header format as you like
-    return `To: ${letter.to}\nSubject: ${letter.subject}\nDate: ${letter.date}\nWords: ${letter.wordCount}\n\n`;
+  const handleAddMemory = () => {
+    if (!memoryTitle.trim() || !memoryDescription.trim()) return;
+    const newMem: Memory = {
+      id: Date.now(),
+      title: memoryTitle.trim(),
+      description: memoryDescription,
+      flower: selectedFlower,
+      createdAt: Date.now(),
+    };
+    setMemories(prev => [newMem, ...prev]);
+    setMemoryTitle('');
+    setMemoryDescription('');
+    setSelectedFlower(flowerOptions[0]);
+    setShowAddMemory(false);
   };
 
-  const downloadLetter = (letter: Letter) => {
-    const header = printableHeader(letter);
-    const body = letter.content.endsWith('\n') ? letter.content : `${letter.content}\n`;
-    const full = `${header}${body}`;
-    const blob = new Blob([full], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    const safeTo = letter.to.replace(/[^\w\-]+/g, '_');
-    const safeSubj = letter.subject.replace(/[^\w\-]+/g, '_');
-    a.href = url;
-    a.download = `Letter_to_${safeTo}_${safeSubj}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+  const toggleLike = (id: number) => {
+    setMemories(prev => prev.map(m => (m.id === id ? { ...m, liked: !m.liked } : m)));
   };
 
-  const printActiveLetter = () => {
-    // Use a print stylesheet area
+  const deleteMemory = (id: number) => {
+    setMemories(prev => prev.filter(m => m.id !== id));
+    if (activeMemory?.id === id) {
+      setIsReaderOpen(false);
+      setActiveMemory(null);
+    }
+  };
+
+  const downloadMemoryTxt = (m: Memory) => {
+    const header = `Title: ${m.title}\nFlower: ${m.flower}\nDate: ${new Date(m.createdAt).toLocaleString()}\n\n`;
+    const body = m.description.endsWith('\n') ? m.description : m.description + '\n';
+    const safe = m.title.replace(/[^\w\-]+/g, '_');
+    downloadTextFile(`Memory_${safe}.txt`, header + body);
+  };
+
+  const printActive = () => {
     window.print();
   };
 
-  const wordCount = letterContent.trim() ? letterContent.trim().split(/\s+/).length : 0;
+  // ---- stats ----
+  const total = memories.length;
+  const firstCreated = memories.reduce<number | null>((acc, m) => acc === null ? m.createdAt : Math.min(acc, m.createdAt), null);
+  const daysActive = firstCreated ? Math.max(1, Math.ceil((Date.now() - firstCreated) / (24 * 60 * 60 * 1000))) : 0;
+  const distinctFlowers = new Set(memories.map(m => m.flower)).size;
 
   return (
     <div className="space-y-6">
-      {/* Page header */}
-      <div className="flex items-center space-x-4">
+      {/* Header */}
+      <div className="flex items-center space-x-4 print:hidden">
         <Link to="/tools">
           <Button variant="outline" size="sm">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Tools
           </Button>
         </Link>
-        <div className="flex-1">
-          <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
-            💌 Letters to Loved Ones
-          </h1>
-          <p className="text-gray-600 dark:text-gray-300">
-            Write messages to those you've lost - a beautiful way to stay connected
-          </p>
-        </div>
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-white">🌸 Memory Garden</h1>
       </div>
 
-      {/* New letter CTA */}
-      <div className="text-center">
-        <Button onClick={() => setShowNewLetter(true)} className="space-x-2">
-          <Mail className="h-4 w-4" />
-          <span>Write a New Letter</span>
+      <div className="text-center space-y-4 print:hidden">
+        <p className="text-lg text-gray-600 dark:text-gray-300">
+          Plant digital flowers to honor and preserve your precious memories
+        </p>
+        <Button onClick={() => setShowAddMemory(true)} className="space-x-2">
+          <Plus className="h-4 w-4" />
+          <span>Plant a Memory</span>
         </Button>
       </div>
 
-      {/* Compose card */}
-      {showNewLetter && (
-        <Card className="border-purple-200 bg-purple-50 dark:bg-purple-900/20 print:hidden">
+      {/* Add memory form */}
+      {showAddMemory && (
+        <Card className="border-green-200 bg-green-50 dark:bg-green-900/20 print:hidden">
           <CardHeader>
-            <CardTitle>Write a Letter</CardTitle>
+            <CardTitle>Plant a New Memory</CardTitle>
             <CardDescription>
-              Express your thoughts, feelings, and memories in a heartfelt letter
+              Share a cherished memory and choose a flower to represent it
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                placeholder="To: (e.g., 'Mom', 'Grandpa', 'Best Friend')"
-                value={letterTo}
-                onChange={(e) => setLetterTo(e.target.value)}
-              />
-              <Input
-                placeholder="Subject (optional)"
-                value={letterSubject}
-                onChange={(e) => setLetterSubject(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <p className="text-sm font-medium mb-2">Writing prompts (click to use):</p>
-              <div className="flex flex-wrap gap-2 mb-4">
-                {letterPrompts.slice(0, 4).map((prompt, index) => (
-                  <Button
-                    key={index}
-                    variant="outline"
-                    size="sm"
-                    className="text-xs h-auto py-1 px-2"
-                    onClick={() =>
-                      setLetterContent(prev =>
-                        prev + (prev ? '\n\n' : '') + prompt
-                      )
-                    }
-                  >
-                    {prompt.substring(0, 30)}...
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            <Textarea
-              placeholder="Dear..."
-              value={letterContent}
-              onChange={(e) => setLetterContent(e.target.value)}
-              className="min-h-64"
+            <Input
+              placeholder="Memory title (e.g., 'Mom\'s apple pie recipe')"
+              value={memoryTitle}
+              onChange={(e) => setMemoryTitle(e.target.value)}
             />
-
-            <div className="flex justify-between items-center">
-              <div className="space-x-2">
-                <Button
-                  disabled={!letterContent.trim() || !letterTo.trim()}
-                  onClick={handleSaveLetter}
-                >
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Letter
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowNewLetter(false)}
-                >
-                  Cancel
-                </Button>
+            <Textarea
+              placeholder="Describe this special memory..."
+              value={memoryDescription}
+              onChange={(e) => setMemoryDescription(e.target.value)}
+              className="min-h-24"
+            />
+            <div>
+              <p className="text-sm font-medium mb-2">Choose your flower:</p>
+              <div className="flex flex-wrap gap-2">
+                {['🌻','🌹','🌸','🌺','🌷','🌼','🌿','🍀'].map((flower) => {
+                  const active = selectedFlower === flower;
+                  return (
+                    <Button
+                      key={flower}
+                      type="button"
+                      variant={active ? 'default' : 'outline'}
+                      size="sm"
+                      className={`text-2xl p-2`}
+                      onClick={() => setSelectedFlower(flower)}
+                      aria-pressed={active}
+                    >
+                      {flower}
+                    </Button>
+                  );
+                })}
               </div>
-
-              <div className="text-sm text-gray-500">
-                {wordCount} words
-              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={handleAddMemory} disabled={!memoryTitle.trim() || !memoryDescription.trim()}>
+                Plant Memory
+              </Button>
+              <Button variant="outline" onClick={() => setShowAddMemory(false)}>
+                Cancel
+              </Button>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Saved letters */}
-      {savedLetters.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Mail className="h-5 w-5" />
-              <span>Your Letters</span>
-              <Badge variant="outline">{savedLetters.length}</Badge>
-            </CardTitle>
-            <CardDescription>Your collection of heartfelt messages</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {savedLetters.map((letter) => (
-                <Card key={letter.id} className="hover:shadow-md transition-shadow">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold">To: {letter.to}</h3>
-                          <Badge className={getCategoryColor(letter.category)}>
-                            {letter.category}
-                          </Badge>
-                        </div>
-                        <h4 className="text-sm text-gray-600 dark:text-gray-400">
-                          {letter.subject}
-                        </h4>
-                        <div className="flex items-center gap-4 text-xs text-gray-500">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            <span>{letter.date}</span>
-                          </span>
-                          <span>{letter.wordCount} words</span>
-                        </div>
-                      </div>
-                      <div className="space-x-1">
-                        <Button size="sm" variant="ghost" aria-label="Favorite">
-                          <Heart className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => deleteLetter(letter.id)}
-                          aria-label="Delete"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <p className="text-sm line-clamp-3 mb-3">
-                      {letter.content}
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      <Button size="sm" variant="outline" onClick={() => openReader(letter)}>
-                        Read Full Letter
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => downloadLetter(letter)}>
-                        <Download className="h-3 w-3 mr-1" />
-                        Download
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Garden grid */}
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {memories.map((memory) => (
+          <Card key={memory.id} className="hover:shadow-md transition-shadow group">
+            <CardHeader className="text-center">
+              <div className="text-4xl mb-2 group-hover:scale-110 transition-transform">
+                {memory.flower}
+              </div>
+              <CardTitle className="text-lg">{memory.title}</CardTitle>
+              <CardDescription className="text-sm text-gray-500 inline-flex items-center gap-1">
+                <Calendar className="h-3 w-3" /> Planted {formatRelative(memory.createdAt)}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 whitespace-pre-wrap">
+                {memory.description}
+              </p>
+              <div className="mt-3 flex justify-between items-center">
+                <div className="flex gap-2">
+                  <Button variant="ghost" size="sm" onClick={() => openReader(memory)}>
+                    Read More
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => downloadMemoryTxt(memory)}>
+                    <Download className="h-4 w-4 mr-1" /> Download
+                  </Button>
+                </div>
+                <div className="flex gap-1">
+                  <Button variant={memory.liked ? 'default' : 'ghost'} size="sm" onClick={() => toggleLike(memory.id)} aria-pressed={!!memory.liked}>
+                    <Heart className={`h-4 w-4 ${memory.liked ? 'fill-current' : ''}`} />
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => deleteMemory(memory.id)} aria-label="Delete Memory">
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
-      {/* Education card */}
-      <Card className="bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 print:hidden">
+      {/* Stats */}
+      <Card className="print:hidden">
         <CardHeader>
-          <CardTitle className="text-amber-800 dark:text-amber-200">💝 Letters as Healing</CardTitle>
-          <CardDescription className="text-amber-700 dark:text-amber-300">
-            Writing letters to loved ones helps process grief and maintain connection
-          </CardDescription>
+          <CardTitle>Garden Statistics</CardTitle>
+          <CardDescription>Your memory garden is growing beautifully</CardDescription>
         </CardHeader>
-        <CardContent className="text-amber-700 dark:text-amber-300">
-          <ul className="space-y-1 text-sm">
-            <li>• Express feelings you couldn't say before</li>
-            <li>• Share important life updates and milestones</li>
-            <li>• Ask questions and imagine their responses</li>
-            <li>• Keep their memory alive through conversation</li>
-            <li>• Find comfort in continuing the relationship</li>
-          </ul>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div>
+              <div className="text-2xl font-bold text-green-600">{total}</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Memories Planted</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-blue-600">{daysActive}</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Days Active</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-purple-600">{distinctFlowers}</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Flowers Blooming</div>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
       {/* Reader Dialog */}
       <Dialog open={isReaderOpen} onOpenChange={setIsReaderOpen}>
         <DialogContent className="sm:max-w-2xl print:block">
-          {activeLetter && (
+          {activeMemory && (
             <>
               <DialogHeader className="print:hidden">
-                <DialogTitle className="flex items-center justify-between">
-                  <span>{activeLetter.subject}</span>
+                <DialogTitle className="flex items-center gap-3">
+                  <span className="text-2xl">{activeMemory.flower}</span>
+                  <span>{activeMemory.title}</span>
                 </DialogTitle>
                 <DialogDescription>
                   <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-gray-500">
                     <span className="inline-flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      {activeLetter.date}
+                      <Calendar className="h-3 w-3" /> {formatRelative(activeMemory.createdAt)}
                     </span>
-                    <span>{activeLetter.wordCount} words</span>
-                    <Badge className={getCategoryColor(activeLetter.category)}>
-                      {activeLetter.category}
-                    </Badge>
                   </div>
                 </DialogDescription>
               </DialogHeader>
@@ -360,29 +313,23 @@ export function LettersPage() {
               {/* Printable area */}
               <div id="print-area" className="prose dark:prose-invert max-w-none">
                 <div className="mb-4 hidden print:block">
-                  {/* Header shown only in print */}
-                  <h2 className="text-xl font-semibold">Letter</h2>
-                  <p><strong>To:</strong> {activeLetter.to}</p>
-                  <p><strong>Subject:</strong> {activeLetter.subject}</p>
-                  <p><strong>Date:</strong> {activeLetter.date}</p>
+                  <h2 className="text-xl font-semibold">Memory</h2>
+                  <p><strong>Title:</strong> {activeMemory.title}</p>
+                  <p><strong>Flower:</strong> {activeMemory.flower}</p>
+                  <p><strong>Date:</strong> {new Date(activeMemory.createdAt).toLocaleString()}</p>
                 </div>
 
-                <div className="mb-2">
-                  <p className="text-sm text-gray-500">To: {activeLetter.to}</p>
-                </div>
                 <article className="whitespace-pre-wrap leading-7">
-                  {activeLetter.content}
+                  {activeMemory.description}
                 </article>
               </div>
 
               <DialogFooter className="mt-6 flex gap-2 print:hidden">
-                <Button variant="outline" onClick={() => downloadLetter(activeLetter)}>
-                  <Download className="h-4 w-4 mr-2" />
-                  Download (.txt)
+                <Button variant="outline" onClick={() => downloadMemoryTxt(activeMemory)}>
+                  <Download className="h-4 w-4 mr-2" /> Download (.txt)
                 </Button>
-                <Button variant="outline" onClick={printActiveLetter}>
-                  <Printer className="h-4 w-4 mr-2" />
-                  Print / Save as PDF
+                <Button variant="outline" onClick={printActive}>
+                  <Printer className="h-4 w-4 mr-2" /> Print / Save as PDF
                 </Button>
                 <Button onClick={() => setIsReaderOpen(false)}>Close</Button>
               </DialogFooter>
@@ -402,4 +349,6 @@ export function LettersPage() {
     </div>
   );
 }
-export default LettersPage;
+
+// ✅ Default export too (so you can also `import MemoryGardenPage from './MemoryGardenPage'` if desired)
+export default MemoryGardenPage;
