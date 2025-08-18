@@ -402,4 +402,4 @@ export function LettersPage() {
     </div>
   );
 }
-export default MemoryGardenPage;
+export default LettersPage;
