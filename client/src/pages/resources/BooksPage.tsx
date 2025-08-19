@@ -120,7 +120,19 @@ export function BooksPage() {
       isbn: '978-0415656948',
       summary: 'Validates the profound grief experienced after losing a beloved pet and provides practical guidance for healing from companion animal loss.',
       keyTopics: ['Pet Grief', 'Animal Bonds', 'Disenfranchised Grief', 'Pet Memorials']
-    }
+    },
+    {
+  title: 'The Art of Procrastination',
+  author: 'John Perry',
+  description: 'A witty and philosophical guide to turning procrastination into productivity through structured procrastination.',
+  rating: 4.2,
+  category: 'Self-Help',
+  pages: 112,
+  published: '2012',
+  isbn: '978-0761171676',
+  summary: 'Through humor and wisdom, John Perry introduces the concept of structured procrastination—using the urge to avoid big tasks as a way to get other things done. Rather than fighting procrastination, Perry shows how to embrace it productively.',
+  keyTopics: ['Structured Procrastination', 'Time Management', 'Self-Deception', 'Productivity Hacks', 'Humor']
+}
   ];
 
   const categories = ['all', 'Memoir', 'Self-Help', 'Spiritual', 'Psychology', 'Health', 'Family', 'Pet Loss', 'Resilience'];
