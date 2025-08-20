@@ -72,7 +72,57 @@ export function ResourcesPage() {
       pages: 464,
       published: '2014',
       isbn: '978-0670785933'
-    }
+    },
+    {
+  title: 'Motherless Daughters',
+  author: 'Hope Edelman',
+  description: 'The legacy of loss for women who lost their mothers early',
+  rating: 4.5,
+  category: 'Family',
+  pages: 384,
+  published: '1994',
+  isbn: '978-0385311908'
+},
+{
+  title: 'A Grief Observed',
+  author: 'C.S. Lewis',
+  description: 'Classic exploration of grief written after the death of his wife',
+  rating: 4.4,
+  category: 'Memoir',
+  pages: 96,
+  published: '1961',
+  isbn: '978-0060652883'
+},
+{
+  title: 'Pet Loss and Human Emotion',
+  author: 'Cheri Barton Ross',
+  description: 'Guide to understanding and healing from pet loss',
+  rating: 4.3,
+  category: 'Pet Loss',
+  pages: 192,
+  published: '2013',
+  isbn: '978-0415656948'
+},
+{
+  title: 'The Art of Procrastination',
+  author: 'John Perry',
+  description: 'A witty guide to turning procrastination into productivity',
+  rating: 4.2,
+  category: 'Self-Help',
+  pages: 112,
+  published: '2012',
+  isbn: '978-0761171676'
+},
+{
+  title: 'Immun gegen toxische Menschen',
+  author: 'Lisa Irani & Anna Eckert',
+  description: 'Psychological tools for recognizing and protecting yourself from toxic people (German only)',
+  rating: 4.3,
+  category: 'Self-Help',
+  pages: 288,
+  published: '2024',
+  isbn: '978-3833892660'
+}
   ];
 
   const courses = [
