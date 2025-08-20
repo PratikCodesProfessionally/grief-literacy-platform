@@ -242,7 +242,23 @@ export function BooksPage() {
       // >>> Notes for Healing (tying procrastination to grief work)
       notesForHealing:
         'Grief can drain executive function. Instead of shaming yourself for “not doing the big thing,” harness gentle momentum: do small, kind tasks that orbit the hard one. Let tiny wins rebuild capacity.'
-    }
+    },
+    {
+  title: 'Immun gegen toxische Menschen',
+  author: 'Lisa Irani & Anna Eckert',
+  description: 'Psychological tools for recognizing and protecting yourself from toxic dynamics and narcissistic manipulation. (Currently available in German only.)',
+  rating: 4.3,
+  category: 'Self-Help',
+  pages: 288,
+  published: '2024',
+  isbn: '978-3833892660', // print edition
+  summary: 'A structured guide to identifying toxic patterns (especially narcissistic tactics), setting boundaries, and detaching from manipulative behaviors using evidence‑informed psychological tools. Clear explanations, reflective exercises, and everyday strategies help you build emotional immunity and reclaim agency.',
+  keyTopics: ['Narcissism', 'Manipulation Patterns', 'Boundaries', 'Emotional Resilience', 'Detachment'],
+  // Optional field if you’re using the commented version I gave you:
+  // This shows up inside the “Read Summary” dialog under a green box.
+  notesForHealing: 'If you can’t avoid difficult people (family, coworkers), focus on micro‑boundaries and low‑drama exits. Practice scripts and body cues; small, consistent limits compound into safety.'
+}
+
   ];
 
   // Available categories for the filter dropdown.
