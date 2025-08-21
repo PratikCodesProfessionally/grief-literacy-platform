@@ -37,7 +37,7 @@ export function HomePage() {
     <div className="space-y-12">
       {/* Mandala-Icon oben auf der Seite */}
       <div className="flex justify-center mt-8">
-        <img src={/mandala.png} alt="App Icon" className="h-20 w-20 rounded-full shadow-lg" />
+        <img src="/mandala.png" alt="App Icon" className="h-20 w-20 rounded-full shadow-lg" />
       </div>
 
       <div className="text-center space-y-4">
