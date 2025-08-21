@@ -17,9 +17,9 @@ export function Header() {
     <header className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700">
       <nav className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          <Link to="/" className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+          <Link to="/" className="flex items-center space-x-3">
             {/* Logo aus public-Ordner */}
-            <img src="/mandala.png" alt="Logo" className="h-10 w-10 rounded-full" />
+            <img src="/mandala.png" alt="Logo" className="h-8 w-8 rounded-full" />
             <span className="text-2xl font-bold text-purple-600 dark:text-purple-400">
               Grief Literacy
             </span>
