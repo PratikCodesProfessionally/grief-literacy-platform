@@ -201,19 +201,39 @@ export function MeditationPage() {
           <CardContent>
             <div className="space-y-4">
               {/* The hidden (chrome-free) video element we control via our own buttons */}
-              <video
-                ref={videoRef}
-                // Only set src if this meditation actually has media available
-                src={selectedMeditation.src}
-                // We hide native controls to keep your custom UI. Add controls if you prefer.
-                controls={false}
-                preload="metadata"
-                // For accessibility: allow keyboard users to focus the player
-                tabIndex={0}
-                className="w-full rounded-lg shadow-sm bg-black/5"
-                // Auto-load the new source when selection changes
-                // (no autoPlay here; we manage via isPlaying effect)
-              />
+{/* --- Responsive, non-overflowing video wrapper --- */}
+{selectedMeditation.src ? (
+  <div
+    className="
+      mx-auto                       /* center horizontally */
+      w-full max-w-[92vw] md:max-w-3xl  /* comfortable width limits */
+    "
+  >
+    {/* soft backdrop + rounded edges */}
+    <div className="rounded-xl overflow-hidden bg-black/70">
+      <video
+        ref={videoRef}
+        src={selectedMeditation.src}
+        controls={false}            /* keep custom controls; set true if you want native ones */
+        preload="metadata"
+        tabIndex={0}
+        playsInline                 // ← keeps video inline on iOS Safari
+        className="
+          w-full h-auto             /* maintain natural aspect ratio */
+          max-h-[70vh]              /* never exceed 70% of viewport height */
+          object-contain            /* letterbox instead of crop */
+          block
+        "
+      />
+    </div>
+  </div>
+) : (
+  /* if there is no media yet, we don’t render an empty player */
+  <p className="text-sm text-center text-gray-600 dark:text-gray-400">
+    This meditation’s video is coming soon.
+  </p>
+)}
+
 
               <Progress value={progress} className="h-2" />
 
@@ -247,12 +267,7 @@ export function MeditationPage() {
                 </Button>
               </div>
 
-              {/* Friendly message if a meditation has no video yet */}
-              {!selectedMeditation.src && (
-                <p className="text-sm text-center text-gray-600 dark:text-gray-400">
-                  This meditation’s video is coming soon.
-                </p>
-              )}
+
             </div>
           </CardContent>
         </Card>
