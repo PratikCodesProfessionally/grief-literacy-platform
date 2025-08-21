@@ -18,7 +18,11 @@ export function Header() {
       <nav className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <Link to="/" className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-            🌿 Grief Literacy
+            {/* Logo aus public-Ordner */}
+            <img src="/mandala.png" alt="Logo" className="h-10 w-10 rounded-full" />
+            <span className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+              Grief Literacy
+            </span>
           </Link>
           
           <div className="hidden md:flex space-x-8">
