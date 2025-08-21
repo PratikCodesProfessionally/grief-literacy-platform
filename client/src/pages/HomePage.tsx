@@ -2,6 +2,8 @@ import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+// Importiere das neue Icon
+//import mandalaIcon from '@/assets/mandala.png';
 
 export function HomePage() {
   const features = [
@@ -33,6 +35,11 @@ export function HomePage() {
 
   return (
     <div className="space-y-12">
+      {/* Mandala-Icon oben auf der Seite */}
+      <div className="flex justify-center mt-8">
+        <img src={/mandala.png} alt="App Icon" className="h-20 w-20 rounded-full shadow-lg" />
+      </div>
+
       <div className="text-center space-y-4">
         <h1 className="text-4xl md:text-6xl font-bold text-gray-800 dark:text-white">
           Welcome to Your
