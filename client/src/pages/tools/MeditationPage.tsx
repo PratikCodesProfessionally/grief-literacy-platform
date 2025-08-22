@@ -49,7 +49,7 @@ export function MeditationPage() {
       duration: '8 min',
       description: 'Use breath as an anchor when emotions feel overwhelming',
       category: 'Coping',
-      // src: '/videos/BreathingThroughPain.mp4' // (add when you have it)
+       src: '/videos/BreathingThroughPain.mp4' // (add when you have it)
     },
     {
       title: 'Body Scan for Grief',
