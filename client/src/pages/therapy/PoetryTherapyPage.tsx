@@ -67,6 +67,36 @@ export function PoetryTherapyPage() {
       content: "Peaceful house with no pesky mouse\nthat I yearn - moi aussi\nno smart home but an autark home\n where egos don't burn the entire Rome\n\nA greenish garden, multiple plants\n with minimal conflicts, petty rants\nwhere the marmelade is made\n fresh with love's own aid\nto soothe the burning ail\npeachy tinged in its own shade\n\nA morning sun on hill's turn\nOver the barn by the tavern\n the morning bird shall hymn the urn\nof how peace was won in the long run\nPeaceful house with no pecky mouse\nthat I yearn - moi aussi\n",
       category: "Simplicity",
       readTime: "1 min",
+    },
+    {
+      id : 7,
+      title: "How Soon",
+      author: "Unknown",
+      content: `How soon the love turns into hate
+Sweetness transitions to bitterness 
+How the Cuckoo's voice no more rings the semblance of melody 
+
+How soon the air grows toxic,
+burning away feelings of warmth.
+Tunes once frolic in memory
+now lie earthed in the graveyard of love.
+
+In front of that fallen hope
+lay confused
+the white Gladiolen 
+forcing themselves to remember 
+Once cherry,
+once merry, 
+Memories - 
+violently pulverized,
+steamlessly vaporized 
+Into non-existence.
+
+How soon the love turns into hate
+Sweetness transitions to bitterness`,
+      category: "Transformation",
+      readTime: "2 min"
+    
     }
   ];
 
