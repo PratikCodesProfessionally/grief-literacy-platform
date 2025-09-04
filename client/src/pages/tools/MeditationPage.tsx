@@ -56,7 +56,7 @@ export function MeditationPage() {
       duration: '25 min',
       description: 'Notice and release tension held in the body from grief',
       category: 'Release',
-      src : '/videos/BodyScanforGrief.mp4' // (add when you have it)
+      src : '/videos/BodyScanForGrief.mp4' // (add when you have it)
     },
     {
       title: 'Sleep Meditation for Loss',
