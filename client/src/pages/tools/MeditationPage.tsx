@@ -63,6 +63,7 @@ export function MeditationPage() {
       duration: '20 min',
       description: 'Gentle guidance to help you rest when grief disrupts sleep',
       category: 'Sleep',
+      src: '/videos/SleepMeditationForLoss.mp4' // (add when you have it)
     },
     {
       title: 'Gratitude in Grief',
