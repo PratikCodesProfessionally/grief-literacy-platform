@@ -257,6 +257,18 @@ export function BooksPage() {
   // Optional field if you’re using the commented version I gave you:
   // This shows up inside the “Read Summary” dialog under a green box.
   notesForHealing: 'If you can’t avoid difficult people (family, coworkers), focus on micro‑boundaries and low‑drama exits. Practice scripts and body cues; small, consistent limits compound into safety.'
+},
+{
+  title: 'Meistere Deine Emotionen: Die neue 5-Schritte-Methode, um Ängste zu besiegen, Wut zu besänftigen und Depressionen zu überwinden',
+  author: 'Dr. Detlef Beeker',
+  description: 'A practical guide to understanding and transforming your emotions through a structured five-step method.',
+  rating: 4.5,
+  category: 'Emotional Health',
+  pages: 256,
+  published: '2021',
+  isbn: '978-3982144601',
+  summary: 'This book offers a scientifically grounded and easy-to-follow 5-step approach to mastering emotions like fear, anger, and sadness. Dr. Beeker combines psychological insights with practical exercises to help readers achieve emotional balance, break negative cycles, and regain mental clarity. It’s an empowering read for anyone seeking long-term emotional resilience and peace of mind.',
+  keyTopics: ['Emotional Regulation', 'Mindfulness', 'Cognitive Techniques', 'Self-Awareness', 'Stress Management']
 }
 
   ];
