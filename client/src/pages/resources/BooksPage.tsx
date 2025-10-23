@@ -264,9 +264,9 @@ export function BooksPage() {
   description: 'A practical guide to understanding and transforming your emotions through a structured five-step method.',
   rating: 4.5,
   category: 'Emotional Health',
-  pages: 256,
-  published: '2021',
-  isbn: '978-3982144601',
+  pages: 150,
+  published: '2019',
+  isbn: '978-1072551386',
   summary: 'This book offers a scientifically grounded and easy-to-follow 5-step approach to mastering emotions like fear, anger, and sadness. Dr. Beeker combines psychological insights with practical exercises to help readers achieve emotional balance, break negative cycles, and regain mental clarity. It’s an empowering read for anyone seeking long-term emotional resilience and peace of mind.',
   keyTopics: ['Emotional Regulation', 'Mindfulness', 'Cognitive Techniques', 'Self-Awareness', 'Stress Management']
 }
