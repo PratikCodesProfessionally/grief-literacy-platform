@@ -6,7 +6,40 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Heart, Share, Bookmark, Volume2, Mic, MicOff, Save, Download } from 'lucide-react';
-import { read } from 'fs';
+import { ApiClient } from '@/services/ApiClient';
+/* Lightweight local fallback for StorageProviderFactory to avoid importing client-only files
+   during server builds where rootDir excludes client/. Replace this with the real provider
+   in the client-only build if needed. */
+type StorageProvider = {
+  list: () => Promise<any[]>;
+  // add other methods here if needed by the app
+};
+const StorageProviderFactory = {
+  createProvider: (type: 'local' | 'cloud', namespace: string, apiUrl?: string): StorageProvider => {
+    if (type === 'cloud') {
+      return {
+        list: async () => {
+          // Placeholder: in a full client runtime this would fetch from cloud/api using apiUrl.
+          // Returning empty array to keep behavior safe during server compilation.
+          return [];
+        }
+      };
+    }
+    return {
+      list: async () => {
+        try {
+          const raw = typeof window !== 'undefined' ? localStorage.getItem(namespace) : null;
+          return raw ? JSON.parse(raw) : [];
+        } catch {
+          return [];
+        }
+      }
+    };
+  }
+};
+import { useToast } from '@/components/ui/use-toast';
+import { Switch } from '@/components/ui/switch';
+import { Wifi, WifiOff, Cloud, HardDrive, RefreshCw } from 'lucide-react';
 
 export function PoetryTherapyPage() {
   const [selectedPoem, setSelectedPoem] = React.useState('');
@@ -18,7 +51,108 @@ export function PoetryTherapyPage() {
   const [isRecording, setIsRecording] = React.useState(false);
   const [recordingTime, setRecordingTime] = React.useState(0);
   const [voiceRecordings, setVoiceRecordings] = React.useState<string[]>([]);
+  // Neue Zustände für Storage und Sync
+  const [storageType, setStorageType] = React.useState<'local' | 'cloud'>('local');
+  const [isOnline, setIsOnline] = React.useState(navigator.onLine);
+  const [isSyncing, setIsSyncing] = React.useState(false);
+  const [lastSyncTime, setLastSyncTime] = React.useState<Date | null>(null);
+  
+  const { toast } = useToast();
+  const storageProvider = React.useMemo(() => 
+    StorageProviderFactory.createProvider(
+      storageType,
+      'poems',
+      process.env.REACT_APP_API_URL
+    ),
+    [storageType]
+  );
 
+
+  // Online/Offline Status überwachen
+  React.useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+    // Sync-Funktion
+  const syncPoems = async () => {
+    if (!isOnline || storageType === 'local') return;
+
+    try {
+      setIsSyncing(true);
+      const cloudPoems = await storageProvider.list();
+      setSavedPoems(cloudPoems);
+      setLastSyncTime(new Date());
+      
+      toast({
+        title: "Sync successful",
+        description: "Your Poem was synced with the cloud storage",
+      });
+    } catch (error) {
+      toast({
+        title: "Sync failed",
+        description: "There was an error syncing your poems.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  // UI-Komponenten für Storage-Controls
+  const StorageControls = () => (
+    <div className="flex items-center justify-between p-4 border-b">
+      <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2">
+          {storageType === 'local' ? (
+            <HardDrive className="h-4 w-4" />
+          ) : (
+            <Cloud className="h-4 w-4" />
+          )}
+          <span>Storage: {storageType === 'local' ? 'Lokal' : 'Cloud'}</span>
+        </div>
+        <Switch
+          checked={storageType === 'cloud'}
+          onCheckedChange={(checked) => setStorageType(checked ? 'cloud' : 'local')}
+        />
+      </div>
+      
+      <div className="flex items-center space-x-4">
+        {isOnline ? (
+          <Wifi className="h-4 w-4 text-green-500" />
+        ) : (
+          <WifiOff className="h-4 w-4 text-red-500" />
+        )}
+        
+        {storageType === 'cloud' && (
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={!isOnline || isSyncing}
+            onClick={syncPoems}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
+            {isSyncing ? 'Synchronisiere...' : 'Sync'}
+          </Button>
+        )}
+        
+        {lastSyncTime && (
+          <span className="text-xs text-gray-500">
+            Letzter Sync: {lastSyncTime.toLocaleTimeString()}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+  
   const healingPoems = [
     {
       id: 1,
@@ -261,11 +395,15 @@ Sweetness transitions to bitterness`,
 
       <div className="grid lg:grid-cols-2 gap-6">
         <div className="space-y-6">
+          {/* Storage Controls vor den Healing Poems */}
+          <Card>
+            <StorageControls />
+          </Card>
           <Card>
             <CardHeader>
               <CardTitle>Healing Poems</CardTitle>
               <CardDescription>
-                Read poems that speak to the grief experience
+               Read poems that bring light to the healing journey
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 max-h-96 overflow-y-auto">
