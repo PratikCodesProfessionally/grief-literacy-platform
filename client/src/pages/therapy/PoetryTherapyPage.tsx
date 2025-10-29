@@ -7,36 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Heart, Share, Bookmark, Volume2, Mic, MicOff, Save, Download } from 'lucide-react';
 import { ApiClient } from '@/services/ApiClient';
-/* Lightweight local fallback for StorageProviderFactory to avoid importing client-only files
-   during server builds where rootDir excludes client/. Replace this with the real provider
-   in the client-only build if needed. */
-type StorageProvider = {
-  list: () => Promise<any[]>;
-  // add other methods here if needed by the app
-};
-const StorageProviderFactory = {
-  createProvider: (type: 'local' | 'cloud', namespace: string, apiUrl?: string): StorageProvider => {
-    if (type === 'cloud') {
-      return {
-        list: async () => {
-          // Placeholder: in a full client runtime this would fetch from cloud/api using apiUrl.
-          // Returning empty array to keep behavior safe during server compilation.
-          return [];
-        }
-      };
-    }
-    return {
-      list: async () => {
-        try {
-          const raw = typeof window !== 'undefined' ? localStorage.getItem(namespace) : null;
-          return raw ? JSON.parse(raw) : [];
-        } catch {
-          return [];
-        }
-      }
-    };
-  }
-};
 import { useToast } from '@/components/ui/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { Wifi, WifiOff, Cloud, HardDrive, RefreshCw } from 'lucide-react';
