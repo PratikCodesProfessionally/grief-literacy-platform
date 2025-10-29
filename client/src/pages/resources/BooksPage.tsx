@@ -193,7 +193,7 @@ export function BooksPage() {
       category: 'Family',
       pages: 384,
       published: '1994',
-      isbn: '978-0385311908',
+      isbn: '978-0738217734',
       summary: 'Explores the unique challenges faced by women who lose their mothers at any age, offering insights into the lasting impact and pathways to healing.',
       keyTopics: ["Mother Loss", "Women's Grief", 'Family Dynamics', 'Identity and Loss'],
       notesForHealing:
@@ -207,7 +207,7 @@ export function BooksPage() {
       category: 'Memoir',
       pages: 96,
       published: '1961',
-      isbn: '978-0060652883',
+      isbn: '978-0571290680',
       summary: "Lewis's raw, honest account of his grief after losing his wife to cancer. A timeless exploration of faith, doubt, and the reality of loss.",
       keyTopics: ['Faith and Grief', 'Spousal Loss', 'Honest Grief', 'Spiritual Questions'],
       notesForHealing:
@@ -221,7 +221,7 @@ export function BooksPage() {
       category: 'Pet Loss',
       pages: 192,
       published: '2013',
-      isbn: '978-0415656948',
+      isbn: '978-0415955768',
       summary: 'Validates the profound grief experienced after losing a beloved pet and provides practical guidance for healing from companion animal loss.',
       keyTopics: ['Pet Grief', 'Animal Bonds', 'Disenfranchised Grief', 'Pet Memorials'],
       notesForHealing:
