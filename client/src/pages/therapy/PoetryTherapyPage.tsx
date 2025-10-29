@@ -29,7 +29,7 @@ export function PoetryTherapyPage() {
   
   const { toast } = useToast();
   const storageProvider = React.useMemo(() => 
-    StorageProviderFactory.createProvider(
+    storageProvider.createProvider(
       storageType,
       'poems',
       process.env.REACT_APP_API_URL
