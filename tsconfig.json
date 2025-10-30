@@ -13,12 +13,13 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "outDir": "dist/server",
-    "rootDir": "server",
     "allowImportingTsExtensions": true,
     "baseUrl": ".",
     "paths": {
       "@/*": ["./client/src/*"]
-    }
-  }
+    },
+    "types": ["vite/client"]
+  },
+  "include": ["client/**/*", "server/**/*"],
+  "exclude": ["node_modules", "dist"]
 }

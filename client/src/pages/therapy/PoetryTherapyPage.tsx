@@ -10,6 +10,7 @@ import { ApiClient } from '@/services/ApiClient';
 import { useToast } from '@/components/ui/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { Wifi, WifiOff, Cloud, HardDrive, RefreshCw } from 'lucide-react';
+import { storageProvider } from '@/services/StorageProvider';
 
 export function PoetryTherapyPage() {
   const [selectedPoem, setSelectedPoem] = React.useState('');
@@ -28,15 +29,14 @@ export function PoetryTherapyPage() {
   const [lastSyncTime, setLastSyncTime] = React.useState<Date | null>(null);
   
   const { toast } = useToast();
-  const storageProvider = React.useMemo(() => 
+  const storageProviderInstance = React.useMemo(() => 
     storageProvider.createProvider(
       storageType,
       'poems',
-      process.env.REACT_APP_API_URL
+      import.meta.env.VITE_API_URL
     ),
     [storageType]
   );
-
 
   // Online/Offline Status überwachen
   React.useEffect(() => {
@@ -52,28 +52,74 @@ export function PoetryTherapyPage() {
     };
   }, []);
 
+  // Gedichte beim Mount laden
+  React.useEffect(() => {
+    const loadPoems = async () => {
+      try {
+        const poems = await storageProviderInstance.list();
+        setSavedPoems(poems);
+      } catch (error) {
+        console.error('Failed to load poems:', error);
+      }
+    };
+    loadPoems();
+  }, [storageProviderInstance]);
+
     // Sync-Funktion
   const syncPoems = async () => {
     if (!isOnline || storageType === 'local') return;
 
     try {
       setIsSyncing(true);
-      const cloudPoems = await storageProvider.list();
+      const cloudPoems = await storageProviderInstance.list();
       setSavedPoems(cloudPoems);
       setLastSyncTime(new Date());
       
       toast({
-        title: "Sync successful",
-        description: "Your Poem was synced with the cloud storage",
+        title: "Sync erfolgreich",
+        description: "Ihre Gedichte wurden mit der Cloud synchronisiert",
       });
     } catch (error) {
       toast({
-        title: "Sync failed",
-        description: "There was an error syncing your poems.",
+        title: "Sync fehlgeschlagen",
+        description: "Fehler beim Synchronisieren der Gedichte.",
         variant: "destructive",
       });
     } finally {
       setIsSyncing(false);
+    }
+  };
+
+  const savePoem = async () => {
+    if (userPoem.trim()) {
+      const newPoem = {
+        id: Date.now(),
+        title: poemTitle || 'Untitled Poem',
+        content: userPoem,
+        prompt: selectedPoem,
+        wordCount: userPoem.trim().split(/\s+/).length,
+        lineCount: userPoem.split('\n').length,
+        createdAt: new Date().toLocaleDateString()
+      };
+
+      try {
+        await storageProviderInstance.save(String(newPoem.id), newPoem);
+        setSavedPoems([...savedPoems, newPoem]);
+        setUserPoem('');
+        setPoemTitle('');
+        setSelectedPoem('');
+        
+        toast({
+          title: "Gedicht gespeichert",
+          description: `"${newPoem.title}" wurde erfolgreich gespeichert`,
+        });
+      } catch (error) {
+        toast({
+          title: "Fehler",
+          description: "Gedicht konnte nicht gespeichert werden",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -288,24 +334,6 @@ Sweetness transitions to bitterness`,
           window.speechSynthesis.speak(utterance);
         }
       }
-    }
-  };
-
-  const savePoem = () => {
-    if (userPoem.trim()) {
-      const newPoem = {
-        id: Date.now(),
-        title: poemTitle || 'Untitled Poem',
-        content: userPoem,
-        prompt: selectedPoem,
-        wordCount: userPoem.trim().split(/\s+/).length,
-        lineCount: userPoem.split('\n').length,
-        createdAt: new Date().toLocaleDateString()
-      };
-      setSavedPoems([...savedPoems, newPoem]);
-      setUserPoem('');
-      setPoemTitle('');
-      setSelectedPoem('');
     }
   };
 
