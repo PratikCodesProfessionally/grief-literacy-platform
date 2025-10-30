@@ -125,15 +125,15 @@ export function PoetryTherapyPage() {
 
   // UI-Komponenten für Storage-Controls
   const StorageControls = () => (
-    <div className="flex items-center justify-between p-4 border-b">
+    <div className="flex items-center justify-between p-6 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
       <div className="flex items-center space-x-4">
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-3 px-3 py-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
           {storageType === 'local' ? (
-            <HardDrive className="h-4 w-4" />
+            <HardDrive className="h-5 w-5 text-blue-600 dark:text-blue-400" />
           ) : (
-            <Cloud className="h-4 w-4" />
+            <Cloud className="h-5 w-5 text-purple-600 dark:text-purple-400" />
           )}
-          <span>Storage: {storageType === 'local' ? 'Lokal' : 'Cloud'}</span>
+          <span className="font-medium text-sm">Storage: {storageType === 'local' ? 'Lokal' : 'Cloud'}</span>
         </div>
         <Switch
           checked={storageType === 'cloud'}
@@ -143,9 +143,15 @@ export function PoetryTherapyPage() {
       
       <div className="flex items-center space-x-4">
         {isOnline ? (
-          <Wifi className="h-4 w-4 text-green-500" />
+          <div className="flex items-center space-x-2 px-3 py-1 bg-green-100 dark:bg-green-900/30 rounded-full">
+            <Wifi className="h-4 w-4 text-green-600 dark:text-green-400" />
+            <span className="text-xs font-medium text-green-700 dark:text-green-300">Online</span>
+          </div>
         ) : (
-          <WifiOff className="h-4 w-4 text-red-500" />
+          <div className="flex items-center space-x-2 px-3 py-1 bg-red-100 dark:bg-red-900/30 rounded-full">
+            <WifiOff className="h-4 w-4 text-red-600 dark:text-red-400" />
+            <span className="text-xs font-medium text-red-700 dark:text-red-300">Offline</span>
+          </div>
         )}
         
         {storageType === 'cloud' && (
@@ -154,6 +160,7 @@ export function PoetryTherapyPage() {
             variant="outline"
             disabled={!isOnline || isSyncing}
             onClick={syncPoems}
+            className="shadow-sm"
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
             {isSyncing ? 'Synchronisiere...' : 'Sync'}
@@ -161,7 +168,7 @@ export function PoetryTherapyPage() {
         )}
         
         {lastSyncTime && (
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-gray-500 dark:text-gray-400">
             Letzter Sync: {lastSyncTime.toLocaleTimeString()}
           </span>
         )}
@@ -373,50 +380,59 @@ Sweetness transitions to bitterness`,
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center space-x-4">
-        <Link to="/therapy">
-          <Button variant="outline" size="sm">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Therapy
-          </Button>
-        </Link>
-        <div className="flex-1">
-          <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
+    <div className="min-h-screen space-y-8">
+      {/* Hero Header Section */}
+      <div className="bg-gradient-to-r from-purple-50 via-pink-50 to-blue-50 dark:from-purple-900/20 dark:via-pink-900/20 dark:to-blue-900/20 rounded-xl p-8 shadow-sm border border-purple-100 dark:border-purple-800">
+        <div className="flex items-center space-x-4 mb-4">
+          <Link to="/therapy">
+            <Button variant="outline" size="sm" className="shadow-sm">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Therapy
+            </Button>
+          </Link>
+        </div>
+        <div className="text-center space-y-2">
+          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
             ✍️ Poetry Therapy
           </h1>
-          <p className="text-gray-600 dark:text-gray-300">
+          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
             Find healing through the rhythm and beauty of words
           </p>
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6">
-        <div className="space-y-6">
+      <div className="grid lg:grid-cols-2 gap-8">
+        <div className="space-y-8">
           {/* Storage Controls vor den Healing Poems */}
-          <Card>
+          <div>
             <StorageControls />
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Healing Poems</CardTitle>
-              <CardDescription>
+          </div>
+          
+          <Card className="shadow-lg border-2 border-purple-100 dark:border-purple-800">
+            <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-b border-purple-100 dark:border-purple-800">
+              <CardTitle className="text-2xl flex items-center gap-2">
+                <span className="text-purple-600 dark:text-purple-400">📖</span>
+                Healing Poems
+              </CardTitle>
+              <CardDescription className="text-base">
                Read poems that bring light to the healing journey
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4 max-h-96 overflow-y-auto">
+            <CardContent className="space-y-4 max-h-[600px] overflow-y-auto p-6" role="region" aria-label="Healing poems collection">
               {healingPoems.map((poem) => (
-                <Card key={poem.id} className="hover:shadow-md transition-shadow">
+                <Card key={poem.id} className="hover:shadow-xl transition-all duration-300 border-l-4 border-l-purple-400 dark:border-l-purple-600 bg-gradient-to-r from-white to-purple-50/30 dark:from-gray-800 dark:to-purple-900/10">
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
-                      <div className="space-y-1">
-                        <h3 className="font-semibold">{poem.title}</h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">by {poem.author}</p>
+                      <div className="space-y-2">
+                        <h3 className="font-bold text-lg text-gray-800 dark:text-gray-100">{poem.title}</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 italic">by {poem.author}</p>
                         <div className="flex items-center space-x-2">
                           <Badge className={getCategoryColor(poem.category)}>
                             {poem.category}
                           </Badge>
-                          <span className="text-xs text-gray-500">{poem.readTime}</span>
+                          <Badge variant="outline" className="text-xs">
+                            {poem.readTime}
+                          </Badge>
                         </div>
                       </div>
                       <div className="flex items-center space-x-1">
@@ -424,31 +440,38 @@ Sweetness transitions to bitterness`,
                           size="sm"
                           variant="ghost"
                           onClick={() => toggleFavorite(poem.id)}
+                          className="hover:bg-red-50 dark:hover:bg-red-900/20"
+                          aria-label={favoritePoems.has(poem.id) ? "Remove from favorites" : "Add to favorites"}
+                          aria-pressed={favoritePoems.has(poem.id)}
                         >
                           <Heart 
-                            className={`h-4 w-4 ${favoritePoems.has(poem.id) ? 'fill-red-500 text-red-500' : ''}`}
+                            className={`h-5 w-5 transition-all ${favoritePoems.has(poem.id) ? 'fill-red-500 text-red-500 scale-110' : 'text-gray-400'}`}
+                            aria-hidden="true"
                           />
                         </Button>
                         <Button
                           size="sm"
                           variant="ghost"
                           onClick={() => readAloud(poem.id)}
+                          className="hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                          aria-label={isReading === poem.id ? "Stop reading" : "Read aloud"}
+                          aria-pressed={isReading === poem.id}
                         >
-                          <Volume2 className={`h-4 w-4 ${isReading === poem.id ? 'text-blue-600' : ''}`} />
+                          <Volume2 className={`h-5 w-5 transition-all ${isReading === poem.id ? 'text-blue-600 animate-pulse' : 'text-gray-400'}`} aria-hidden="true" />
                         </Button>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent className="pt-0">
-                    <p className="text-sm whitespace-pre-line italic leading-relaxed">
+                    <p className="text-sm whitespace-pre-line italic leading-relaxed text-gray-700 dark:text-gray-300 bg-white/50 dark:bg-gray-900/30 p-4 rounded-lg border border-gray-100 dark:border-gray-700">
                       {poem.content}
                     </p>
-                    <div className="flex items-center space-x-2 mt-3">
-                      <Button size="sm" variant="outline">
+                    <div className="flex items-center space-x-2 mt-4">
+                      <Button size="sm" variant="outline" className="shadow-sm hover:shadow-md transition-shadow">
                         <Share className="h-3 w-3 mr-1" />
                         Share
                       </Button>
-                      <Button size="sm" variant="outline">
+                      <Button size="sm" variant="outline" className="shadow-sm hover:shadow-md transition-shadow">
                         <Bookmark className="h-3 w-3 mr-1" />
                         Save
                       </Button>
@@ -459,31 +482,40 @@ Sweetness transitions to bitterness`,
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Poetry Prompts</CardTitle>
-              <CardDescription>
+          <Card className="shadow-lg border-2 border-indigo-100 dark:border-indigo-800">
+            <CardHeader className="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 border-b border-indigo-100 dark:border-indigo-800">
+              <CardTitle className="text-2xl flex items-center gap-2">
+                <span className="text-indigo-600 dark:text-indigo-400">💭</span>
+                Poetry Prompts
+              </CardTitle>
+              <CardDescription className="text-base">
                 Choose a prompt to inspire your writing
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-2 max-h-64 overflow-y-auto">
+            <CardContent className="space-y-3 max-h-[400px] overflow-y-auto p-6">
               {poetryPrompts.map((prompt, index) => (
                 <Button
                   key={index}
                   variant={selectedPoem === prompt.text ? "default" : "outline"}
-                  className="w-full text-left justify-start h-auto p-3"
+                  className={`w-full text-left justify-start h-auto p-4 transition-all duration-200 hover:shadow-md ${
+                    selectedPoem === prompt.text 
+                      ? 'bg-gradient-to-r from-indigo-600 to-blue-600 shadow-lg scale-105' 
+                      : 'hover:border-indigo-300 dark:hover:border-indigo-700'
+                  }`}
                   onClick={() => setSelectedPoem(prompt.text)}
                 >
                   <div className="w-full">
-                    <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center justify-between mb-2">
                       <Badge className={getCategoryColor(prompt.category)}>
                         {prompt.category}
                       </Badge>
-                      <Badge variant="outline">
+                      <Badge variant="outline" className="text-xs">
                         {prompt.difficulty}
                       </Badge>
                     </div>
-                    <div className="text-sm">{prompt.text}</div>
+                    <div className={`text-sm ${selectedPoem === prompt.text ? 'text-white font-medium' : ''}`}>
+                      {prompt.text}
+                    </div>
                   </div>
                 </Button>
               ))}
@@ -491,24 +523,27 @@ Sweetness transitions to bitterness`,
           </Card>
         </div>
 
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
+        <div className="space-y-8">
+          <Card className="shadow-lg border-2 border-pink-100 dark:border-pink-800">
+            <CardHeader className="bg-gradient-to-r from-pink-50 to-rose-50 dark:from-pink-900/20 dark:to-rose-900/20 border-b border-pink-100 dark:border-pink-800">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Your Poetry</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="text-2xl flex items-center gap-2">
+                    <span className="text-pink-600 dark:text-pink-400">✨</span>
+                    Your Poetry
+                  </CardTitle>
+                  <CardDescription className="text-base mt-2">
                     {selectedPoem || "Select a prompt or write freely"}
                   </CardDescription>
                 </div>
                 <div className="flex items-center space-x-2">
                   {isRecording ? (
-                    <Button size="sm" variant="destructive" onClick={stopRecording}>
+                    <Button size="sm" variant="destructive" onClick={stopRecording} className="shadow-md animate-pulse">
                       <MicOff className="h-4 w-4 mr-1" />
                       {formatTime(recordingTime)}
                     </Button>
                   ) : (
-                    <Button size="sm" variant="outline" onClick={startRecording}>
+                    <Button size="sm" variant="outline" onClick={startRecording} className="shadow-sm hover:shadow-md transition-shadow">
                       <Mic className="h-4 w-4 mr-1" />
                       Record
                     </Button>
@@ -516,46 +551,60 @@ Sweetness transitions to bitterness`,
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 p-6">
               <Input
                 placeholder="Poem title (optional)"
                 value={poemTitle}
                 onChange={(e) => setPoemTitle(e.target.value)}
+                className="text-lg font-semibold border-2 focus:border-pink-400 dark:focus:border-pink-600 transition-colors"
               />
               <Textarea
                 placeholder="Let your words flow..."
-                className="min-h-80 font-mono leading-relaxed"
+                className="min-h-80 font-mono leading-relaxed text-base border-2 focus:border-pink-400 dark:focus:border-pink-600 transition-colors bg-gradient-to-br from-white to-pink-50/20 dark:from-gray-900 dark:to-pink-900/10"
                 value={userPoem}
                 onChange={(e) => setUserPoem(e.target.value)}
               />
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center pt-2">
                 <div className="flex space-x-2">
-                  <Button disabled={!userPoem.trim()} onClick={savePoem}>
+                  <Button 
+                    disabled={!userPoem.trim()} 
+                    onClick={savePoem}
+                    className="shadow-md hover:shadow-lg transition-all bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700"
+                  >
                     <Save className="h-4 w-4 mr-2" />
                     Save Poem
                   </Button>
-                  <Button variant="outline" onClick={() => {
-                    setUserPoem('');
-                    setPoemTitle('');
-                  }}>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setUserPoem('');
+                      setPoemTitle('');
+                    }}
+                    className="shadow-sm hover:shadow-md transition-shadow"
+                  >
                     Clear
                   </Button>
                 </div>
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-800 px-3 py-1 rounded-full border border-gray-200 dark:border-gray-700">
                   {userPoem.split('\n').length} lines • {userPoem.trim() ? userPoem.trim().split(/\s+/).length : 0} words
                 </div>
               </div>
 
               {voiceRecordings.length > 0 && (
-                <div className="border-t pt-4">
-                  <h4 className="font-medium mb-2">Voice Recordings:</h4>
-                  <div className="space-y-1">
+                <div className="border-t-2 border-pink-100 dark:border-pink-800 pt-6 mt-6">
+                  <h4 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                    <Mic className="h-5 w-5 text-pink-600 dark:text-pink-400" />
+                    Voice Recordings:
+                  </h4>
+                  <div className="space-y-2">
                     {voiceRecordings.map((recording, index) => (
-                      <div key={index} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded text-sm">
-                        <span>{recording}</span>
+                      <div key={index} className="flex items-center justify-between p-3 bg-gradient-to-r from-pink-50 to-rose-50 dark:from-pink-900/20 dark:to-rose-900/20 rounded-lg border border-pink-200 dark:border-pink-700 hover:shadow-md transition-shadow">
+                        <span className="font-medium text-sm">{recording}</span>
                         <div className="space-x-1">
-                          <Button size="sm" variant="ghost">Play</Button>
-                          <Button size="sm" variant="ghost">
+                          <Button size="sm" variant="ghost" className="hover:bg-pink-100 dark:hover:bg-pink-900/30">
+                            Play
+                          </Button>
+                          <Button size="sm" variant="ghost" className="hover:bg-pink-100 dark:hover:bg-pink-900/30">
                             <Download className="h-3 w-3" />
                           </Button>
                         </div>
@@ -568,34 +617,43 @@ Sweetness transitions to bitterness`,
           </Card>
 
           {savedPoems.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Your Poetry Collection</CardTitle>
-                <CardDescription>
-                  {savedPoems.length} poems written
+            <Card className="shadow-lg border-2 border-teal-100 dark:border-teal-800">
+              <CardHeader className="bg-gradient-to-r from-teal-50 to-cyan-50 dark:from-teal-900/20 dark:to-cyan-900/20 border-b border-teal-100 dark:border-teal-800">
+                <CardTitle className="text-2xl flex items-center gap-2">
+                  <span className="text-teal-600 dark:text-teal-400">📚</span>
+                  Your Poetry Collection
+                </CardTitle>
+                <CardDescription className="text-base">
+                  {savedPoems.length} {savedPoems.length === 1 ? 'poem' : 'poems'} written
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-3 max-h-64 overflow-y-auto">
+              <CardContent className="space-y-3 max-h-[400px] overflow-y-auto p-6">
                 {savedPoems.map((poem) => (
-                  <Card key={poem.id} className="hover:shadow-sm transition-shadow">
+                  <Card key={poem.id} className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-teal-400 dark:border-l-teal-600 bg-gradient-to-r from-white to-teal-50/30 dark:from-gray-800 dark:to-teal-900/10">
                     <CardHeader className="pb-2">
                       <div className="flex items-center justify-between">
-                        <h4 className="font-medium">{poem.title}</h4>
-                        <span className="text-xs text-gray-500">{poem.createdAt}</span>
+                        <h4 className="font-bold text-lg text-gray-800 dark:text-gray-100">{poem.title}</h4>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 px-2 py-1 rounded-full border border-gray-200 dark:border-gray-700">
+                          {poem.createdAt}
+                        </span>
                       </div>
                       {poem.prompt && (
-                        <p className="text-xs text-gray-600 dark:text-gray-400 italic">
+                        <p className="text-xs text-gray-600 dark:text-gray-400 italic mt-2 bg-teal-50/50 dark:bg-teal-900/20 p-2 rounded border-l-2 border-teal-300 dark:border-teal-700">
                           "{poem.prompt}"
                         </p>
                       )}
                     </CardHeader>
                     <CardContent className="pt-0">
-                      <p className="text-sm line-clamp-3 mb-2">
+                      <p className="text-sm line-clamp-3 mb-3 text-gray-700 dark:text-gray-300">
                         {poem.content}
                       </p>
-                      <div className="flex items-center justify-between text-xs text-gray-500">
-                        <span>{poem.lineCount} lines • {poem.wordCount} words</span>
-                        <Button size="sm" variant="ghost">Read Full</Button>
+                      <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                        <span className="bg-white dark:bg-gray-800 px-2 py-1 rounded-full border border-gray-200 dark:border-gray-700">
+                          {poem.lineCount} lines • {poem.wordCount} words
+                        </span>
+                        <Button size="sm" variant="ghost" className="hover:bg-teal-100 dark:hover:bg-teal-900/30 font-medium">
+                          Read Full
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>
