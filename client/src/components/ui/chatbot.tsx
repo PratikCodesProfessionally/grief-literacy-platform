@@ -102,7 +102,7 @@ const responseKeywords = {
   anxiety: ['anxious', 'worried', 'nervous', 'scared', 'afraid', 'panic', 'stress', 'overwhelmed'],
   anger: ['angry', 'mad', 'frustrated', 'rage', 'furious', 'upset', 'irritated'],
   hope: ['hope', 'hopeful', 'better', 'improving', 'forward', 'future', 'optimistic'],
-  struggle: ['struggling', 'hard', 'difficult', 'can\'t cope', 'too much', 'hard time'],
+  struggle: ['struggling', 'hard', 'difficult', "can't cope", 'too much', 'hard time'],
   support: ['need help', 'support', 'alone', 'lonely', 'isolated', 'nobody understands'],
   self_care: ['self care', 'take care', 'exhausted', 'tired', 'rest', 'care for myself'],
   coping: ['cope', 'coping', 'deal with', 'handle', 'manage', 'get through'],
@@ -270,9 +270,9 @@ export function GrandmaSueChatbot() {
                     Grandma Sue
                   </div>
                   <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:0ms]" />
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:150ms]" />
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:300ms]" />
                   </div>
                 </div>
               </div>
