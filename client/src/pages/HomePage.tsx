@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { GrandmaSueChatbot } from '@/components/ui/chatbot';
 // Importiere das neue Icon
 //import mandalaIcon from '@/assets/mandala.png';
 
@@ -35,6 +36,9 @@ export function HomePage() {
 
   return (
     <div className="space-y-12">
+      {/* Grandma Sue Chatbot */}
+      <GrandmaSueChatbot />
+      
       {/* Mandala-Icon oben auf der Seite */}
       <div className="flex justify-center mt-8">
         <img src="/mandala.png" alt="App Icon" className="h-20 w-20 rounded-full shadow-lg" />
