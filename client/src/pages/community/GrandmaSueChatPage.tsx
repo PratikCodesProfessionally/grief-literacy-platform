@@ -73,6 +73,7 @@ export function GrandmaSueChatPage() {
   const [inputValue, setInputValue] = React.useState('');
   const [isTyping, setIsTyping] = React.useState(false);
   const scrollRef = React.useRef<HTMLDivElement>(null);
+  const messageIdCounter = React.useRef(2); // Start at 2 since initial message is id 1
   
   const [context, setContext] = React.useState<ConversationContext>({
     userConcerns: [],
@@ -158,7 +159,7 @@ export function GrandmaSueChatPage() {
     }
 
     // Respond based on emotional state
-    if (analysis.emotion === 'anxious' && context.emotionalState !== 'unknown') {
+    if (analysis.emotion === 'anxious') {
       return RESPONSES.ANXIETY;
     }
 
@@ -169,10 +170,13 @@ export function GrandmaSueChatPage() {
     // Default empathetic responses for continued conversation
     // Provide value-based responses based on conversation context
     const provideSupportiveAdvice = (): string => {
+      // Use responseCount - 1 since it was just incremented, so we start from 0
+      const currentCount = context.responseCount - 1;
+      
       // Check if we already know about their concerns and provide relevant follow-up
       if (context.userConcerns.includes('academic_stress') || context.lastTopic === 'exam') {
         // Use context-based selection for exam advice
-        const index = context.responseCount % EXAM_ADVICE_FOLLOWUPS.length;
+        const index = currentCount % EXAM_ADVICE_FOLLOWUPS.length;
         return EXAM_ADVICE_FOLLOWUPS[index];
       }
 
@@ -181,7 +185,7 @@ export function GrandmaSueChatPage() {
       }
 
       // Use context-based selection for general supportive responses
-      const index = context.responseCount % SUPPORTIVE_RESPONSES.length;
+      const index = currentCount % SUPPORTIVE_RESPONSES.length;
       return SUPPORTIVE_RESPONSES[index];
     };
 
@@ -191,10 +195,12 @@ export function GrandmaSueChatPage() {
   const handleSendMessage = () => {
     if (!inputValue.trim()) return;
 
-    // Add user message
+    const userInputText = inputValue; // Capture input before clearing
+    
+    // Add user message using ref-based ID counter
     const userMessage: Message = {
-      id: messages.length + 1,
-      text: inputValue,
+      id: messageIdCounter.current++,
+      text: userInputText,
       sender: 'user',
       timestamp: new Date(),
     };
@@ -205,9 +211,9 @@ export function GrandmaSueChatPage() {
 
     // Simulate typing delay for more natural conversation
     setTimeout(() => {
-      const response = generateGrandmaSueResponse(inputValue);
+      const response = generateGrandmaSueResponse(userInputText);
       const grandmaMessage: Message = {
-        id: messages.length + 2,
+        id: messageIdCounter.current++,
         text: response,
         sender: 'grandma',
         timestamp: new Date(),
