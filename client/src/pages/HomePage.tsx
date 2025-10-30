@@ -2,8 +2,7 @@ import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-// Importiere das neue Icon
-//import mandalaIcon from '@/assets/mandala.png';
+import { GrandmaSue } from '@/components/GrandmaSue';
 
 export function HomePage() {
   const features = [
@@ -35,7 +34,6 @@ export function HomePage() {
 
   return (
     <div className="space-y-12">
-      {/* Mandala-Icon oben auf der Seite */}
       <div className="flex justify-center mt-8">
         <img src="/mandala.png" alt="App Icon" className="h-20 w-20 rounded-full shadow-lg" />
       </div>
@@ -79,6 +77,17 @@ export function HomePage() {
           peer support and practical tools to help you navigate your unique journey. 
           Remember: healing is not linear and every feeling is valid.
         </p>
+      </div>
+
+      <div className="mt-12">
+        <h3 className="text-3xl font-bold mb-6 text-center text-gray-800 dark:text-white">
+          Talk with Grandma Sue
+        </h3>
+        <p className="text-center text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
+          Meet Grandma Sue, a compassionate AI psychotherapist trained in evidence-based therapeutic approaches. 
+          She is here to listen without judgment, offer gentle guidance, and provide a safe space for your thoughts and feelings.
+        </p>
+        <GrandmaSue />
       </div>
     </div>
   );
