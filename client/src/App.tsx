@@ -7,6 +7,7 @@ import { CommunityPage } from '@/pages/community/CommunityPage';
 import { ToolsPage } from '@/pages/tools/ToolsPage';
 import { ResourcesPage } from '@/pages/resources/ResourcesPage';
 import { ToastProvider } from '@/components/ui/use-toast';
+import { Toaster } from '@/components/ui/toaster';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
             </Routes>
           </main>
         </div>
+        <Toaster />
       </Router>
     </ToastProvider>
   );
