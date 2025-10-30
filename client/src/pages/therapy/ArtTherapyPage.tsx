@@ -13,6 +13,8 @@ import { EmotionColorMapping } from './EmotionColorMapping';
 import { MemoryCollage } from './MemoryCollage';
 import { SymbolicDrawing } from './SymbolicDrawing';
 import { HealingMandala } from './HealingMandala';
+import { AdvancedCanvas } from './AdvancedCanvas';
+import { ArtworkGallery } from './ArtworkGallery';
 
 interface ActivityProgress {
   [key: string]: 'not-started' | 'in-progress' | 'completed';
@@ -28,6 +30,8 @@ export function ArtTherapyPage() {
     collage: false,
     drawing: false,
     mandala: false,
+    advancedCanvas: false,
+    gallery: false,
   });
 
   const [activityProgress, setActivityProgress] = React.useState<ActivityProgress>({
@@ -133,12 +137,18 @@ export function ArtTherapyPage() {
     if (!selectedActivity) return;
     setCurrentMood(mood);
     setShowMoodSelector(false);
-    openModalForActivity(selectedActivity);
+    
+    // Handle digital canvas separately
+    if (selectedActivity === 'digital-canvas') {
+      setModals((m) => ({ ...m, advancedCanvas: true }));
+    } else {
+      openModalForActivity(selectedActivity);
+    }
   };
 
   const complete = (activityId: keyof typeof activityProgress) => {
     setActivityProgress((prev) => ({ ...prev, [activityId]: 'completed' }));
-    setModals({ emotion: false, collage: false, drawing: false, mandala: false });
+    setModals({ emotion: false, collage: false, drawing: false, mandala: false, advancedCanvas: false, gallery: false });
   };
 
   const completedCount = Object.values(activityProgress).filter((s) => s === 'completed').length;
@@ -222,6 +232,17 @@ export function ArtTherapyPage() {
             onComplete={() => complete('healing-mandala')}
           />
         )}
+        {modals.advancedCanvas && (
+          <AdvancedCanvas
+            mood={currentMood}
+            onClose={() => setModals((m) => ({ ...m, advancedCanvas: false }))}
+          />
+        )}
+        {modals.gallery && (
+          <ArtworkGallery
+            onClose={() => setModals((m) => ({ ...m, gallery: false }))}
+          />
+        )}
 
         {/* Art Activities Grid */}
         <div className="grid md:grid-cols-2 gap-6">
@@ -276,23 +297,35 @@ export function ArtTherapyPage() {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Palette className="h-6 w-6 text-indigo-600" />
-              <span>Digital Art Canvas</span>
-              <Badge className="bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200">Coming Soon</Badge>
+              <span>Advanced Digital Art Studio</span>
             </CardTitle>
             <CardDescription>Professional-grade digital art tools for grief expression</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="bg-white/50 dark:bg-gray-800/50 border-2 border-dashed border-indigo-300 dark:border-indigo-600 rounded-xl p-8">
-              <div className="text-center space-y-6">
-                <div className="relative">
-                  <div className="text-6xl opacity-20 animate-pulse">🖌️</div>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-12 h-12 border-4 border-indigo-300 border-t-indigo-600 rounded-full animate-spin"></div>
-                  </div>
-                </div>
-                <h3 className="text-xl font-semibold text-gray-800 dark:text-white">Advanced Art Studio in Development</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Multiple brushes, layers, palettes, and export options.</p>
-              </div>
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Create professional artwork with advanced features including:
+              </p>
+              <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1 ml-4">
+                <li>• Multiple brush types (pencil, brush, marker, spray)</li>
+                <li>• Layer system for complex compositions</li>
+                <li>• Custom color palettes</li>
+                <li>• Adjustable opacity and brush sizes</li>
+                <li>• Save and export your creations</li>
+              </ul>
+              <Button 
+                onClick={() => {
+                  if (!currentMood) {
+                    setSelectedActivity('digital-canvas');
+                    setShowMoodSelector(true);
+                  } else {
+                    setModals((m) => ({ ...m, advancedCanvas: true }));
+                  }
+                }}
+                className="w-full"
+              >
+                Launch Digital Studio
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -302,18 +335,22 @@ export function ArtTherapyPage() {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Users className="h-5 w-5 text-green-600" />
-                <span>Community Gallery</span>
+                <span>Your Artwork Gallery</span>
               </CardTitle>
-              <CardDescription>See inspiring artwork from others on their healing journey (anonymous)</CardDescription>
+              <CardDescription>View and manage all your saved artwork</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-center py-6">
                 <div className="text-3xl mb-3">🖼️</div>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  A safe space to share and be inspired by others' creative expressions
+                  Access all your saved creations, organized by activity type
                 </p>
-                <Button variant="outline" className="border-green-300 text-green-700 hover:bg-green-50">
-                  Explore Gallery
+                <Button 
+                  variant="outline" 
+                  className="border-green-300 text-green-700 hover:bg-green-50"
+                  onClick={() => setModals((m) => ({ ...m, gallery: true }))}
+                >
+                  Open Gallery
                 </Button>
               </div>
             </CardContent>

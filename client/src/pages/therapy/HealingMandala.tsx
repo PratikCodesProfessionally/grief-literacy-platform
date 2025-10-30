@@ -1,5 +1,7 @@
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
+import { artStorageService } from '@/services/ArtStorageService';
+import { Save } from 'lucide-react';
 
 interface HealingMandalaProps {
   mood: string;
@@ -19,6 +21,7 @@ export const HealingMandala: React.FC<HealingMandalaProps> = ({ mood, onClose, o
   // Painting controls
   const [selectedColor, setSelectedColor] = React.useState('#f472b6'); // initial pink
   const [mode, setMode] = React.useState<'paint' | 'erase' | 'eyedropper'>('paint');
+  const [isSaving, setIsSaving] = React.useState(false);
 
   // Keep latest values available to the click handler (avoid stale closure)
   const selectedColorRef = React.useRef(selectedColor);
@@ -206,6 +209,33 @@ export const HealingMandala: React.FC<HealingMandalaProps> = ({ mood, onClose, o
 
   const randomize = () => setSeed(s => s + 1);
 
+  const handleSaveArtwork = async () => {
+    if (!svgRef.current) return;
+    
+    setIsSaving(true);
+    try {
+      const svgData = new XMLSerializer().serializeToString(svgRef.current);
+      await artStorageService.saveArtwork({
+        title: `Healing Mandala - ${new Date().toLocaleDateString()}`,
+        activityType: 'healing-mandala',
+        mood,
+        svgData,
+        config: {
+          petals,
+          rings,
+          stroke,
+          lineColor,
+        },
+      });
+      alert('Mandala saved successfully!');
+    } catch (error) {
+      console.error('Error saving mandala:', error);
+      alert('Failed to save mandala');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   // Export helpers
   const exportSVG = () => {
     if (!svgRef.current) return;
@@ -284,9 +314,13 @@ export const HealingMandala: React.FC<HealingMandalaProps> = ({ mood, onClose, o
           <div className="ml-auto flex items-center gap-2">
             <Button size="sm" variant="outline" onClick={undo} disabled={!undoStack.length}>Undo</Button>
             <Button size="sm" variant="outline" onClick={clearColors}>Clear</Button>
+            <Button size="sm" variant="outline" onClick={handleSaveArtwork} disabled={isSaving}>
+              <Save className="h-4 w-4 mr-1" />
+              {isSaving ? 'Saving...' : 'Save'}
+            </Button>
             <Button size="sm" variant="outline" onClick={exportSVG}>Save SVG</Button>
             <Button size="sm" onClick={exportPNG}>Save PNG</Button>
-            {onComplete && <Button size="sm" onClick={onComplete} disabled={!canComplete}>Mark as Completed</Button>}
+            {onComplete && <Button size="sm" onClick={onComplete} disabled={!canComplete}>Complete</Button>}
           </div>
         </div>
 
