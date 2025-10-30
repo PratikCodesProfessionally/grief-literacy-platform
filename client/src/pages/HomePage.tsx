@@ -79,16 +79,8 @@ export function HomePage() {
         </p>
       </div>
 
-      <div className="mt-12">
-        <h3 className="text-3xl font-bold mb-6 text-center text-gray-800 dark:text-white">
-          Talk with Grandma Sue
-        </h3>
-        <p className="text-center text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
-          Meet Grandma Sue, a compassionate AI psychotherapist trained in evidence-based therapeutic approaches. 
-          She is here to listen without judgment, offer gentle guidance, and provide a safe space for your thoughts and feelings.
-        </p>
-        <GrandmaSue />
-      </div>
+      {/* Floating Grandma Sue Chatbot */}
+      <GrandmaSue />
     </div>
   );
 }

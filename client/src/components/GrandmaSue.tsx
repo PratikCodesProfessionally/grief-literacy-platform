@@ -12,11 +12,12 @@ interface Message {
 }
 
 export function GrandmaSue() {
+  const [isOpen, setIsOpen] = React.useState(false);
   const [messages, setMessages] = React.useState<Message[]>([
     {
       id: '1',
       role: 'assistant',
-      content: 'Hello, dear one. I am Grandma Sue. I have spent many years as a psychotherapist, and I am here to listen with an open heart and offer gentle guidance. This is a safe, confidential space for you. What is on your mind today?',
+      content: 'Hello, dear one. I am Grandma Sue. I am here to listen with an open heart and offer gentle guidance. This is a safe, confidential space for you. What is on your mind today?',
       timestamp: new Date(),
     },
   ]);
@@ -152,74 +153,102 @@ export function GrandmaSue() {
   };
 
   return (
-    <Card className="w-full max-w-4xl mx-auto shadow-xl">
-      <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-3xl shadow-lg">
-            👵
-          </div>
-          <div>
-            <CardTitle className="text-2xl">Grandma Sue</CardTitle>
-            <CardDescription className="text-base">
-              Licensed Psychotherapist • Empathetic Listener • Here for You
-            </CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="p-6">
-        <ScrollArea className="h-[500px] pr-4 mb-4" ref={scrollRef}>
-          <div className="space-y-4">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-[80%] rounded-lg p-4 ${
-                    message.role === 'user'
-                      ? 'bg-purple-500 text-white'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
-                  }`}
-                >
-                  <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</p>
-                  <p className="text-xs mt-2 opacity-70">
-                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </p>
-                </div>
-              </div>
-            ))}
-            {isTyping && (
-              <div className="flex justify-start">
-                <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4">
-                  <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+    <>
+      {/* Floating Chat Button */}
+      {!isOpen && (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="fixed bottom-6 right-6 w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full shadow-2xl hover:shadow-purple-500/50 transition-all hover:scale-110 flex items-center justify-center text-3xl z-50 animate-bounce"
+          aria-label="Open Grandma Sue chat"
+        >
+          ��
+        </button>
+      )}
+
+      {/* Chat Window */}
+      {isOpen && (
+        <div className="fixed bottom-6 right-6 w-96 z-50 shadow-2xl">
+          <Card className="border-2 border-purple-200">
+            <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-2xl shadow-md">
+                    👵
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Grandma Sue</CardTitle>
+                    <CardDescription className="text-xs">
+                      Empathetic Listener • Here for You
+                    </CardDescription>
                   </div>
                 </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsOpen(false)}
+                  className="h-8 w-8 p-0"
+                >
+                  ✕
+                </Button>
               </div>
-            )}
-          </div>
-        </ScrollArea>
-        <div className="space-y-2">
-          <Textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyPress}
-            placeholder="Share what is on your mind... (Press Enter to send, Shift+Enter for new line)"
-            className="min-h-[100px] resize-none"
-            disabled={isTyping}
-          />
-          <div className="flex justify-between items-center">
-            <p className="text-xs text-gray-500">
-              💙 This is a supportive space, but not a substitute for professional crisis intervention
-            </p>
-            <Button onClick={handleSend} disabled={!input.trim() || isTyping}>
-              Send Message
-            </Button>
-          </div>
+            </CardHeader>
+            <CardContent className="p-4">
+              <ScrollArea className="h-[400px] pr-2 mb-3" ref={scrollRef}>
+                <div className="space-y-3">
+                  {messages.map((message) => (
+                    <div
+                      key={message.id}
+                      className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div
+                        className={`max-w-[85%] rounded-lg p-3 ${
+                          message.role === 'user'
+                            ? 'bg-purple-500 text-white'
+                            : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                        }`}
+                      >
+                        <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</p>
+                        <p className="text-xs mt-1 opacity-70">
+                          {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                  {isTyping && (
+                    <div className="flex justify-start">
+                      <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-3">
+                        <div className="flex gap-1">
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+              <div className="space-y-2">
+                <Textarea
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyPress}
+                  placeholder="Share what is on your mind..."
+                  className="min-h-[80px] resize-none text-sm"
+                  disabled={isTyping}
+                />
+                <div className="flex justify-between items-center gap-2">
+                  <p className="text-xs text-gray-500 flex-1">
+                    💙 AI support companion
+                  </p>
+                  <Button onClick={handleSend} disabled={!input.trim() || isTyping} size="sm">
+                    Send
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </>
   );
 }
