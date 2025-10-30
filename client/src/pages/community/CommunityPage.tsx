@@ -4,12 +4,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { SupportCirclesPage } from './SupportCirclesPage';
 import { PeerSupportPage } from './PeerSupportPage';
+import { GrandmaSueChatPage } from './GrandmaSueChatPage';
 
 export function CommunityPage() {
   const location = useLocation();
   const isMainPage = location.pathname === '/community';
 
   const communityOptions = [
+    {
+      title: 'Chat with Grandma Sue',
+      description: 'Talk with a compassionate listener who cares',
+      icon: '💝',
+      path: '/community/grandma-sue',
+    },
     {
       title: 'Support Circles',
       description: 'Join safe, moderated group discussions by type of loss',
@@ -87,6 +94,7 @@ export function CommunityPage() {
 
   return (
     <Routes>
+      <Route path="/grandma-sue" element={<GrandmaSueChatPage />} />
       <Route path="/circles" element={<SupportCirclesPage />} />
       <Route path="/peer" element={<PeerSupportPage />} />
     </Routes>
