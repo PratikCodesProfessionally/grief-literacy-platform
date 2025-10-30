@@ -101,7 +101,7 @@ export const AdvancedDigitalStudio: React.FC<AdvancedDigitalStudioProps> = ({
     const dpr = window.devicePixelRatio || 1;
     const rect = compositeCanvasRef.current?.getBoundingClientRect();
     
-    if (rect) {
+    if (rect && rect.width && rect.height) {
       canvas.width = Math.floor(rect.width * dpr);
       canvas.height = Math.floor(rect.height * dpr);
       const ctx = canvas.getContext('2d')!;
@@ -334,11 +334,14 @@ export const AdvancedDigitalStudio: React.FC<AdvancedDigitalStudioProps> = ({
     const targetColor = getPixelColor(data, x, y, canvas.width);
     const fillRgb = hexToRgb(fillColor);
     
-    if (colorsMatch(targetColor, fillRgb)) return;
+    if (!fillRgb || colorsMatch(targetColor, fillRgb)) return;
     
     const stack: [number, number][] = [[x, y]];
+    const maxIterations = 50000; // Prevent infinite loops
+    let iterations = 0;
     
-    while (stack.length > 0) {
+    while (stack.length > 0 && iterations < maxIterations) {
+      iterations++;
       const [px, py] = stack.pop()!;
       if (px < 0 || px >= canvas.width || py < 0 || py >= canvas.height) continue;
       
@@ -366,13 +369,15 @@ export const AdvancedDigitalStudio: React.FC<AdvancedDigitalStudioProps> = ({
     data[index + 3] = 255;
   };
 
-  const hexToRgb = (hex: string): number[] => {
+  const hexToRgb = (hex: string): number[] | null => {
+    if (!hex || typeof hex !== 'string') return null;
+    
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result ? [
       parseInt(result[1], 16),
       parseInt(result[2], 16),
       parseInt(result[3], 16)
-    ] : [0, 0, 0];
+    ] : null;
   };
 
   const colorsMatch = (c1: number[], c2: number[]) => {

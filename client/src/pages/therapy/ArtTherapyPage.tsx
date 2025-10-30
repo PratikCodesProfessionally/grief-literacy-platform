@@ -146,7 +146,8 @@ export function ArtTherapyPage() {
   };
 
   const completedCount = Object.values(activityProgress).filter((s) => s === 'completed').length;
-  const overallProgress = (completedCount / artActivities.length) * 100;
+  const totalActivities = Object.keys(activityProgress).length;
+  const overallProgress = (completedCount / totalActivities) * 100;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 dark:from-gray-900 dark:via-purple-900/20 dark:to-gray-900 relative overflow-hidden">
@@ -184,7 +185,7 @@ export function ArtTherapyPage() {
                 Your Art Therapy Journey
               </span>
             </CardTitle>
-            <CardDescription className="text-base">{completedCount} of {artActivities.length + 1} activities completed</CardDescription>
+            <CardDescription className="text-base mt-2">{completedCount} of {totalActivities} activities completed</CardDescription>
           </CardHeader>
           <CardContent>
             <Progress value={overallProgress} className="h-4 mb-3" />
@@ -257,7 +258,7 @@ export function ArtTherapyPage() {
                 'bg-gradient-to-br',
                 activity.themeColor,
                 activity.borderColor,
-                'border-3 relative'
+                'border-2 relative'
               )}
             >
               {/* Artistic shine effect */}
@@ -298,7 +299,7 @@ export function ArtTherapyPage() {
         </div>
 
         {/* Advanced Digital Art Studio Card */}
-        <Card className="bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 dark:from-indigo-900/30 dark:via-purple-900/30 dark:to-pink-900/30 border-3 border-indigo-300 dark:border-indigo-700 shadow-2xl hover:shadow-3xl hover:scale-[1.01] transition-all duration-300 overflow-hidden group relative">
+        <Card className="bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 dark:from-indigo-900/30 dark:via-purple-900/30 dark:to-pink-900/30 border-2 border-indigo-300 dark:border-indigo-700 shadow-2xl hover:shadow-3xl hover:scale-[1.01] transition-all duration-300 overflow-hidden group relative">
           {/* Animated gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-r from-purple-400/20 via-pink-400/20 to-orange-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
           
