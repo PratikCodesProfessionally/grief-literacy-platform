@@ -10,14 +10,15 @@ export function Toaster() {
       {toasts.map(({ id, title, description, variant, action }) => (
         <div
           key={id}
+          role="alert"
+          aria-live="polite"
+          aria-atomic="true"
           className={cn(
-            "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all",
-            "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full",
+            "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all animate-in slide-in-from-top-full sm:slide-in-from-bottom-full",
             variant === "destructive"
               ? "border-red-500 bg-red-50 text-red-900 dark:border-red-900 dark:bg-red-900 dark:text-red-50"
               : "border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
           )}
-          data-state="open"
         >
           <div className="grid gap-1">
             {title && <div className="text-sm font-semibold">{title}</div>}

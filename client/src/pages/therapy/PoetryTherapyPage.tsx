@@ -392,7 +392,7 @@ Sweetness transitions to bitterness`,
           </Link>
         </div>
         <div className="text-center space-y-2">
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
+          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent [text-shadow:_0_0_0_rgb(147_51_234_/_0.5)] dark:[text-shadow:_0_0_0_rgb(192_132_252_/_0.5)]">
             ✍️ Poetry Therapy
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
@@ -418,7 +418,7 @@ Sweetness transitions to bitterness`,
                Read poems that bring light to the healing journey
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4 max-h-[600px] overflow-y-auto p-6">
+            <CardContent className="space-y-4 max-h-[600px] overflow-y-auto p-6" role="region" aria-label="Healing poems collection">
               {healingPoems.map((poem) => (
                 <Card key={poem.id} className="hover:shadow-xl transition-all duration-300 border-l-4 border-l-purple-400 dark:border-l-purple-600 bg-gradient-to-r from-white to-purple-50/30 dark:from-gray-800 dark:to-purple-900/10">
                   <CardHeader className="pb-3">
@@ -441,9 +441,12 @@ Sweetness transitions to bitterness`,
                           variant="ghost"
                           onClick={() => toggleFavorite(poem.id)}
                           className="hover:bg-red-50 dark:hover:bg-red-900/20"
+                          aria-label={favoritePoems.has(poem.id) ? "Remove from favorites" : "Add to favorites"}
+                          aria-pressed={favoritePoems.has(poem.id)}
                         >
                           <Heart 
                             className={`h-5 w-5 transition-all ${favoritePoems.has(poem.id) ? 'fill-red-500 text-red-500 scale-110' : 'text-gray-400'}`}
+                            aria-hidden="true"
                           />
                         </Button>
                         <Button
@@ -451,8 +454,10 @@ Sweetness transitions to bitterness`,
                           variant="ghost"
                           onClick={() => readAloud(poem.id)}
                           className="hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                          aria-label={isReading === poem.id ? "Stop reading" : "Read aloud"}
+                          aria-pressed={isReading === poem.id}
                         >
-                          <Volume2 className={`h-5 w-5 transition-all ${isReading === poem.id ? 'text-blue-600 animate-pulse' : 'text-gray-400'}`} />
+                          <Volume2 className={`h-5 w-5 transition-all ${isReading === poem.id ? 'text-blue-600 animate-pulse' : 'text-gray-400'}`} aria-hidden="true" />
                         </Button>
                       </div>
                     </div>
