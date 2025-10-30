@@ -1,5 +1,7 @@
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
+import { artStorageService } from '@/services/ArtStorageService';
+import { Download, Save } from 'lucide-react';
 
 interface EmotionColorMappingProps {
   mood: string;
@@ -10,6 +12,7 @@ interface EmotionColorMappingProps {
 export const EmotionColorMapping: React.FC<EmotionColorMappingProps> = ({ mood, onClose, onComplete }) => {
   const [selectedColor, setSelectedColor] = React.useState<string>('#ffb3b3');
   const [cells, setCells] = React.useState<string[]>(Array(25).fill('#fff'));
+  const [isSaving, setIsSaving] = React.useState(false);
 
   const palette = [
     '#ffb3b3', // rot
@@ -27,6 +30,58 @@ export const EmotionColorMapping: React.FC<EmotionColorMappingProps> = ({ mood, 
 
   // Optional: require at least one non-white cell before allowing completion
   const canComplete = React.useMemo(() => cells.some((c) => c !== '#fff'), [cells]);
+
+  const handleSaveArtwork = async () => {
+    if (!canComplete) return;
+    
+    setIsSaving(true);
+    try {
+      await artStorageService.saveArtwork({
+        title: `Emotion Colors - ${new Date().toLocaleDateString()}`,
+        activityType: 'emotion-color',
+        mood,
+        cells,
+        selectedColor,
+      });
+      alert('Artwork saved successfully!');
+    } catch (error) {
+      console.error('Error saving artwork:', error);
+      alert('Failed to save artwork');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleExportPNG = () => {
+    if (!canComplete) return;
+    
+    // Create a canvas and draw the color grid
+    const canvas = document.createElement('canvas');
+    const cellSize = 60;
+    canvas.width = cellSize * 5;
+    canvas.height = cellSize * 5;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    cells.forEach((color, idx) => {
+      const row = Math.floor(idx / 5);
+      const col = idx % 5;
+      ctx.fillStyle = color;
+      ctx.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
+      ctx.strokeStyle = '#cccccc';
+      ctx.strokeRect(col * cellSize, row * cellSize, cellSize, cellSize);
+    });
+
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `emotion-colors-${Date.now()}.png`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  };
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
@@ -66,18 +121,40 @@ export const EmotionColorMapping: React.FC<EmotionColorMappingProps> = ({ mood, 
 
         <div className="flex items-center justify-between pt-2">
           <div className="text-xs text-gray-500 dark:text-gray-400">
-            Deine gewählte Stimmung: <span className="font-semibold">{mood}</span>
+            Your mood: <span className="font-semibold">{mood}</span>
           </div>
-          {onComplete && (
+          <div className="flex gap-2">
             <Button
               size="sm"
-              onClick={onComplete}
-              disabled={!canComplete}
-              title={canComplete ? 'Als abgeschlossen markieren' : 'Bitte mindestens ein Feld färben'}
+              variant="outline"
+              onClick={handleSaveArtwork}
+              disabled={!canComplete || isSaving}
+              title="Save to gallery"
             >
-              Mark as Completed
+              <Save className="h-4 w-4 mr-1" />
+              {isSaving ? 'Saving...' : 'Save'}
             </Button>
-          )}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleExportPNG}
+              disabled={!canComplete}
+              title="Download as PNG"
+            >
+              <Download className="h-4 w-4 mr-1" />
+              Export
+            </Button>
+            {onComplete && (
+              <Button
+                size="sm"
+                onClick={onComplete}
+                disabled={!canComplete}
+                title={canComplete ? 'Mark as completed' : 'Please color at least one cell'}
+              >
+                Complete
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </div>

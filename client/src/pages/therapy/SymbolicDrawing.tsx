@@ -1,5 +1,7 @@
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
+import { artStorageService } from '@/services/ArtStorageService';
+import { Download, Save } from 'lucide-react';
 
 interface SymbolicDrawingProps {
   mood: string;
@@ -13,6 +15,13 @@ export const SymbolicDrawing: React.FC<SymbolicDrawingProps> = ({ mood, onClose,
   const [size, setSize] = React.useState(4);
   const [isDrawing, setIsDrawing] = React.useState(false);
   const [hasStroke, setHasStroke] = React.useState(false);
+  const [isSaving, setIsSaving] = React.useState(false);
+  const [strokes, setStrokes] = React.useState<Array<{
+    color: string;
+    size: number;
+    points: Array<{ x: number; y: number }>;
+  }>>([]);
+  const currentStroke = React.useRef<Array<{ x: number; y: number }>>([]);
 
   React.useEffect(() => {
     const canvas = canvasRef.current!;
@@ -31,6 +40,7 @@ export const SymbolicDrawing: React.FC<SymbolicDrawingProps> = ({ mood, onClose,
   const start = (x: number, y: number) => {
     setIsDrawing(true);
     pos.current = { x, y };
+    currentStroke.current = [{ x, y }];
   };
 
   const move = (x: number, y: number) => {
@@ -44,12 +54,21 @@ export const SymbolicDrawing: React.FC<SymbolicDrawingProps> = ({ mood, onClose,
     ctx.lineTo(x, y);
     ctx.stroke();
     pos.current = { x, y };
+    currentStroke.current.push({ x, y });
     setHasStroke(true);
   };
 
   const stop = () => {
+    if (isDrawing && currentStroke.current.length > 0) {
+      setStrokes(prev => [...prev, {
+        color,
+        size,
+        points: [...currentStroke.current]
+      }]);
+    }
     setIsDrawing(false);
     pos.current = null;
+    currentStroke.current = [];
   };
 
   const handlePointerDown: React.PointerEventHandler<HTMLCanvasElement> = (e) => {
@@ -66,6 +85,43 @@ export const SymbolicDrawing: React.FC<SymbolicDrawingProps> = ({ mood, onClose,
     const ctx = canvas.getContext('2d')!;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     setHasStroke(false);
+    setStrokes([]);
+  };
+
+  const handleSaveArtwork = async () => {
+    if (!hasStroke || !canvasRef.current) return;
+    
+    setIsSaving(true);
+    try {
+      const canvasDataUrl = canvasRef.current.toDataURL('image/png');
+      await artStorageService.saveArtwork({
+        title: `Symbolic Drawing - ${new Date().toLocaleDateString()}`,
+        activityType: 'symbolic-drawing',
+        mood,
+        canvasDataUrl,
+        strokes,
+      });
+      alert('Drawing saved successfully!');
+    } catch (error) {
+      console.error('Error saving drawing:', error);
+      alert('Failed to save drawing');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleExportPNG = () => {
+    if (!hasStroke || !canvasRef.current) return;
+    
+    canvasRef.current.toBlob((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `symbolic-drawing-${Date.now()}.png`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
   };
 
   return (
@@ -92,9 +148,19 @@ export const SymbolicDrawing: React.FC<SymbolicDrawingProps> = ({ mood, onClose,
             onChange={(e) => setSize(Number(e.target.value))}
           />
           <Button size="sm" variant="outline" onClick={clear}>Clear</Button>
-          {onComplete && (
-            <Button size="sm" onClick={onComplete} disabled={!hasStroke}>Mark as Completed</Button>
-          )}
+          <div className="ml-auto flex gap-2">
+            <Button size="sm" variant="outline" onClick={handleSaveArtwork} disabled={!hasStroke || isSaving}>
+              <Save className="h-4 w-4 mr-1" />
+              {isSaving ? 'Saving...' : 'Save'}
+            </Button>
+            <Button size="sm" variant="outline" onClick={handleExportPNG} disabled={!hasStroke}>
+              <Download className="h-4 w-4 mr-1" />
+              Export
+            </Button>
+            {onComplete && (
+              <Button size="sm" onClick={onComplete} disabled={!hasStroke}>Complete</Button>
+            )}
+          </div>
         </div>
 
         <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden bg-white">
