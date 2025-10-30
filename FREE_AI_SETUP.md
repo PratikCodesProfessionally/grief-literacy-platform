@@ -71,19 +71,52 @@ Ich kann das implementieren, wenn Sie möchten!
 
 ---
 
-## 🆓 Option 3: Google Gemini (Gratis Tier)
+## 🆓 Option 3: Google Gemini (Gratis Tier) ⭐ NOW INTEGRATED
 
 ### Vorteile:
 - ✅ 15 Requests/Minute gratis
-- ✅ Sehr gutes Modell
+- ✅ Sehr gutes Modell (Gemini 1.5 Flash)
 - ✅ Keine Kreditkarte
+- ✅ **JETZT VOLL IMPLEMENTIERT** ✨
 
 ### Setup:
+
+#### 1. API Key erstellen
 ```
-1. https://makersuite.google.com/app/apikey
-2. Erstelle API Key
-3. VITE_GEMINI_API_KEY=dein-key
+1. Gehe zu: https://aistudio.google.com/app/apikey
+2. Klicke "Get API Key" oder "Create API Key"
+3. Wähle "Create API key in new project" oder wähle ein bestehendes Projekt
+4. Kopiere den API Key
 ```
+
+#### 2. Konfigurieren
+```bash
+# Im Projekt-Ordner:
+cp .env.example .env
+nano .env
+```
+
+Füge hinzu:
+```
+VITE_GEMINI_API_KEY=dein-key-hier
+```
+
+#### 3. Fertig!
+```bash
+npm run build
+npm run dev
+```
+
+### Wie es funktioniert:
+- Grandma Sue erkennt automatisch verfügbare AI Services
+- Gemini wird bevorzugt, wenn konfiguriert
+- Toggle Button (🧠) wechselt zwischen Modi
+- Automatischer Fallback zu lokalen Antworten bei Problemen
+
+### Kosten:
+- **Komplett kostenlos** ✅
+- Rate Limit: 15 Requests/Minute (900/Stunde)
+- Perfekt für persönliche Projekte
 
 ---
 
@@ -108,9 +141,9 @@ Ich kann das implementieren, wenn Sie möchten!
 
 | Service | Kosten | Qualität | Setup | Empfehlung |
 |---------|--------|----------|-------|------------|
-| **Hugging Face** | ✅ Free | ⭐⭐⭐⭐ | Easy | **BESTE WAHL** |
+| **Google Gemini** | ✅ Free | ⭐⭐⭐⭐⭐ | Easy | **NEU! BESTE WAHL** ✨ |
+| **Hugging Face** | ✅ Free | ⭐⭐⭐⭐ | Easy | Auch gut |
 | Lokal (offline) | ✅ Free | ⭐⭐⭐ | Medium | Für Privacy |
-| Google Gemini | ✅ Free Tier | ⭐⭐⭐⭐⭐ | Easy | Auch gut |
 | OpenAI | $5 free then $ | ⭐⭐⭐⭐⭐ | Easy | Nach Credits $ |
 | Claude | $$$ | ⭐⭐⭐⭐⭐ | Easy | Teuer |
 
@@ -118,53 +151,68 @@ Ich kann das implementieren, wenn Sie möchten!
 
 ## Empfehlung:
 
-### Für Ihr Projekt: **Hugging Face** ⭐
+### Für Ihr Projekt: **Google Gemini** ⭐✨
 
 **Warum?**
-1. Komplett kostenlos
-2. Gute Qualität (Llama 3.1)
-3. Keine Kreditkarte
-4. Einfaches Setup (5 Minuten)
-5. 1000 Requests/Tag reicht
+1. **JETZT VOLL IMPLEMENTIERT** - Einfach API Key einfügen und loslegen!
+2. Komplett kostenlos (15 req/min)
+3. Höchste Qualität (Gemini 1.5 Flash)
+4. Keine Kreditkarte nötig
+5. Einfaches Setup (3 Minuten)
+6. Automatische Integration mit Toggle
+7. Fallback zu lokalen Antworten
+
+### Alternative: **Hugging Face**
+Wenn Sie mehr Requests/Tag brauchen.
 
 ### Alternative: **Lokale AI**
 Wenn Sie 100% offline arbeiten möchten.
 
 ---
 
-## Quick Start (Hugging Face):
+## Quick Start (Google Gemini) - EMPFOHLEN:
 
 ```bash
-# 1. Account erstellen
-https://huggingface.co/join
+# 1. API Key holen (KOSTENLOS)
+https://aistudio.google.com/app/apikey
 
-# 2. Token holen
-https://huggingface.co/settings/tokens
+# 2. Konfigurieren
+echo "VITE_GEMINI_API_KEY=dein-key" > .env
 
-# 3. Konfigurieren
-echo "VITE_HUGGINGFACE_API_KEY=hf_your_token" > .env
-
-# 4. Starten
+# 3. Bauen und Starten
+npm run build
 npm run dev
+
+# 4. Im Chat auf 🧠 klicken für Gemini!
 ```
 
-**Fertig!** Grandma Sue nutzt jetzt kostenlose AI! 🎉
+**Fertig!** Grandma Sue nutzt jetzt Google Gemini AI! 🎉✨
 
 ---
 
 ## Fragen?
 
 **Ist es wirklich kostenlos?**
-Ja! Hugging Face bietet Inference API kostenlos an.
+Ja! Google Gemini Free Tier ist komplett kostenlos. Keine Kreditkarte nötig.
+
+**Welcher Service ist der beste?**
+Google Gemini (jetzt integriert!) - Beste Qualität, kostenlos, und funktioniert sofort!
 
 **Gibt es Limits?**
-~1000 Requests/Tag. Für normale Nutzung mehr als genug.
+Gemini: 15 Requests/Minute (900/Stunde) - mehr als genug!
+Hugging Face: ~1000 Requests/Tag
 
 **Wie gut ist die Qualität?**
-Llama 3.1 ist sehr gut - fast so gut wie Claude/GPT-4.
+Gemini 1.5 Flash ist ausgezeichnet - vergleichbar mit Claude/GPT-4!
 
 **Brauche ich eine Kreditkarte?**
-Nein! Nur Email-Adresse.
+Nein! Weder für Gemini noch für Hugging Face.
 
 **Funktioniert es auch offline?**
 Nein, aber wir können lokale AI implementieren für offline use.
+
+**Kann ich zwischen AI Services wechseln?**
+Ja! Klicken Sie auf das 🧠/🤖/🤗/💭 Icon um zwischen Modi zu wechseln.
+
+**Was passiert wenn die API nicht funktioniert?**
+Grandma Sue wechselt automatisch zu lokalen ML-Antworten. Keine Sorge!
