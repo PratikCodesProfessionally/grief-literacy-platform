@@ -5,7 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, Save, FileText, Clock, CheckCircle, Mic, MicOff } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { ArrowLeft, Save, FileText, Clock, CheckCircle, Mic, MicOff, Trash2, Download, Wifi, WifiOff, Cloud, HardDrive, RefreshCw } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
+import { storageProvider } from '@/services/StorageProvider';
 
 export function StoryTherapyPage() {
   const [selectedPrompt, setSelectedPrompt] = React.useState('');
@@ -16,6 +19,22 @@ export function StoryTherapyPage() {
   const [voiceRecordings, setVoiceRecordings] = React.useState<string[]>([]);
   const [writingTimer, setWritingTimer] = React.useState(0);
   const [isWriting, setIsWriting] = React.useState(false);
+  
+  // Storage states
+  const [storageType, setStorageType] = React.useState<'local' | 'cloud'>('local');
+  const [isOnline, setIsOnline] = React.useState(navigator.onLine);
+  const [isSyncing, setIsSyncing] = React.useState(false);
+  const [lastSyncTime, setLastSyncTime] = React.useState<Date | null>(null);
+  
+  const { toast } = useToast();
+  const storageProviderInstance = React.useMemo(() => 
+    storageProvider.createProvider(
+      storageType,
+      'stories',
+      import.meta.env.VITE_API_URL
+    ),
+    [storageType]
+  );
 
   const storyPrompts = [
     {
@@ -69,6 +88,36 @@ export function StoryTherapyPage() {
   ];
 
   const [completedPrompts, setCompletedPrompts] = React.useState<Set<string>>(new Set());
+
+  // Online/Offline status monitoring
+  React.useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Load stories on mount
+  React.useEffect(() => {
+    const loadStories = async () => {
+      try {
+        const stories = await storageProviderInstance.list();
+        setSavedStories(stories);
+        // Update completed prompts
+        const completed = new Set(stories.map((s: any) => s.prompt));
+        setCompletedPrompts(completed);
+      } catch (error) {
+        console.error('Failed to load stories:', error);
+      }
+    };
+    loadStories();
+  }, [storageProviderInstance]);
 
   // Writing timer effect
   React.useEffect(() => {
@@ -125,7 +174,7 @@ export function StoryTherapyPage() {
     return colors[category as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
-  const handleSaveStory = () => {
+  const handleSaveStory = async () => {
     if (story.trim() && selectedPrompt) {
       const newStory = {
         id: Date.now(),
@@ -136,12 +185,89 @@ export function StoryTherapyPage() {
         savedAt: new Date().toLocaleDateString(),
         category: storyPrompts.find(p => p.text === selectedPrompt)?.category || 'Unknown'
       };
-      setSavedStories([...savedStories, newStory]);
-      setCompletedPrompts(new Set([...completedPrompts, selectedPrompt]));
-      setStory('');
-      setSelectedPrompt('');
-      setIsWriting(false);
-      setWritingTimer(0);
+      
+      try {
+        await storageProviderInstance.save(String(newStory.id), newStory);
+        setSavedStories([...savedStories, newStory]);
+        setCompletedPrompts(new Set([...completedPrompts, selectedPrompt]));
+        setStory('');
+        setSelectedPrompt('');
+        setIsWriting(false);
+        setWritingTimer(0);
+        
+        toast({
+          title: "Story saved",
+          description: `Your story has been successfully saved`,
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to save story",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleDeleteStory = async (storyId: number) => {
+    try {
+      await storageProviderInstance.delete(String(storyId));
+      setSavedStories(savedStories.filter(s => s.id !== storyId));
+      
+      toast({
+        title: "Story deleted",
+        description: "Your story has been removed",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete story",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDownloadStory = (storyToDownload: any) => {
+    const content = `Title: ${storyToDownload.prompt}\n\nCategory: ${storyToDownload.category}\nDate: ${storyToDownload.savedAt}\nWord Count: ${storyToDownload.wordCount}\nTime Spent: ${formatTime(storyToDownload.timeSpent)}\n\n${storyToDownload.content}`;
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `story-${storyToDownload.id}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Downloaded",
+      description: "Your story has been downloaded",
+    });
+  };
+
+  const syncStories = async () => {
+    if (!isOnline || storageType === 'local') return;
+
+    try {
+      setIsSyncing(true);
+      const cloudStories = await storageProviderInstance.list();
+      setSavedStories(cloudStories);
+      const completed = new Set(cloudStories.map((s: any) => s.prompt));
+      setCompletedPrompts(completed);
+      setLastSyncTime(new Date());
+      
+      toast({
+        title: "Sync successful",
+        description: "Your stories have been synchronized with the cloud",
+      });
+    } catch (error) {
+      toast({
+        title: "Sync failed",
+        description: "Failed to synchronize stories",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -164,6 +290,52 @@ export function StoryTherapyPage() {
   };
 
   const completionPercentage = (completedPrompts.size / storyPrompts.length) * 100;
+
+  // Storage Controls Component
+  const StorageControls = () => (
+    <div className="flex items-center justify-between p-4 border-b">
+      <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2">
+          {storageType === 'local' ? (
+            <HardDrive className="h-4 w-4" />
+          ) : (
+            <Cloud className="h-4 w-4" />
+          )}
+          <span className="text-sm">Storage: {storageType === 'local' ? 'Local' : 'Cloud'}</span>
+        </div>
+        <Switch
+          checked={storageType === 'cloud'}
+          onCheckedChange={(checked) => setStorageType(checked ? 'cloud' : 'local')}
+        />
+      </div>
+      
+      <div className="flex items-center space-x-4">
+        {isOnline ? (
+          <Wifi className="h-4 w-4 text-green-500" />
+        ) : (
+          <WifiOff className="h-4 w-4 text-red-500" />
+        )}
+        
+        {storageType === 'cloud' && (
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={!isOnline || isSyncing}
+            onClick={syncStories}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
+            {isSyncing ? 'Syncing...' : 'Sync'}
+          </Button>
+        )}
+        
+        {lastSyncTime && (
+          <span className="text-xs text-gray-500">
+            Last sync: {lastSyncTime.toLocaleTimeString()}
+          </span>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -205,6 +377,11 @@ export function StoryTherapyPage() {
       </Card>
 
       <div className="grid lg:grid-cols-3 gap-6">
+        {/* Storage Controls */}
+        <Card className="lg:col-span-3">
+          <StorageControls />
+        </Card>
+
         <Card className="lg:col-span-1">
           <CardHeader>
             <CardTitle>Story Prompts</CardTitle>
@@ -320,7 +497,33 @@ export function StoryTherapyPage() {
                   {voiceRecordings.map((recording, index) => (
                     <div key={index} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded text-sm">
                       <span>{recording}</span>
-                      <Button size="sm" variant="ghost">Play</Button>
+                      <div className="flex items-center space-x-2">
+                        <Button 
+                          size="sm" 
+                          variant="ghost"
+                          onClick={() => {
+                            toast({
+                              title: "Playing recording",
+                              description: recording,
+                            });
+                          }}
+                        >
+                          Play
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="ghost"
+                          onClick={() => {
+                            setVoiceRecordings(voiceRecordings.filter((_, i) => i !== index));
+                            toast({
+                              title: "Recording deleted",
+                              description: "Voice recording has been removed",
+                            });
+                          }}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -358,13 +561,29 @@ export function StoryTherapyPage() {
                     <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
                       <div>{story.wordCount} words</div>
                       <div>Writing time: {formatTime(story.timeSpent)}</div>
-                      <p className="mt-2 text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                      <p className="mt-2 text-gray-700 dark:text-gray-300 line-clamp-3">
                          {story.content}
                       </p>
                     </div>
-                    <Button size="sm" variant="outline" className="w-full mt-3">
-                      Read Full Story
-                    </Button>
+                    <div className="flex items-center space-x-2 mt-3">
+                      <Button size="sm" variant="outline" className="flex-1">
+                        Read Full Story
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleDownloadStory(story)}
+                      >
+                        <Download className="h-3 w-3" />
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleDeleteStory(story.id)}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               ))}
