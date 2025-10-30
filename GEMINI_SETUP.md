@@ -21,9 +21,11 @@ Grandma Sue now supports Google Gemini AI (free tier) for intelligent, empatheti
 5. Copy your API key (it will look like: `AIzaSy...`)
 
 **Note:** No credit card required! The free tier includes:
-- 15 requests per minute
-- 1 million tokens per day
-- 1500 requests per day
+- 15 requests per minute (rate limit)
+- 1,500 requests per day (daily limit)
+- 1 million tokens per month (token limit)
+
+Both request and token limits apply - whichever is reached first.
 
 ### 2. Configure Your Project
 
@@ -117,8 +119,10 @@ If Gemini API fails for any reason:
 ### Google Gemini Free Tier:
 - **Rate Limit:** 15 requests per minute
 - **Daily Limit:** 1,500 requests per day
-- **Token Limit:** 1 million tokens per day
+- **Monthly Token Limit:** 1 million tokens per month
 - **Cost:** $0 (completely free)
+
+Note: Both request and token limits apply.
 
 ### Usage Estimates:
 - Average conversation: 10-20 requests

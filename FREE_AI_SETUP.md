@@ -71,13 +71,13 @@ Ich kann das implementieren, wenn Sie möchten!
 
 ---
 
-## 🆓 Option 3: Google Gemini (Gratis Tier) ⭐ NOW INTEGRATED
+## 🆓 Option 3: Google Gemini (Gratis Tier) - NOW INTEGRATED
 
 ### Vorteile:
 - ✅ 15 Requests/Minute gratis
 - ✅ Sehr gutes Modell (Gemini 1.5 Flash)
 - ✅ Keine Kreditkarte
-- ✅ **JETZT VOLL IMPLEMENTIERT** ✨
+- ✅ **JETZT VOLL IMPLEMENTIERT**
 
 ### Setup:
 
@@ -141,7 +141,7 @@ npm run dev
 
 | Service | Kosten | Qualität | Setup | Empfehlung |
 |---------|--------|----------|-------|------------|
-| **Google Gemini** | ✅ Free | ⭐⭐⭐⭐⭐ | Easy | **NEU! BESTE WAHL** ✨ |
+| **Google Gemini** | ✅ Free | ⭐⭐⭐⭐⭐ | Easy | **NEU! BESTE WAHL** |
 | **Hugging Face** | ✅ Free | ⭐⭐⭐⭐ | Easy | Auch gut |
 | Lokal (offline) | ✅ Free | ⭐⭐⭐ | Medium | Für Privacy |
 | OpenAI | $5 free then $ | ⭐⭐⭐⭐⭐ | Easy | Nach Credits $ |
@@ -151,7 +151,7 @@ npm run dev
 
 ## Empfehlung:
 
-### Für Ihr Projekt: **Google Gemini** ⭐✨
+### Für Ihr Projekt: **Google Gemini**
 
 **Warum?**
 1. **JETZT VOLL IMPLEMENTIERT** - Einfach API Key einfügen und loslegen!
@@ -186,7 +186,7 @@ npm run dev
 # 4. Im Chat auf 🧠 klicken für Gemini!
 ```
 
-**Fertig!** Grandma Sue nutzt jetzt Google Gemini AI! 🎉✨
+**Fertig!** Grandma Sue nutzt jetzt Google Gemini AI! 🎉
 
 ---
 
