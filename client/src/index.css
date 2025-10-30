@@ -4,57 +4,59 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 0%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    /* Therapeutic soft, calming palette */
+    --background: 210 30% 98%; /* Soft off-white with gentle blue undertone */
+    --foreground: 210 15% 25%; /* Muted dark blue-gray for text */
+    --card: 0 0% 100%; /* Pure white for cards */
+    --card-foreground: 210 15% 25%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 10% 3.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
+    --popover-foreground: 210 15% 25%;
+    --primary: 150 25% 45%; /* Sage green - calming and therapeutic */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 260 25% 88%; /* Soft lavender */
+    --secondary-foreground: 260 20% 30%;
+    --muted: 30 30% 94%; /* Warm beige background */
+    --muted-foreground: 210 10% 50%; /* Soft gray text */
+    --accent: 200 30% 88%; /* Gentle blue */
+    --accent-foreground: 200 20% 30%;
+    --destructive: 0 60% 65%; /* Muted rose for destructive actions */
+    --destructive-foreground: 0 0% 100%;
+    --border: 210 20% 92%; /* Very soft border */
+    --input: 210 20% 95%; /* Light input background */
+    --ring: 150 25% 45%; /* Sage green focus ring */
+    --chart-1: 150 30% 55%; /* Soft green */
+    --chart-2: 200 30% 60%; /* Gentle blue */
+    --chart-3: 260 30% 65%; /* Soft lavender */
+    --chart-4: 30 40% 70%; /* Warm beige */
+    --chart-5: 340 30% 70%; /* Muted rose */
+    --radius: 1rem; /* More rounded corners for softer feel */
   }
   .dark {
-    --background: 0 0% 0%;
-    --foreground: 0 0% 100%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    /* Dark mode with calming, therapeutic tones */
+    --background: 210 25% 12%; /* Deep blue-gray background */
+    --foreground: 210 15% 90%; /* Soft off-white text */
+    --card: 210 20% 15%; /* Slightly lighter card background */
+    --card-foreground: 210 15% 90%;
+    --popover: 210 20% 15%;
+    --popover-foreground: 210 15% 90%;
+    --primary: 150 25% 55%; /* Brighter sage green for dark mode */
+    --primary-foreground: 210 25% 12%;
+    --secondary: 260 25% 25%; /* Deeper soft lavender */
+    --secondary-foreground: 260 15% 90%;
+    --muted: 210 20% 20%; /* Muted background */
+    --muted-foreground: 210 10% 65%; /* Medium gray text */
+    --accent: 200 25% 25%; /* Deeper gentle blue */
+    --accent-foreground: 200 15% 90%;
+    --destructive: 0 50% 50%; /* Muted red for dark mode */
+    --destructive-foreground: 0 0% 100%;
+    --border: 210 20% 22%; /* Subtle borders */
+    --input: 210 20% 20%; /* Input background */
+    --ring: 150 25% 55%; /* Sage green focus ring */
+    --chart-1: 150 30% 60%;
+    --chart-2: 200 30% 65%;
+    --chart-3: 260 30% 70%;
+    --chart-4: 30 35% 65%;
+    --chart-5: 340 30% 65%;
   }
 }
 @layer base {
@@ -63,5 +65,43 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "kern" 1, "liga" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.6; /* Better readability */
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold;
+    line-height: 1.3; /* Comfortable heading line height */
+    letter-spacing: -0.01em; /* Slight tightening for better aesthetics */
+  }
+  p {
+    line-height: 1.7; /* Generous line height for body text */
+  }
+}
+
+/* Smooth transitions for all interactive elements */
+@layer components {
+  .therapeutic-transition {
+    @apply transition-all duration-300 ease-in-out;
+  }
+  
+  /* Soft shadow styles */
+  .shadow-soft {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.04);
+  }
+  
+  .shadow-soft-lg {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+  }
+  
+  /* Gentle hover effect */
+  .hover-lift {
+    @apply transition-all duration-300 ease-out;
+  }
+  
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1), 0 3px 10px rgba(0, 0, 0, 0.06);
   }
 }
