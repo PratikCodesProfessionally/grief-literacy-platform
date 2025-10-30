@@ -4,9 +4,6 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build && tsc --project tsconfig.server.json",
-    "start": "node dist/server/index.mjs"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "1.1.3",
