@@ -129,13 +129,19 @@ export function GrandmaSueChatPage() {
   const generateGrandmaSueResponse = (userMessage: string): string => {
     const analysis = analyzeUserMessage(userMessage);
     
-    // Update context with incremented response count
+    // Calculate the new response count (will be used after state update)
+    const newResponseCount = context.responseCount + 1;
+    
+    // Merge current concerns with new ones
+    const allConcerns = [...new Set([...context.userConcerns, ...analysis.concerns])];
+    
+    // Update context (asynchronous - won't be available until next render)
     setContext(prev => ({
       ...prev,
-      userConcerns: [...new Set([...prev.userConcerns, ...analysis.concerns])],
+      userConcerns: allConcerns,
       emotionalState: analysis.emotion,
       lastTopic: analysis.topic,
-      responseCount: prev.responseCount + 1,
+      responseCount: newResponseCount,
     }));
 
     // Handle exam-related concerns with empathy and practical advice
@@ -158,7 +164,7 @@ export function GrandmaSueChatPage() {
       return RESPONSES.GRIEF;
     }
 
-    // Respond based on emotional state
+    // Respond based on current emotional state from analysis
     if (analysis.emotion === 'anxious') {
       return RESPONSES.ANXIETY;
     }
@@ -168,19 +174,20 @@ export function GrandmaSueChatPage() {
     }
 
     // Default empathetic responses for continued conversation
-    // Provide value-based responses based on conversation context
+    // Use current analysis and context for decision making
     const provideSupportiveAdvice = (): string => {
-      // Use responseCount - 1 since it was just incremented, so we start from 0
-      const currentCount = context.responseCount - 1;
+      // Use newResponseCount - 1 to start from index 0
+      const currentCount = newResponseCount - 1;
       
-      // Check if we already know about their concerns and provide relevant follow-up
-      if (context.userConcerns.includes('academic_stress') || context.lastTopic === 'exam') {
+      // Check if we already know about exam concerns (from either current or past messages)
+      if (allConcerns.includes('academic_stress') || analysis.topic === 'exam' || context.lastTopic === 'exam') {
         // Use context-based selection for exam advice
         const index = currentCount % EXAM_ADVICE_FOLLOWUPS.length;
         return EXAM_ADVICE_FOLLOWUPS[index];
       }
 
-      if (context.emotionalState === 'anxious') {
+      // Check for anxiety in current or previous state
+      if (analysis.emotion === 'anxious' || context.emotionalState === 'anxious') {
         return "Anxiety can make everything feel more difficult, can't it? When you're feeling overwhelmed, it helps to ground yourself in the present moment. What's one small thing you can do right now that would make you feel even a tiny bit better? Sometimes just naming our feelings out loud helps them feel less scary. I'm here with you, and whatever you're facing, we can talk through it together.";
       }
 
