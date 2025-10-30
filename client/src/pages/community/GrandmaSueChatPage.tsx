@@ -96,6 +96,10 @@ export function GrandmaSueChatPage() {
 
     // Handle exam-related concerns with empathy and practical advice
     if (analysis.topic === 'exam') {
+      // If they mention both fear and preparation issues
+      if (analysis.concerns.includes('fear') && analysis.concerns.includes('preparation')) {
+        return "Oh sweetheart, I can hear the anxiety in your words - exam fears combined with feeling unprepared is such a difficult place to be. Let me tell you something important: you're being brave by acknowledging these feelings instead of ignoring them.\n\nFirst, take a deep breath with me. The fact that you're worried shows you care, and that's actually a good sign.\n\nNow, let's be practical: Even if you feel unprepared, you likely know more than you think you do. Our minds often exaggerate how bad things are when we're anxious. Here's what I suggest:\n\n1. Focus on the basics - what are the core concepts you absolutely must know?\n2. Take short, focused study breaks rather than cramming everything at once\n3. Practice self-compassion - you're doing your best in this moment\n4. Remember: one exam doesn't define your worth or your future\n\nHow much time do you have before the exam? And can you tell me what subject or topic feels most challenging? Let's work through this together.";
+      }
       if (analysis.concerns.includes('fear')) {
         return "Oh sweetheart, exam fears are so common, and I can hear the worry in your words. It's completely normal to feel anxious about tests. Let me share something: feeling unprepared often feels bigger in our minds than it really is. Tell me, what specifically worries you the most about this exam? Is it the material itself, the time pressure, or perhaps fear of disappointing yourself or others?";
       }
@@ -120,22 +124,32 @@ export function GrandmaSueChatPage() {
     }
 
     // Default empathetic responses for continued conversation
-    const continuationResponses = [
-      "Thank you for sharing that with me. I'm listening carefully to what you're telling me. Tell me more about this - what else is on your heart?",
-      "I can tell this matters deeply to you. Your feelings are important and valid. What would feel most supportive for you right now?",
-      "I'm glad you're opening up about this. Sometimes just putting our thoughts and feelings into words can help us understand them better. What else would you like to explore together?",
-      "I hear you, dear one. These are real concerns you're carrying. Let's take them one at a time. What feels most pressing to you right now?",
-    ];
-
-    // If we have context about their concerns, provide more specific guidance
-    if (context.userConcerns.length > 0) {
-      if (context.userConcerns.includes('academic_stress')) {
-        return "You've mentioned stress about your studies. I want you to know that academic challenges are temporary, but the skills you're building - resilience, persistence, self-awareness - those last a lifetime. Let's focus on what you can control. What's one small step you could take today that might help you feel a bit more prepared or at ease?";
+    // Avoid just asking questions - provide value and support
+    const provideSupportiveAdvice = () => {
+      // Check if we already know about their concerns
+      if (context.userConcerns.includes('academic_stress') || context.lastTopic === 'exam') {
+        const examAdvice = [
+          "You know, I've seen many people worry about exams over the years. Here's what I've learned: the fact that you're concerned shows you care, and that matters. Even if you don't feel fully prepared, remember that you've been learning all along - trust that some of it has stayed with you. Focus on taking care of yourself too - good sleep and staying calm can help you perform better than cramming through the night.",
+          "Let me share something with you: exams test your knowledge at one moment in time, but they don't measure your intelligence, your worth, or your potential. Whatever happens, you'll learn from it and move forward. Right now, if you have time, focus on the key concepts. If the exam is very soon, practice staying calm and doing your best with what you know. That's all anyone can ask of you - including yourself.",
+          "I want you to remember something important: feeling unprepared and actually being unprepared are two different things. Anxiety has a way of making us feel like we know nothing, when in reality, we know more than we think. Before the exam, take a moment to acknowledge what you DO know. Sometimes that shift in perspective can make all the difference.",
+        ];
+        return examAdvice[messages.length % examAdvice.length];
       }
-    }
 
-    // Return a varied continuation response
-    return continuationResponses[messages.length % continuationResponses.length];
+      if (context.emotionalState === 'anxious') {
+        return "Anxiety can make everything feel more difficult, can't it? When you're feeling overwhelmed, it helps to ground yourself in the present moment. What's one small thing you can do right now that would make you feel even a tiny bit better? Sometimes just naming our feelings out loud helps them feel less scary. I'm here with you, and whatever you're facing, we can talk through it together.";
+      }
+
+      // General supportive responses that provide value
+      const supportiveResponses = [
+        "I want you to know that what you're sharing with me matters. These feelings and concerns are real, and they deserve attention. Sometimes when we're struggling, it helps to break things down into smaller pieces. What feels most manageable to address first? We don't have to solve everything at once.",
+        "Thank you for trusting me with what's in your heart. Remember, you don't have to have all the answers right now. It's okay to feel uncertain or worried - those feelings are part of being human. What I want you to know is that you're stronger than you realize, even when you don't feel strong. How can I best support you in this moment?",
+        "I hear the concern in your words, and I want to remind you of something: you're doing better than you think you are. Just by reaching out and talking about what's bothering you, you're taking a positive step. Many people keep everything bottled up inside. You're being brave by opening up. Is there a specific aspect of what you're dealing with where you'd like some guidance?",
+      ];
+      return supportiveResponses[Math.floor(messages.length / 2) % supportiveResponses.length];
+    };
+
+    return provideSupportiveAdvice();
   };
 
   const handleSendMessage = () => {
