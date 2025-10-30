@@ -34,7 +34,7 @@
 
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import Poem, { IPoem } from '../models/Poem';
+import Poem, { IPoem } from '../models/Poem.js';
 
 /**
  * Definiert die Struktur der Client-Änderungen

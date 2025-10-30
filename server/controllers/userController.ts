@@ -12,8 +12,8 @@ import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { User, IUser } from '../models/User';
-import { sendVerificationEmail, sendPasswordResetEmail } from '../services/emailService';
+import { User, IUser } from '../models/User.js';
+import { sendVerificationEmail, sendPasswordResetEmail } from '../services/emailService.js';
 
 class UserController {
   /**

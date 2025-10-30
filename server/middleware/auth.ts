@@ -11,8 +11,8 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { rateLimit } from 'express-rate-limit';
-import User, { IUser } from '../models/User';
-import { logger } from '../utils/logger';
+import User, { IUser } from '../models/User.js';
+import { logger } from '../utils/logger.js';
 
 // Erweitere Express Request Type
 declare module 'express' {

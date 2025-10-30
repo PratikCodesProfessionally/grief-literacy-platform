@@ -9,7 +9,7 @@
  */
 
 import mongoose from 'mongoose';
-import { logger } from '../utils/logger';
+import { logger } from '../utils/logger.js';
 
 // Add type definitions
 type MongoServerApiVersion = '1' | '2';

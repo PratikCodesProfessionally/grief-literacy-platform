@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import Poem, { IPoem } from '../models/Poem';
-import { logger } from '../utils/logger';
+import Poem, { IPoem } from '../models/Poem.js';
+import { logger } from '../utils/logger.js';
 
 // Extend Express Request
 declare global {

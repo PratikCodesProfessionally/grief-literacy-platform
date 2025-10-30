@@ -5,10 +5,13 @@
     "moduleResolution": "nodenext",
     "esModuleInterop": true,
     "outDir": "dist/server",
+    "rootDir": "server",
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "strict": false,
+    "noImplicitAny": false
   },
   "include": ["server/**/*"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "client", "dist"]
 }

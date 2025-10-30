@@ -196,7 +196,7 @@ UserSchema.virtual('isDeactivated').get(function() {
 });
 
 // Model erstellen und exportieren
-export default mongoose.model<IUser>('User', UserSchema);
+const User = mongoose.model<IUser>('User', UserSchema);
 
 /**
  * Erklärung der Komponenten:
@@ -223,4 +223,5 @@ E-Mail-Validierung per Regex
 Mehrsprachunterstützung
 Theme-Präferenzen
 Soft-Delete Funktionalität
-*/
+*/export { User };
+export default User;
