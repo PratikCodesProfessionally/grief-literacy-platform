@@ -3,6 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { geminiService } from '@/services/GeminiService';
+import { claudeService } from '@/services/ClaudeService';
+import { huggingFaceService } from '@/services/HuggingFaceService';
 
 interface Message {
   id: string;
@@ -21,11 +24,14 @@ interface ConversationContext {
   };
 }
 
+type AIMode = 'local' | 'gemini' | 'claude' | 'huggingface';
+
 export function GrandmaSue() {
   const [isOpen, setIsOpen] = React.useState(false);
   const [messages, setMessages] = React.useState<Message[]>([]);
   const [input, setInput] = React.useState('');
   const [isTyping, setIsTyping] = React.useState(false);
+  const [aiMode, setAIMode] = React.useState<AIMode>('local');
   const [context, setContext] = React.useState<ConversationContext>({
     topics: [],
     sentiment: 'neutral',
@@ -35,6 +41,17 @@ export function GrandmaSue() {
     },
   });
   const scrollRef = React.useRef<HTMLDivElement>(null);
+
+  // Auto-detect best available AI service on mount
+  React.useEffect(() => {
+    if (geminiService.isConfigured()) {
+      setAIMode('gemini');
+    } else if (claudeService.isConfigured()) {
+      setAIMode('claude');
+    } else if (huggingFaceService.isConfigured()) {
+      setAIMode('huggingface');
+    }
+  }, []);
 
   // Load conversation history from localStorage on mount
   React.useEffect(() => {
@@ -246,7 +263,84 @@ export function GrandmaSue() {
     setInput('');
     setIsTyping(true);
 
-    setTimeout(() => {
+    try {
+      let response: string;
+      
+      // Try to use AI service based on mode
+      if (aiMode === 'gemini' && geminiService.isConfigured()) {
+        try {
+          const conversationHistory = messages.slice(-10).map(m => ({
+            role: m.role,
+            content: m.content,
+          }));
+          
+          response = await geminiService.generateResponse(
+            [...conversationHistory, { role: 'user', content: userMessage.content }],
+            {
+              topics: context.topics,
+              sentiment: context.sentiment,
+              previousTopics: context.userPreferences.previousTopics,
+            }
+          );
+        } catch (error) {
+          console.error('Gemini API failed, falling back to local:', error);
+          response = generateSmartResponse(userMessage.content, messages);
+        }
+      } else if (aiMode === 'claude' && claudeService.isConfigured()) {
+        try {
+          const conversationHistory = messages.slice(-10).map(m => ({
+            role: m.role,
+            content: m.content,
+          }));
+          
+          response = await claudeService.generateResponse(
+            [...conversationHistory, { role: 'user', content: userMessage.content }],
+            {
+              topics: context.topics,
+              sentiment: context.sentiment,
+              previousTopics: context.userPreferences.previousTopics,
+            }
+          );
+        } catch (error) {
+          console.error('Claude API failed, falling back to local:', error);
+          response = generateSmartResponse(userMessage.content, messages);
+        }
+      } else if (aiMode === 'huggingface' && huggingFaceService.isConfigured()) {
+        try {
+          const conversationHistory = messages.slice(-10).map(m => ({
+            role: m.role,
+            content: m.content,
+          }));
+          
+          response = await huggingFaceService.generateResponse(
+            [...conversationHistory, { role: 'user', content: userMessage.content }],
+            {
+              topics: context.topics,
+              sentiment: context.sentiment,
+              previousTopics: context.userPreferences.previousTopics,
+            }
+          );
+        } catch (error) {
+          console.error('HuggingFace API failed, falling back to local:', error);
+          response = generateSmartResponse(userMessage.content, messages);
+        }
+      } else {
+        // Use local ML-enhanced responses
+        response = generateSmartResponse(userMessage.content, messages);
+      }
+      
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: response,
+        timestamp: new Date(),
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
+      setIsTyping(false);
+    } catch (error) {
+      console.error('Error generating response:', error);
+      // Fallback to local response on any error
       const response = generateSmartResponse(userMessage.content, messages);
       
       const assistantMessage: Message = {
@@ -258,7 +352,7 @@ export function GrandmaSue() {
 
       setMessages(prev => [...prev, assistantMessage]);
       setIsTyping(false);
-    }, 1500 + Math.random() * 1000);
+    }
   };
 
   const handleFeedback = (messageId: string, feedback: 'helpful' | 'not-helpful') => {
@@ -326,11 +420,37 @@ export function GrandmaSue() {
                   <div>
                     <CardTitle className="text-lg">Grandma Sue</CardTitle>
                     <CardDescription className="text-xs">
-                      AI Companion • Learning & Growing
+                      {aiMode === 'gemini' && geminiService.isConfigured() ? '🧠 Google Gemini AI' :
+                       aiMode === 'claude' && claudeService.isConfigured() ? '🤖 Claude AI' :
+                       aiMode === 'huggingface' && huggingFaceService.isConfigured() ? '🤗 Hugging Face AI' :
+                       'AI Companion • Learning & Growing'}
                     </CardDescription>
                   </div>
                 </div>
                 <div className="flex gap-1">
+                  {/* AI Mode Toggle */}
+                  {(geminiService.isConfigured() || claudeService.isConfigured() || huggingFaceService.isConfigured()) && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        const modes: AIMode[] = ['local'];
+                        if (geminiService.isConfigured()) modes.push('gemini');
+                        if (claudeService.isConfigured()) modes.push('claude');
+                        if (huggingFaceService.isConfigured()) modes.push('huggingface');
+                        
+                        const currentIndex = modes.indexOf(aiMode);
+                        const nextMode = modes[(currentIndex + 1) % modes.length];
+                        setAIMode(nextMode);
+                      }}
+                      className="h-8 w-8 p-0"
+                      title="Toggle AI mode"
+                    >
+                      {aiMode === 'gemini' ? '🧠' : 
+                       aiMode === 'claude' ? '🤖' : 
+                       aiMode === 'huggingface' ? '🤗' : '💭'}
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
                     size="sm"
