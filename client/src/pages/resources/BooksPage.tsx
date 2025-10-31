@@ -287,7 +287,7 @@ export function BooksPage() {
   ];
 
   // Available categories for the filter dropdown.
-  const categories = ['all', 'Memoir', 'Self-Help', 'Spiritual', 'Psychology', 'Health', 'Family', 'Pet Loss', 'Resilience'];
+  const categories = ['all', 'Memoir', 'Self-Help', 'Spiritual', 'Psychology', 'Health', 'Family', 'Pet Loss', 'Resilience', 'Emotional Health'];
 
   // -----------------------------
   // 2.3) Persistence effects
@@ -382,6 +382,7 @@ export function BooksPage() {
       'Family': 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200',
       'Pet Loss': 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200',
       'Resilience': 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200',
+      'Emotional Health': 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
     };
     return colors[category] || 'bg-gray-100 text-gray-800';
   };
