@@ -6,8 +6,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { ArrowLeft, Play, Pause, Volume2, VolumeX, Mic, MicOff, Download, Plus, AlertTriangle } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
+
+interface Recording {
+  name: string;
+  blob: Blob;
+  url: string;
+}
 
 export function MusicTherapyPage() {
+  const { toast } = useToast();
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
 
   const [currentTrack, setCurrentTrack] = React.useState<string | null>(null);
@@ -21,11 +29,14 @@ export function MusicTherapyPage() {
 
   const [isRecording, setIsRecording] = React.useState(false);
   const [recordingTime, setRecordingTime] = React.useState(0);
-  const [recordings, setRecordings] = React.useState<string[]>([]);
+  const [recordings, setRecordings] = React.useState<Recording[]>([]);
   const [playlistName, setPlaylistName] = React.useState('');
   const [customPlaylist, setCustomPlaylist] = React.useState<string[]>([]);
   const [journalEntry, setJournalEntry] = React.useState('');
   const [selectedActivity, setSelectedActivity] = React.useState<string | null>(null);
+  const [mediaRecorder, setMediaRecorder] = React.useState<MediaRecorder | null>(null);
+  const [playingRecording, setPlayingRecording] = React.useState<number | null>(null);
+  const recordingAudioRef = React.useRef<HTMLAudioElement | null>(null);
 
   const musicCategories = [
     {
@@ -179,17 +190,126 @@ export function MusicTherapyPage() {
     setCurrentTime(t);
   };
 
-  const startRecording = () => {
-    setIsRecording(true);
-    setRecordingTime(0);
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const chunks: Blob[] = [];
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          chunks.push(e.data);
+        }
+      };
+
+      recorder.onstop = () => {
+        const audioBlob = new Blob(chunks, { type: 'audio/webm' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const name = `Recording ${recordings.length + 1} (${formatTime(recordingTime)})`;
+        
+        setRecordings((r) => [...r, { name, blob: audioBlob, url: audioUrl }]);
+        setRecordingTime(0);
+        
+        // Stop all tracks to release the microphone
+        stream.getTracks().forEach(track => track.stop());
+        
+        toast({
+          title: "Recording saved",
+          description: `${name} has been saved successfully.`,
+        });
+      };
+
+      recorder.start();
+      setMediaRecorder(recorder);
+      setIsRecording(true);
+      setRecordingTime(0);
+    } catch (error) {
+      console.error('Error accessing microphone:', error);
+      toast({
+        title: "Microphone access denied",
+        description: "Please grant microphone permissions to record audio.",
+        variant: "destructive",
+      });
+    }
   };
 
   const stopRecording = () => {
-    setIsRecording(false);
-    const name = `Recording ${recordings.length + 1} (${formatTime(recordingTime)})`;
-    setRecordings((r) => [...r, name]);
-    setRecordingTime(0);
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop();
+      setIsRecording(false);
+      setMediaRecorder(null);
+    }
   };
+
+  const playRecording = (index: number) => {
+    const audio = recordingAudioRef.current;
+    if (!audio) return;
+
+    if (playingRecording === index) {
+      // Stop playing
+      audio.pause();
+      audio.currentTime = 0;
+      setPlayingRecording(null);
+    } else {
+      // Start playing
+      audio.src = recordings[index].url;
+      audio.play().catch((err) => {
+        console.error('Playback failed:', err);
+        toast({
+          title: "Playback failed",
+          description: "Unable to play the recording. Please try again.",
+          variant: "destructive",
+        });
+      });
+      setPlayingRecording(index);
+    }
+  };
+
+  const downloadRecording = (index: number) => {
+    const recording = recordings[index];
+    const a = document.createElement('a');
+    a.href = recording.url;
+    a.download = `${recording.name}.webm`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  // Handle recording audio end
+  React.useEffect(() => {
+    const audio = recordingAudioRef.current;
+    if (!audio) return;
+
+    const handleEnded = () => {
+      setPlayingRecording(null);
+    };
+
+    audio.addEventListener('ended', handleEnded);
+    return () => {
+      audio.removeEventListener('ended', handleEnded);
+    };
+  }, []);
+
+  // Cleanup mediaRecorder on unmount
+  React.useEffect(() => {
+    return () => {
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+        // Get the stream and stop all tracks
+        const stream = mediaRecorder.stream;
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [mediaRecorder]);
+
+  // Cleanup object URLs on unmount to prevent memory leaks
+  React.useEffect(() => {
+    return () => {
+      recordings.forEach(recording => {
+        URL.revokeObjectURL(recording.url);
+      });
+    };
+  }, [recordings]);
 
   const addToPlaylist = (track: string) => {
     setCustomPlaylist((p) => (p.includes(track) ? p : [...p, track]));
@@ -264,6 +384,8 @@ export function MusicTherapyPage() {
     <div className="space-y-8 p-4 max-w-7xl mx-auto">
       {/* hidden audio element */}
       <audio ref={audioRef} preload="metadata" playsInline />
+      {/* hidden audio element for recordings */}
+      <audio ref={recordingAudioRef} preload="metadata" playsInline />
 
       <div className="flex items-center space-x-4">
         <Link to="/therapy">
@@ -449,10 +571,24 @@ export function MusicTherapyPage() {
                   <h4 className="font-medium text-lg">Your Recordings:</h4>
                   {recordings.map((rec, idx) => (
                     <div key={idx} className="flex items-center justify-between p-3 bg-muted/30 rounded-2xl hover:bg-muted/50 transition-all duration-300">
-                      <span className="text-sm">{rec}</span>
+                      <span className="text-sm">{rec.name}</span>
                       <div className="space-x-1">
-                        <Button size="sm" variant="ghost" className="rounded-full"><Play className="h-3 w-3" /></Button>
-                        <Button size="sm" variant="ghost" className="rounded-full"><Download className="h-3 w-3" /></Button>
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          className="rounded-full"
+                          onClick={() => playRecording(idx)}
+                        >
+                          {playingRecording === idx ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          className="rounded-full"
+                          onClick={() => downloadRecording(idx)}
+                        >
+                          <Download className="h-3 w-3" />
+                        </Button>
                       </div>
                     </div>
                   ))}
