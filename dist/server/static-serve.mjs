@@ -8,10 +8,13 @@ export function setupStaticServing(app) {
     const staticDir = path.join(process.cwd(), 'dist');
     console.log('Registering static assets at:', staticDir);
     app.use(express.static(staticDir));
-    // Fallback-Route NUR in Produktion
-    if (process.env.NODE_ENV === 'production') {
-        app.get('*', (req, res) => {
-            res.sendFile(path.join(staticDir, 'index.html'));
-        });
-    }
+    // SPA fallback route - serve index.html for all non-API routes
+    app.get('*', (req, res) => {
+        // Skip API routes
+        if (req.path.startsWith('/api')) {
+            res.status(404).json({ error: 'API endpoint not found' });
+            return;
+        }
+        res.sendFile(path.join(staticDir, 'index.html'));
+    });
 }
