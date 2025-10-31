@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Heart, Share, Bookmark, Volume2, Mic, MicOff, Save, Download } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ArrowLeft, Heart, Share, Bookmark, Volume2, Mic, MicOff, Save, Download, X } from 'lucide-react';
 import { ApiClient } from '@/services/ApiClient';
 import { useToast } from '@/components/ui/use-toast';
 import { Switch } from '@/components/ui/switch';
@@ -27,6 +28,7 @@ export function PoetryTherapyPage() {
   const [isOnline, setIsOnline] = React.useState(navigator.onLine);
   const [isSyncing, setIsSyncing] = React.useState(false);
   const [lastSyncTime, setLastSyncTime] = React.useState<Date | null>(null);
+  const [expandedPoem, setExpandedPoem] = React.useState<any | null>(null);
   
   const { toast } = useToast();
   const storageProviderInstance = React.useMemo(() => 
@@ -377,6 +379,44 @@ Sweetness transitions to bitterness`,
 
   return (
     <div className="space-y-8 p-4 max-w-7xl mx-auto">
+      {/* Dialog for expanded poem view */}
+      <Dialog open={expandedPoem !== null} onOpenChange={(open) => !open && setExpandedPoem(null)}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          {expandedPoem && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-semibold">{expandedPoem.title}</DialogTitle>
+                <DialogDescription className="text-base">
+                  {expandedPoem.prompt && `Prompt: "${expandedPoem.prompt}"`}
+                  <br />
+                  Created on {expandedPoem.createdAt}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="mt-4">
+                <p className="whitespace-pre-line text-base leading-loose font-serif">
+                  {expandedPoem.content}
+                </p>
+              </div>
+              <div className="flex items-center justify-between mt-6 pt-4 border-t">
+                <div className="text-sm text-muted-foreground">
+                  {expandedPoem.lineCount} lines • {expandedPoem.wordCount} words
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" className="rounded-full">
+                    <Share className="h-3 w-3 mr-1" />
+                    Share
+                  </Button>
+                  <Button size="sm" variant="outline" className="rounded-full">
+                    <Download className="h-3 w-3 mr-1" />
+                    Export
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
       <div className="flex items-center space-x-4">
         <Link to="/therapy">
           <Button variant="outline" size="sm" className="rounded-full shadow-soft hover:shadow-soft-lg transition-all duration-300">
@@ -601,7 +641,14 @@ Sweetness transitions to bitterness`,
                       </p>
                       <div className="flex items-center justify-between text-xs text-muted-foreground">
                         <span>{poem.lineCount} lines • {poem.wordCount} words</span>
-                        <Button size="sm" variant="ghost" className="rounded-full hover:bg-accent/20 transition-all duration-300">Read Full</Button>
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          className="rounded-full hover:bg-accent/20 transition-all duration-300"
+                          onClick={() => setExpandedPoem(poem)}
+                        >
+                          Read Full
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>
