@@ -269,6 +269,19 @@ export function BooksPage() {
   isbn: '978-1072551386',
   summary: 'This book offers a scientifically grounded and easy-to-follow 5-step approach to mastering emotions like fear, anger, and sadness. Dr. Beeker combines psychological insights with practical exercises to help readers achieve emotional balance, break negative cycles, and regain mental clarity. It’s an empowering read for anyone seeking long-term emotional resilience and peace of mind.',
   keyTopics: ['Emotional Regulation', 'Mindfulness', 'Cognitive Techniques', 'Self-Awareness', 'Stress Management']
+},
+{
+  title: 'New love, same ?!:',
+  author: 'Yvi Blum',
+  description: 'A guide to understanding relationship patterns and how to break free from repeating cycles in romantic relationships.',
+  rating: 4.4,
+  category: 'Self-Help',
+  pages: 256,
+  published: '2024',
+  isbn: '978-3833892073',
+  summary: 'This book explores why we often find ourselves repeating the same patterns in relationships, despite wanting different outcomes. Yvi Blum provides practical tools and exercises to help readers identify their relationship patterns, understand their origins, and develop strategies to break old cycles. Through a combination of psychological insights and actionable steps, readers learn how to approach new relationships with awareness and create healthier, more fulfilling connections.',
+  keyTopics: ['Relationship Patterns', 'Self-Awareness', 'Breaking Cycles', 'Emotional Growth', 'Healthy Relationships'],
+  notesForHealing: 'If you keep encountering similar challenges in relationships, this book helps you pause and examine patterns with compassion rather than judgment. The exercises guide you toward conscious choice—building new relational habits one interaction at a time.'
 }
 
   ];
