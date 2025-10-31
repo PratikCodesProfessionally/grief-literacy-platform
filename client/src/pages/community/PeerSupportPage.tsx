@@ -2,24 +2,22 @@ import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/components/ui/use-toast';
 import { 
-  ArrowLeft, MessageCircle, Heart, Search, Filter, X, ChevronDown, 
-  Users, CheckCircle, Clock, AlertTriangle, Shield, TrendingUp,
-  UserCheck, Bell, Settings, BarChart3, CheckCircle2
+  ArrowLeft, MessageCircle, Heart, ChevronDown, 
+  Users, CheckCircle, Clock, Shield, TrendingUp,
+  UserCheck, BarChart3, CheckCircle2, Clipboard, ArrowRight, 
+  ArrowLeftIcon, Loader2, RefreshCw, RotateCcw
 } from 'lucide-react';
 
 type ConnectionStatus = 'not_connected' | 'pending' | 'connected';
-type SortOption = 'compatibility' | 'alphabetical' | 'newest';
 
 interface PeerMatch {
   id: string;
@@ -30,11 +28,14 @@ interface PeerMatch {
   compatibility: number;
   bio: string;
   interests: string[];
-  availability: string;
+  availability: string[];
   responseRate: number;
   isOnline: boolean;
   isVerified: boolean;
   connectionStatus: ConnectionStatus;
+  communicationMethod: string;
+  copingMethods: string[];
+  supportPreferences: string[];
 }
 
 interface ActiveConnection {
@@ -45,32 +46,50 @@ interface ActiveConnection {
   avatar: string;
 }
 
-interface Filters {
+interface QuestionnaireAnswers {
   lossType: string;
-  timeframeRange: string;
-  minCompatibility: number;
-  searchQuery: string;
+  lossTimeframe: string;
+  supportPreferences: string[];
+  communicationFrequency: string;
+  communicationMethod: string;
+  availability: string[];
+  copingMethods: string[];
+  interests: string;
+  ageRange: string;
+  bio: string;
 }
 
 export function PeerSupportPage() {
   const { toast } = useToast();
-  const [filters, setFilters] = React.useState<Filters>({
-    lossType: 'all',
-    timeframeRange: 'all',
-    minCompatibility: 0,
-    searchQuery: '',
-  });
-  const [sortBy, setSortBy] = React.useState<SortOption>('compatibility');
-  const [expandedCards, setExpandedCards] = React.useState<Set<string>>(new Set());
-  const [showPreferences, setShowPreferences] = React.useState(false);
-  const [showSafetyGuidelines, setShowSafetyGuidelines] = React.useState(false);
-  const [showReportModal, setShowReportModal] = React.useState(false);
-  const [isLoading, setIsLoading] = React.useState(false);
   
-  // Preference states
-  const [ageRange, setAgeRange] = React.useState([18, 65]);
-  const [selectedLossTypes, setSelectedLossTypes] = React.useState<string[]>([]);
-  const [commFrequency, setCommFrequency] = React.useState('moderate');
+  // Questionnaire state
+  const [questionnaireCompleted, setQuestionnaireCompleted] = React.useState(false);
+  const [currentStep, setCurrentStep] = React.useState(1);
+  const [answers, setAnswers] = React.useState<QuestionnaireAnswers>({
+    lossType: '',
+    lossTimeframe: '',
+    supportPreferences: [],
+    communicationFrequency: '',
+    communicationMethod: '',
+    availability: [],
+    copingMethods: [],
+    interests: '',
+    ageRange: '',
+    bio: '',
+  });
+  
+  // Matching state
+  const [isMatching, setIsMatching] = React.useState(false);
+  const [matches, setMatches] = React.useState<PeerMatch[]>([]);
+  const [expandedCards, setExpandedCards] = React.useState<Set<string>>(new Set());
+  const [showSafetyGuidelines, setShowSafetyGuidelines] = React.useState(false);
+  const [showAnswersSummary, setShowAnswersSummary] = React.useState(false);
+
+  const activeConnections: ActiveConnection[] = [
+    { id: '1', name: 'Sarah M.', lastMessage: 'Thank you for sharing that...', unreadCount: 2, avatar: '👩' },
+    { id: '2', name: 'Mike T.', lastMessage: 'I understand how you feel...', unreadCount: 0, avatar: '👨' },
+    { id: '3', name: 'Luna K.', lastMessage: 'Let\'s chat more tomorrow?', unreadCount: 1, avatar: '👤' },
+  ];
 
   // Utility function for compatibility gradient
   const getCompatibilityGradient = (compatibility: number) => {
@@ -79,164 +98,128 @@ export function PeerSupportPage() {
     return `linear-gradient(135deg, rgba(${red}, ${green}, 100, 0.2) 0%, rgba(${red}, ${green}, 100, 0.1) 100%)`;
   };
 
-  const activeConnections: ActiveConnection[] = [
-    { id: '1', name: 'Sarah M.', lastMessage: 'Thank you for sharing that...', unreadCount: 2, avatar: '👩' },
-    { id: '2', name: 'Mike T.', lastMessage: 'I understand how you feel...', unreadCount: 0, avatar: '👨' },
-    { id: '3', name: 'Luna K.', lastMessage: 'Let\'s chat more tomorrow?', unreadCount: 1, avatar: '👤' },
-  ];
+  // Helper function to generate random matches based on questionnaire
+  const generateMatches = () => {
+    const names = [
+      'Sarah M.', 'Mike T.', 'Luna K.', 'Emily R.', 'David L.',
+      'Jessica P.', 'Tom W.', 'Rachel S.', 'Chris B.', 'Amanda H.'
+    ];
+    
+    const bios = [
+      'Finding my way through grief, one day at a time.',
+      'Grateful for this supportive community.',
+      'Healing through connection and shared experiences.',
+      'Learning to embrace both joy and sorrow.',
+      'Finding strength in vulnerability and openness.'
+    ];
 
-  const peerMatches: PeerMatch[] = [
-    {
-      id: '1',
-      name: 'Sarah M.',
-      age: 28,
-      lossType: 'Lost mother to cancer',
-      timeframe: '6 months ago',
-      compatibility: 95,
-      bio: 'Also navigating life without mom. Love reading and hiking.',
-      interests: ['Reading', 'Hiking', 'Meditation', 'Journaling'],
-      availability: 'Evenings, Weekends',
-      responseRate: 92,
-      isOnline: true,
-      isVerified: true,
-      connectionStatus: 'connected',
-    },
-    {
-      id: '2',
-      name: 'Mike T.',
-      age: 35,
-      lossType: 'Sudden loss of spouse',
-      timeframe: '1 year ago',
-      compatibility: 88,
-      bio: 'Father of two, finding strength in community support.',
-      interests: ['Parenting', 'Sports', 'Support Groups', 'Cooking'],
-      availability: 'Mornings, Weekends',
-      responseRate: 85,
-      isOnline: false,
-      isVerified: true,
-      connectionStatus: 'connected',
-    },
-    {
-      id: '3',
-      name: 'Luna K.',
-      age: 24,
-      lossType: 'Pet loss (dog)',
-      timeframe: '3 months ago',
-      compatibility: 92,
-      bio: 'Missing my best friend. Art therapy helps me cope.',
-      interests: ['Art Therapy', 'Animals', 'Music', 'Nature'],
-      availability: 'Flexible',
-      responseRate: 88,
-      isOnline: true,
-      isVerified: false,
-      connectionStatus: 'connected',
-    },
-    {
-      id: '4',
-      name: 'Emily R.',
-      age: 42,
-      lossType: 'Lost father to illness',
-      timeframe: '8 months ago',
-      compatibility: 87,
-      bio: 'Learning to cope with the loss of my dad. Family is everything.',
-      interests: ['Family', 'Gardening', 'Photography', 'Reading'],
-      availability: 'Afternoons',
-      responseRate: 90,
-      isOnline: false,
-      isVerified: true,
-      connectionStatus: 'pending',
-    },
-    {
-      id: '5',
-      name: 'David L.',
-      age: 31,
-      lossType: 'Lost sibling in accident',
-      timeframe: '4 months ago',
-      compatibility: 83,
-      bio: 'Still processing the sudden loss. Finding comfort in talking with others.',
-      interests: ['Technology', 'Gaming', 'Writing', 'Movies'],
-      availability: 'Evenings',
-      responseRate: 78,
-      isOnline: true,
-      isVerified: false,
-      connectionStatus: 'not_connected',
-    },
-  ];
+    const numMatches = Math.floor(Math.random() * 3) + 3; // 3-5 matches
+    const generatedMatches: PeerMatch[] = [];
 
-  const lossTypes = [
-    'Lost mother to cancer',
-    'Sudden loss of spouse',
-    'Pet loss (dog)',
-    'Lost father to illness',
-    'Lost sibling in accident',
-  ];
+    for (let i = 0; i < numMatches; i++) {
+      const name = names[Math.floor(Math.random() * names.length)];
+      const age = answers.ageRange === '18-24' ? 18 + Math.floor(Math.random() * 7) :
+                  answers.ageRange === '25-34' ? 25 + Math.floor(Math.random() * 10) :
+                  answers.ageRange === '35-44' ? 35 + Math.floor(Math.random() * 10) :
+                  answers.ageRange === '45-54' ? 45 + Math.floor(Math.random() * 10) :
+                  55 + Math.floor(Math.random() * 15);
 
-  // Filter and sort logic
-  const filteredAndSortedPeers = React.useMemo(() => {
-    let filtered = peerMatches.filter(peer => {
-      // Filter by loss type
-      if (filters.lossType !== 'all' && peer.lossType !== filters.lossType) {
-        return false;
-      }
+      // Calculate compatibility based on shared answers
+      let compatibility = 75 + Math.floor(Math.random() * 23); // 75-98%
       
-      // Filter by timeframe
-      if (filters.timeframeRange !== 'all') {
-        const monthsAgo = parseInt(peer.timeframe.split(' ')[0]) || 0;
-        if (filters.timeframeRange === 'recent' && monthsAgo > 6) return false;
-        if (filters.timeframeRange === 'past_year' && (monthsAgo < 6 || monthsAgo > 12)) return false;
-        if (filters.timeframeRange === 'over_year' && monthsAgo <= 12) return false;
-      }
-      
-      // Filter by minimum compatibility
-      if (peer.compatibility < filters.minCompatibility) {
-        return false;
-      }
-      
-      // Search filter
-      if (filters.searchQuery) {
-        const query = filters.searchQuery.toLowerCase();
-        const matchesBio = peer.bio.toLowerCase().includes(query);
-        const matchesInterests = peer.interests.some(interest => 
-          interest.toLowerCase().includes(query)
-        );
-        if (!matchesBio && !matchesInterests) {
-          return false;
-        }
-      }
-      
-      return true;
-    });
+      // Parse interests from user input
+      const userInterests = answers.interests ? answers.interests.split(',').map(i => i.trim()) : [];
+      const allInterests = [...answers.copingMethods, ...userInterests];
+      const peerInterests = allInterests.slice(0, 3 + Math.floor(Math.random() * 2));
 
-    // Sort
-    if (sortBy === 'compatibility') {
-      filtered.sort((a, b) => b.compatibility - a.compatibility);
-    } else if (sortBy === 'alphabetical') {
-      filtered.sort((a, b) => a.name.localeCompare(b.name));
-    } else if (sortBy === 'newest') {
-      filtered.sort((a, b) => {
-        const aMonths = parseInt(a.timeframe.split(' ')[0]) || 0;
-        const bMonths = parseInt(b.timeframe.split(' ')[0]) || 0;
-        return aMonths - bMonths;
+      generatedMatches.push({
+        id: `match-${i}`,
+        name,
+        age,
+        lossType: answers.lossType,
+        timeframe: answers.lossTimeframe,
+        compatibility,
+        bio: bios[Math.floor(Math.random() * bios.length)],
+        interests: peerInterests,
+        availability: answers.availability,
+        responseRate: 75 + Math.floor(Math.random() * 25),
+        isOnline: Math.random() > 0.5,
+        isVerified: Math.random() > 0.3,
+        connectionStatus: 'not_connected',
+        communicationMethod: answers.communicationMethod,
+        copingMethods: answers.copingMethods,
+        supportPreferences: answers.supportPreferences,
       });
     }
 
-    return filtered;
-  }, [peerMatches, filters, sortBy]);
+    return generatedMatches;
+  };
 
-  const activeFilterCount = React.useMemo(() => {
-    let count = 0;
-    if (filters.lossType !== 'all') count++;
-    if (filters.timeframeRange !== 'all') count++;
-    if (filters.minCompatibility > 0) count++;
-    if (filters.searchQuery) count++;
-    return count;
-  }, [filters]);
+  const handleStartQuestionnaire = () => {
+    setQuestionnaireCompleted(false);
+    setCurrentStep(1);
+    setAnswers({
+      lossType: '',
+      lossTimeframe: '',
+      supportPreferences: [],
+      communicationFrequency: '',
+      communicationMethod: '',
+      availability: [],
+      copingMethods: [],
+      interests: '',
+      ageRange: '',
+      bio: '',
+    });
+  };
 
-  const removeFilter = (filterKey: keyof Filters) => {
-    setFilters(prev => ({
-      ...prev,
-      [filterKey]: filterKey === 'minCompatibility' ? 0 : filterKey === 'searchQuery' ? '' : 'all'
-    }));
+  const handleNextStep = () => {
+    if (currentStep < 5) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handlePreviousStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const handleFindMatches = async () => {
+    setIsMatching(true);
+    
+    // Simulate matching process
+    await new Promise(resolve => setTimeout(resolve, 2500));
+    
+    const newMatches = generateMatches();
+    setMatches(newMatches);
+    setIsMatching(false);
+    setQuestionnaireCompleted(true);
+    
+    toast({
+      title: "Matches Found!",
+      description: `We found ${newMatches.length} great peer matches for you.`,
+      variant: "default",
+    });
+  };
+
+  const handleGetNewMatches = async () => {
+    setIsMatching(true);
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    const newMatches = generateMatches();
+    setMatches(newMatches);
+    setIsMatching(false);
+    
+    toast({
+      title: "New Matches Generated!",
+      description: `Here are ${newMatches.length} new peer matches for you.`,
+      variant: "default",
+    });
+  };
+
+  const handleRetakeQuestionnaire = () => {
+    setQuestionnaireCompleted(false);
+    setCurrentStep(1);
+    setMatches([]);
   };
 
   const toggleCardExpanded = (cardId: string) => {
@@ -251,18 +234,6 @@ export function PeerSupportPage() {
     });
   };
 
-  const handleUpdatePreferences = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      toast({
-        title: "Preferences Updated",
-        description: "Your matching preferences have been saved successfully.",
-        variant: "default",
-      });
-    }, 1000);
-  };
-
   const getConnectionButton = (status: ConnectionStatus) => {
     switch (status) {
       case 'connected':
@@ -273,6 +244,33 @@ export function PeerSupportPage() {
         return { text: 'Connect', icon: <UserCheck className="h-4 w-4" />, variant: 'default' as const };
     }
   };
+
+  const getSharedAttributes = (peer: PeerMatch) => {
+    const shared = [];
+    if (peer.lossType === answers.lossType) shared.push('loss type');
+    if (peer.copingMethods.some(method => answers.copingMethods.includes(method))) shared.push('coping methods');
+    if (peer.availability.some(time => answers.availability.includes(time))) shared.push('availability');
+    if (peer.communicationMethod === answers.communicationMethod) shared.push('communication style');
+    return shared;
+  };
+
+  const isStepValid = () => {
+    switch (currentStep) {
+      case 1:
+        return answers.lossType && answers.lossTimeframe;
+      case 2:
+        return answers.supportPreferences.length > 0 && answers.communicationFrequency;
+      case 3:
+        return answers.communicationMethod && answers.availability.length > 0;
+      case 4:
+        return answers.copingMethods.length > 0;
+      case 5:
+        return answers.ageRange;
+      default:
+        return false;
+    }
+  };
+
 
   return (
     <div className="space-y-6">
@@ -327,42 +325,44 @@ export function PeerSupportPage() {
       </div>
 
       {/* My Connections Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <MessageCircle className="h-5 w-5 mr-2" />
-            My Connections
-          </CardTitle>
-          <CardDescription>Active peer support connections</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {activeConnections.map(conn => (
-              <div 
-                key={conn.id} 
-                className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-              >
-                <div className="flex items-center space-x-3 flex-1">
-                  <div className="text-2xl">{conn.avatar}</div>
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-800 dark:text-white">{conn.name}</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 truncate">{conn.lastMessage}</p>
+      {questionnaireCompleted && matches.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <MessageCircle className="h-5 w-5 mr-2" />
+              My Connections
+            </CardTitle>
+            <CardDescription>Active peer support connections</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {activeConnections.map(conn => (
+                <div 
+                  key={conn.id} 
+                  className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                >
+                  <div className="flex items-center space-x-3 flex-1">
+                    <div className="text-2xl">{conn.avatar}</div>
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-800 dark:text-white">{conn.name}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 truncate">{conn.lastMessage}</p>
+                    </div>
+                    {conn.unreadCount > 0 && (
+                      <Badge variant="default" className="bg-blue-500">
+                        {conn.unreadCount}
+                      </Badge>
+                    )}
                   </div>
-                  {conn.unreadCount > 0 && (
-                    <Badge variant="default" className="bg-blue-500">
-                      {conn.unreadCount}
-                    </Badge>
-                  )}
+                  <Button size="sm" variant="outline">
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    View Chat
+                  </Button>
                 </div>
-                <Button size="sm" variant="outline">
-                  <MessageCircle className="h-4 w-4 mr-2" />
-                  View Chat
-                </Button>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Safety Guidelines */}
       <Card className="border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20">
@@ -400,145 +400,12 @@ export function PeerSupportPage() {
                   <span>Be kind and supportive - Your words have power</span>
                 </li>
               </ul>
-              <div className="mt-4">
-                <Dialog open={showReportModal} onOpenChange={setShowReportModal}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" size="sm" className="border-yellow-600">
-                      <AlertTriangle className="h-4 w-4 mr-2" />
-                      Report Concern
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Report a Concern</DialogTitle>
-                      <DialogDescription>
-                        Help us keep the community safe by reporting any concerning behavior.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4">
-                      <div className="space-y-2">
-                        <Label>Type of Concern</Label>
-                        <Select>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select concern type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="harassment">Harassment</SelectItem>
-                            <SelectItem value="inappropriate">Inappropriate Content</SelectItem>
-                            <SelectItem value="spam">Spam</SelectItem>
-                            <SelectItem value="safety">Safety Concern</SelectItem>
-                            <SelectItem value="other">Other</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Details</Label>
-                        <Textarea 
-                          rows={4}
-                          placeholder="Please describe your concern..."
-                        />
-                      </div>
-                    </div>
-                    <DialogFooter>
-                      <Button variant="outline" onClick={() => setShowReportModal(false)}>Cancel</Button>
-                      <Button onClick={() => {
-                        setShowReportModal(false);
-                        toast({
-                          title: "Report Submitted",
-                          description: "Thank you. We'll review your concern promptly.",
-                        });
-                      }}>Submit Report</Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              </div>
             </CardContent>
           </CollapsibleContent>
         </Collapsible>
       </Card>
 
-      {/* Matching Preferences Panel */}
-      <Card className="border-purple-200 dark:border-purple-800">
-        <Collapsible open={showPreferences} onOpenChange={setShowPreferences}>
-          <CardHeader>
-            <CollapsibleTrigger asChild>
-              <div className="flex items-center justify-between cursor-pointer">
-                <div className="flex items-center space-x-2">
-                  <Settings className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                  <CardTitle>Matching Preferences</CardTitle>
-                </div>
-                <ChevronDown 
-                  className={`h-5 w-5 transition-transform ${showPreferences ? 'rotate-180' : ''}`} 
-                />
-              </div>
-            </CollapsibleTrigger>
-            <CardDescription>Customize your peer matching criteria</CardDescription>
-          </CardHeader>
-          <CollapsibleContent>
-            <CardContent className="space-y-6">
-              <div className="space-y-3">
-                <Label>Preferred Age Range: {ageRange[0]} - {ageRange[1]}</Label>
-                <Slider 
-                  value={ageRange} 
-                  onValueChange={setAgeRange}
-                  min={18}
-                  max={65}
-                  step={1}
-                  className="w-full"
-                />
-              </div>
-              
-              <div className="space-y-3">
-                <Label>Loss Types Willing to Discuss</Label>
-                <div className="space-y-2">
-                  {lossTypes.map(lossType => (
-                    <div key={lossType} className="flex items-center space-x-2">
-                      <Checkbox 
-                        id={lossType}
-                        checked={selectedLossTypes.includes(lossType)}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setSelectedLossTypes([...selectedLossTypes, lossType]);
-                          } else {
-                            setSelectedLossTypes(selectedLossTypes.filter(lt => lt !== lossType));
-                          }
-                        }}
-                      />
-                      <Label htmlFor={lossType} className="font-normal cursor-pointer">
-                        {lossType}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <Label>Communication Frequency Preference</Label>
-                <Select value={commFrequency} onValueChange={setCommFrequency}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="daily">Daily</SelectItem>
-                    <SelectItem value="frequent">Frequent (3-5 times/week)</SelectItem>
-                    <SelectItem value="moderate">Moderate (1-2 times/week)</SelectItem>
-                    <SelectItem value="occasional">Occasional (as needed)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <Button 
-                onClick={handleUpdatePreferences} 
-                disabled={isLoading}
-                className="w-full"
-              >
-                {isLoading ? 'Updating...' : 'Update Preferences'}
-              </Button>
-            </CardContent>
-          </CollapsibleContent>
-        </Collapsible>
-      </Card>
-
+      {/* How Peer Support Works - Updated */}
       <Card className="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
         <CardHeader>
           <CardTitle className="text-green-800 dark:text-green-200">
@@ -547,156 +414,367 @@ export function PeerSupportPage() {
         </CardHeader>
         <CardContent className="text-green-700 dark:text-green-300">
           <ul className="space-y-2">
-            <li>• We match you with someone who has experienced similar loss</li>
-            <li>• Exchange supportive messages in a safe, private space</li>
-            <li>• Share experiences, coping strategies, and encouragement</li>
-            <li>• No pressure - communicate at your own pace</li>
+            <li className="flex items-center">
+              <span className="font-bold mr-2">1.</span>
+              Complete a brief questionnaire about your needs and preferences
+            </li>
+            <li className="flex items-center">
+              <span className="font-bold mr-2">2.</span>
+              Get matched with peers who have similar experiences
+            </li>
+            <li className="flex items-center">
+              <span className="font-bold mr-2">3.</span>
+              Connect and support each other in a safe, private space
+            </li>
+            <li className="flex items-center">
+              <span className="font-bold mr-2">4.</span>
+              Communicate at your own pace - no pressure
+            </li>
           </ul>
         </CardContent>
       </Card>
 
-      {/* Filter Bar */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Filter className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-              <h3 className="font-semibold text-gray-800 dark:text-white">Filters & Search</h3>
-              {activeFilterCount > 0 && (
-                <Badge variant="secondary">{activeFilterCount} active</Badge>
-              )}
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {/* Search */}
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input 
-                  placeholder="Search by bio or interests..." 
-                  className="pl-10"
-                  value={filters.searchQuery}
-                  onChange={(e) => setFilters({ ...filters, searchQuery: e.target.value })}
-                />
+      {/* Empty State - Show when questionnaire not completed */}
+      {!questionnaireCompleted && !isMatching && (
+        <Card className="text-center py-12 border-2 border-dashed">
+          <CardContent>
+            <Clipboard className="h-20 w-20 mx-auto text-blue-500 mb-6" />
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-3">
+              Find Your Peer Support Match
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+              Complete a brief questionnaire to connect with someone who understands your journey and can offer meaningful support.
+            </p>
+            <Button size="lg" onClick={handleStartQuestionnaire}>
+              <Clipboard className="h-5 w-5 mr-2" />
+              Start Questionnaire
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Questionnaire */}
+      {!questionnaireCompleted && currentStep > 0 && !isMatching && (
+        <Card>
+          <CardHeader>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <CardTitle>Peer Matching Questionnaire</CardTitle>
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  Step {currentStep} of 5
+                </span>
               </div>
-
-              {/* Loss Type Filter */}
-              <Select value={filters.lossType} onValueChange={(value) => setFilters({ ...filters, lossType: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Loss Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Loss Types</SelectItem>
-                  {lossTypes.map(type => (
-                    <SelectItem key={type} value={type}>{type}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Timeframe Filter */}
-              <Select value={filters.timeframeRange} onValueChange={(value) => setFilters({ ...filters, timeframeRange: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Timeframe" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Timeframes</SelectItem>
-                  <SelectItem value="recent">Recent (0-6 months)</SelectItem>
-                  <SelectItem value="past_year">Past Year (6-12 months)</SelectItem>
-                  <SelectItem value="over_year">Over a Year</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {/* Sort By */}
-              <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Sort By" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="compatibility">Compatibility</SelectItem>
-                  <SelectItem value="alphabetical">Alphabetical</SelectItem>
-                  <SelectItem value="newest">Newest Matches</SelectItem>
-                </SelectContent>
-              </Select>
+              <Progress value={(currentStep / 5) * 100} className="h-2" />
             </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Step 1 - Loss Experience */}
+            {currentStep === 1 && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Tell us about your loss</h3>
+                
+                <div className="space-y-2">
+                  <Label>What type of loss are you experiencing?</Label>
+                  <Select value={answers.lossType} onValueChange={(value) => setAnswers({...answers, lossType: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select loss type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="parent">Loss of a parent</SelectItem>
+                      <SelectItem value="spouse">Loss of a spouse/partner</SelectItem>
+                      <SelectItem value="sibling">Loss of a sibling</SelectItem>
+                      <SelectItem value="friend">Loss of a friend</SelectItem>
+                      <SelectItem value="pet">Loss of a pet</SelectItem>
+                      <SelectItem value="other">Other loss</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            {/* Min Compatibility Slider */}
-            <div className="space-y-2">
-              <Label>Minimum Compatibility: {filters.minCompatibility}%</Label>
-              <Slider 
-                value={[filters.minCompatibility]} 
-                onValueChange={(value) => setFilters({ ...filters, minCompatibility: value[0] })}
-                min={0}
-                max={100}
-                step={5}
-              />
-            </div>
-
-            {/* Active Filter Chips */}
-            {activeFilterCount > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {filters.lossType !== 'all' && (
-                  <Badge variant="secondary" className="cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600">
-                    Loss Type: {filters.lossType}
-                    <X 
-                      className="h-3 w-3 ml-1" 
-                      onClick={() => removeFilter('lossType')}
-                    />
-                  </Badge>
-                )}
-                {filters.timeframeRange !== 'all' && (
-                  <Badge variant="secondary" className="cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600">
-                    Timeframe: {filters.timeframeRange}
-                    <X 
-                      className="h-3 w-3 ml-1" 
-                      onClick={() => removeFilter('timeframeRange')}
-                    />
-                  </Badge>
-                )}
-                {filters.minCompatibility > 0 && (
-                  <Badge variant="secondary" className="cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600">
-                    Min Match: {filters.minCompatibility}%
-                    <X 
-                      className="h-3 w-3 ml-1" 
-                      onClick={() => removeFilter('minCompatibility')}
-                    />
-                  </Badge>
-                )}
-                {filters.searchQuery && (
-                  <Badge variant="secondary" className="cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600">
-                    Search: "{filters.searchQuery}"
-                    <X 
-                      className="h-3 w-3 ml-1" 
-                      onClick={() => removeFilter('searchQuery')}
-                    />
-                  </Badge>
-                )}
+                <div className="space-y-2">
+                  <Label>How long ago did this happen?</Label>
+                  <Select value={answers.lossTimeframe} onValueChange={(value) => setAnswers({...answers, lossTimeframe: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select timeframe" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="less than 1 month">Less than 1 month</SelectItem>
+                      <SelectItem value="1-3 months">1-3 months</SelectItem>
+                      <SelectItem value="3-6 months">3-6 months</SelectItem>
+                      <SelectItem value="6-12 months">6-12 months</SelectItem>
+                      <SelectItem value="over a year">Over a year</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             )}
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* Peer Matches Section */}
-      <div className="space-y-4">
-        <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">
-          Suggested Peer Matches ({filteredAndSortedPeers.length})
-        </h2>
-        
-        {filteredAndSortedPeers.length === 0 ? (
-          <Card className="text-center py-12">
-            <CardContent>
-              <Users className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-              <h3 className="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">
-                No matches found
-              </h3>
-              <p className="text-gray-500 dark:text-gray-500">
-                Try adjusting your filters to see more peer matches
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          filteredAndSortedPeers.map((peer) => {
+            {/* Step 2 - Support Preferences */}
+            {currentStep === 2 && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">What are you looking for?</h3>
+                
+                <div className="space-y-3">
+                  <Label>What are you looking for in peer support? (Select all that apply)</Label>
+                  {['someone to listen', 'practical advice', 'shared activities', 'spiritual support'].map((pref) => (
+                    <div key={pref} className="flex items-center space-x-2">
+                      <Checkbox 
+                        id={pref}
+                        checked={answers.supportPreferences.includes(pref)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setAnswers({...answers, supportPreferences: [...answers.supportPreferences, pref]});
+                          } else {
+                            setAnswers({...answers, supportPreferences: answers.supportPreferences.filter(p => p !== pref)});
+                          }
+                        }}
+                      />
+                      <Label htmlFor={pref} className="font-normal capitalize cursor-pointer">
+                        {pref}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="space-y-2">
+                  <Label>How often would you like to connect?</Label>
+                  <Select value={answers.communicationFrequency} onValueChange={(value) => setAnswers({...answers, communicationFrequency: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select frequency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="daily">Daily</SelectItem>
+                      <SelectItem value="few times a week">A few times a week</SelectItem>
+                      <SelectItem value="weekly">Weekly</SelectItem>
+                      <SelectItem value="as needed">As needed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+
+            {/* Step 3 - Communication Style */}
+            {currentStep === 3 && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Communication preferences</h3>
+                
+                <div className="space-y-2">
+                  <Label>Preferred communication method?</Label>
+                  <Select value={answers.communicationMethod} onValueChange={(value) => setAnswers({...answers, communicationMethod: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select method" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="text chat">Text chat</SelectItem>
+                      <SelectItem value="scheduled calls">Scheduled calls</SelectItem>
+                      <SelectItem value="group settings">Group settings</SelectItem>
+                      <SelectItem value="flexible">Flexible</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-3">
+                  <Label>When are you typically available? (Select all that apply)</Label>
+                  {['mornings', 'afternoons', 'evenings', 'weekends'].map((time) => (
+                    <div key={time} className="flex items-center space-x-2">
+                      <Checkbox 
+                        id={time}
+                        checked={answers.availability.includes(time)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setAnswers({...answers, availability: [...answers.availability, time]});
+                          } else {
+                            setAnswers({...answers, availability: answers.availability.filter(t => t !== time)});
+                          }
+                        }}
+                      />
+                      <Label htmlFor={time} className="font-normal capitalize cursor-pointer">
+                        {time}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Step 4 - Interests & Coping */}
+            {currentStep === 4 && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Your interests and coping strategies</h3>
+                
+                <div className="space-y-3">
+                  <Label>What helps you cope? (Select all that apply)</Label>
+                  {['exercise', 'reading', 'art/creativity', 'nature', 'music', 'journaling', 'talking'].map((method) => (
+                    <div key={method} className="flex items-center space-x-2">
+                      <Checkbox 
+                        id={method}
+                        checked={answers.copingMethods.includes(method)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setAnswers({...answers, copingMethods: [...answers.copingMethods, method]});
+                          } else {
+                            setAnswers({...answers, copingMethods: answers.copingMethods.filter(m => m !== method)});
+                          }
+                        }}
+                      />
+                      <Label htmlFor={method} className="font-normal capitalize cursor-pointer">
+                        {method}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Your interests/hobbies (optional)</Label>
+                  <Textarea 
+                    placeholder="e.g., hiking, cooking, photography (comma-separated)"
+                    value={answers.interests}
+                    onChange={(e) => setAnswers({...answers, interests: e.target.value})}
+                    rows={3}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Step 5 - About You */}
+            {currentStep === 5 && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Tell us about yourself</h3>
+                
+                <div className="space-y-2">
+                  <Label>Your age range</Label>
+                  <Select value={answers.ageRange} onValueChange={(value) => setAnswers({...answers, ageRange: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select age range" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="18-24">18-24</SelectItem>
+                      <SelectItem value="25-34">25-34</SelectItem>
+                      <SelectItem value="35-44">35-44</SelectItem>
+                      <SelectItem value="45-54">45-54</SelectItem>
+                      <SelectItem value="55+">55+</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Brief bio (optional)</Label>
+                  <Textarea 
+                    placeholder="Share anything you'd like peers to know about you..."
+                    value={answers.bio}
+                    onChange={(e) => setAnswers({...answers, bio: e.target.value})}
+                    rows={4}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Navigation Buttons */}
+            <div className="flex justify-between pt-4">
+              <Button
+                variant="outline"
+                onClick={handlePreviousStep}
+                disabled={currentStep === 1}
+              >
+                <ArrowLeftIcon className="h-4 w-4 mr-2" />
+                Back
+              </Button>
+              
+              {currentStep < 5 ? (
+                <Button
+                  onClick={handleNextStep}
+                  disabled={!isStepValid()}
+                >
+                  Next
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleFindMatches}
+                  disabled={!isStepValid()}
+                >
+                  <Heart className="h-4 w-4 mr-2" />
+                  Find My Matches
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Loading State */}
+      {isMatching && (
+        <Card className="text-center py-12">
+          <CardContent>
+            <Loader2 className="h-16 w-16 mx-auto text-blue-500 animate-spin mb-6" />
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-3">
+              Finding Your Perfect Matches...
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              We're analyzing your responses to connect you with the best peer support matches.
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-500">
+              This usually takes a few moments...
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Questionnaire Answers Summary */}
+      {questionnaireCompleted && matches.length > 0 && (
+        <Card className="border-purple-200 dark:border-purple-800">
+          <Collapsible open={showAnswersSummary} onOpenChange={setShowAnswersSummary}>
+            <CardHeader>
+              <CollapsibleTrigger asChild>
+                <div className="flex items-center justify-between cursor-pointer">
+                  <CardTitle className="flex items-center">
+                    <CheckCircle className="h-5 w-5 mr-2 text-purple-600" />
+                    Your Matching Profile
+                  </CardTitle>
+                  <ChevronDown 
+                    className={`h-5 w-5 transition-transform ${showAnswersSummary ? 'rotate-180' : ''}`} 
+                  />
+                </div>
+              </CollapsibleTrigger>
+              <CardDescription>View the preferences used for matching</CardDescription>
+            </CardHeader>
+            <CollapsibleContent>
+              <CardContent className="space-y-3 text-sm">
+                <div><strong>Loss Type:</strong> {answers.lossType}</div>
+                <div><strong>Timeframe:</strong> {answers.lossTimeframe}</div>
+                <div><strong>Looking For:</strong> {answers.supportPreferences.join(', ')}</div>
+                <div><strong>Communication:</strong> {answers.communicationFrequency} via {answers.communicationMethod}</div>
+                <div><strong>Availability:</strong> {answers.availability.join(', ')}</div>
+                <div><strong>Coping Methods:</strong> {answers.copingMethods.join(', ')}</div>
+                {answers.interests && <div><strong>Interests:</strong> {answers.interests}</div>}
+              </CardContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </Card>
+      )}
+
+      {/* Matched Peers Section */}
+      {questionnaireCompleted && matches.length > 0 && !isMatching && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">
+              Your Peer Matches ({matches.length})
+            </h2>
+            <div className="space-x-2">
+              <Button variant="outline" size="sm" onClick={handleGetNewMatches}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Get New Matches
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleRetakeQuestionnaire}>
+                <RotateCcw className="h-4 w-4 mr-2" />
+                Retake Questionnaire
+              </Button>
+            </div>
+          </div>
+          
+          {matches.map((peer) => {
             const isExpanded = expandedCards.has(peer.id);
             const buttonConfig = getConnectionButton(peer.connectionStatus);
+            const sharedAttributes = getSharedAttributes(peer);
             
             return (
               <Card 
@@ -742,6 +820,15 @@ export function PeerSupportPage() {
                         {peer.bio}
                       </p>
 
+                      {/* Why we matched */}
+                      {sharedAttributes.length > 0 && (
+                        <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                          <p className="text-sm text-blue-800 dark:text-blue-200">
+                            <strong>Why we matched you:</strong> You both share {sharedAttributes.join(', ')}
+                          </p>
+                        </div>
+                      )}
+
                       {/* Shared Interests Tags */}
                       <div className="flex flex-wrap gap-2">
                         {peer.interests.slice(0, isExpanded ? undefined : 3).map(interest => (
@@ -774,7 +861,7 @@ export function PeerSupportPage() {
                           <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                             <div>
                               <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">Availability</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400">{peer.availability}</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 capitalize">{peer.availability.join(', ')}</p>
                             </div>
                             <div>
                               <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">Response Rate</p>
@@ -788,15 +875,14 @@ export function PeerSupportPage() {
                                 <span className="text-sm font-medium">{peer.responseRate}%</span>
                               </div>
                             </div>
-                          </div>
-                          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                            <p className="text-sm text-blue-800 dark:text-blue-200">
-                              <strong>Connection Status:</strong> {
-                                peer.connectionStatus === 'connected' ? 'You are connected with this peer' :
-                                peer.connectionStatus === 'pending' ? 'Connection request sent, awaiting response' :
-                                'Not yet connected'
-                              }
-                            </p>
+                            <div>
+                              <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">Communication Method</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 capitalize">{peer.communicationMethod}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">Coping Methods</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 capitalize">{peer.copingMethods.join(', ')}</p>
+                            </div>
                           </div>
                         </CollapsibleContent>
                       </Collapsible>
@@ -812,9 +898,9 @@ export function PeerSupportPage() {
                 </CardHeader>
               </Card>
             );
-          })
-        )}
-      </div>
+          })}
+        </div>
+      )}
 
       {/* Volunteer Section */}
       <Card>
