@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { SupportCirclesPage } from './SupportCirclesPage';
 import { PeerSupportPage } from './PeerSupportPage';
+import { AnonymousSupportGroupsPage } from './AnonymousSupportGroupsPage';
 
 export function CommunityPage() {
   const location = useLocation();
@@ -11,9 +12,15 @@ export function CommunityPage() {
 
   const communityOptions = [
     {
+      title: 'Anonymous Support Groups',
+      description: 'Join small, intimate groups (max 7 members) with no registration required',
+      icon: '🤝',
+      path: '/community/support-groups',
+    },
+    {
       title: 'Support Circles',
       description: 'Join safe, moderated group discussions by type of loss',
-      icon: '🤝',
+      icon: '🫂',
       path: '/community/circles',
     },
     {
@@ -87,6 +94,7 @@ export function CommunityPage() {
 
   return (
     <Routes>
+      <Route path="/support-groups" element={<AnonymousSupportGroupsPage />} />
       <Route path="/circles" element={<SupportCirclesPage />} />
       <Route path="/peer" element={<PeerSupportPage />} />
     </Routes>

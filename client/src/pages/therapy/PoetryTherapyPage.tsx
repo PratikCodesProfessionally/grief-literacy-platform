@@ -357,66 +357,69 @@ Sweetness transitions to bitterness`,
 
   const getCategoryColor = (category: string) => {
     const colors = {
-      'Understanding': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-      'Acceptance': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-      'Wisdom': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-      'Love': 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200',
-      'Connection': 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200',
-      'Expression': 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-      'Memory': 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
-      'Spiritual': 'bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-200',
-      'Senses': 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200',
-      'Objects': 'bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200',
-      'Journey': 'bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-200'
+      'Understanding': 'bg-blue-100/80 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200/50',
+      'Acceptance': 'bg-green-100/80 text-green-700 dark:bg-green-900/30 dark:text-green-300 border border-green-200/50',
+      'Wisdom': 'bg-purple-100/80 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 border border-purple-200/50',
+      'Love': 'bg-pink-100/80 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300 border border-pink-200/50',
+      'Connection': 'bg-indigo-100/80 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 border border-indigo-200/50',
+      'Expression': 'bg-orange-100/80 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300 border border-orange-200/50',
+      'Memory': 'bg-amber-100/80 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 border border-amber-200/50',
+      'Spiritual': 'bg-violet-100/80 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300 border border-violet-200/50',
+      'Senses': 'bg-teal-100/80 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300 border border-teal-200/50',
+      'Objects': 'bg-rose-100/80 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 border border-rose-200/50',
+      'Journey': 'bg-slate-100/80 text-slate-700 dark:bg-slate-900/30 dark:text-slate-300 border border-slate-200/50',
+      'Guilt': 'bg-gray-100/80 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300 border border-gray-200/50',
+      'Simplicity': 'bg-emerald-100/80 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 border border-emerald-200/50',
+      'Transformation': 'bg-fuchsia-100/80 text-fuchsia-700 dark:bg-fuchsia-900/30 dark:text-fuchsia-300 border border-fuchsia-200/50'
     };
-    return colors[category as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+    return colors[category as keyof typeof colors] || 'bg-gray-100/80 text-gray-700 border border-gray-200/50';
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 p-4 max-w-7xl mx-auto">
       <div className="flex items-center space-x-4">
         <Link to="/therapy">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" className="rounded-full shadow-soft hover:shadow-soft-lg transition-all duration-300">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Therapy
           </Button>
         </Link>
         <div className="flex-1">
-          <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
+          <h1 className="text-4xl font-semibold mb-2 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
             ✍️ Poetry Therapy
           </h1>
-          <p className="text-gray-600 dark:text-gray-300">
+          <p className="text-lg text-muted-foreground">
             Find healing through the rhythm and beauty of words
           </p>
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className="grid lg:grid-cols-2 gap-8">
         <div className="space-y-6">
           {/* Storage Controls vor den Healing Poems */}
-          <Card>
+          <Card className="hover-lift">
             <StorageControls />
           </Card>
-          <Card>
+          <Card className="hover-lift">
             <CardHeader>
-              <CardTitle>Healing Poems</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-2xl">Healing Poems</CardTitle>
+              <CardDescription className="text-base">
                Read poems that bring light to the healing journey
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 max-h-96 overflow-y-auto">
               {healingPoems.map((poem) => (
-                <Card key={poem.id} className="hover:shadow-md transition-shadow">
+                <Card key={poem.id} className="hover:shadow-soft-lg transition-all duration-300 border-2 hover:border-accent/30">
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
-                      <div className="space-y-1">
-                        <h3 className="font-semibold">{poem.title}</h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">by {poem.author}</p>
+                      <div className="space-y-2">
+                        <h3 className="font-semibold text-lg">{poem.title}</h3>
+                        <p className="text-sm text-muted-foreground">by {poem.author}</p>
                         <div className="flex items-center space-x-2">
-                          <Badge className={getCategoryColor(poem.category)}>
+                          <Badge className={`${getCategoryColor(poem.category)} rounded-full px-3 py-1`}>
                             {poem.category}
                           </Badge>
-                          <span className="text-xs text-gray-500">{poem.readTime}</span>
+                          <span className="text-xs text-muted-foreground">{poem.readTime}</span>
                         </div>
                       </div>
                       <div className="flex items-center space-x-1">
@@ -424,31 +427,33 @@ Sweetness transitions to bitterness`,
                           size="sm"
                           variant="ghost"
                           onClick={() => toggleFavorite(poem.id)}
+                          className="rounded-full hover:bg-accent/20 transition-all duration-300"
                         >
                           <Heart 
-                            className={`h-4 w-4 ${favoritePoems.has(poem.id) ? 'fill-red-500 text-red-500' : ''}`}
+                            className={`h-4 w-4 transition-all duration-300 ${favoritePoems.has(poem.id) ? 'fill-red-400 text-red-400 scale-110' : ''}`}
                           />
                         </Button>
                         <Button
                           size="sm"
                           variant="ghost"
                           onClick={() => readAloud(poem.id)}
+                          className="rounded-full hover:bg-accent/20 transition-all duration-300"
                         >
-                          <Volume2 className={`h-4 w-4 ${isReading === poem.id ? 'text-blue-600' : ''}`} />
+                          <Volume2 className={`h-4 w-4 transition-all duration-300 ${isReading === poem.id ? 'text-primary scale-110' : ''}`} />
                         </Button>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent className="pt-0">
-                    <p className="text-sm whitespace-pre-line italic leading-relaxed">
+                    <p className="text-sm whitespace-pre-line italic leading-relaxed text-foreground/80">
                       {poem.content}
                     </p>
-                    <div className="flex items-center space-x-2 mt-3">
-                      <Button size="sm" variant="outline">
+                    <div className="flex items-center space-x-2 mt-4">
+                      <Button size="sm" variant="outline" className="rounded-full hover:bg-accent/20 transition-all duration-300">
                         <Share className="h-3 w-3 mr-1" />
                         Share
                       </Button>
-                      <Button size="sm" variant="outline">
+                      <Button size="sm" variant="outline" className="rounded-full hover:bg-accent/20 transition-all duration-300">
                         <Bookmark className="h-3 w-3 mr-1" />
                         Save
                       </Button>
@@ -459,31 +464,31 @@ Sweetness transitions to bitterness`,
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="hover-lift">
             <CardHeader>
-              <CardTitle>Poetry Prompts</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-2xl">Poetry Prompts</CardTitle>
+              <CardDescription className="text-base">
                 Choose a prompt to inspire your writing
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-2 max-h-64 overflow-y-auto">
+            <CardContent className="space-y-3 max-h-64 overflow-y-auto">
               {poetryPrompts.map((prompt, index) => (
                 <Button
                   key={index}
                   variant={selectedPoem === prompt.text ? "default" : "outline"}
-                  className="w-full text-left justify-start h-auto p-3"
+                  className="w-full text-left justify-start h-auto p-4 rounded-2xl transition-all duration-300 hover:shadow-soft hover:scale-[1.02]"
                   onClick={() => setSelectedPoem(prompt.text)}
                 >
                   <div className="w-full">
-                    <div className="flex items-center justify-between mb-1">
-                      <Badge className={getCategoryColor(prompt.category)}>
+                    <div className="flex items-center justify-between mb-2">
+                      <Badge className={`${getCategoryColor(prompt.category)} rounded-full px-3 py-1`}>
                         {prompt.category}
                       </Badge>
-                      <Badge variant="outline">
+                      <Badge variant="outline" className="rounded-full">
                         {prompt.difficulty}
                       </Badge>
                     </div>
-                    <div className="text-sm">{prompt.text}</div>
+                    <div className="text-sm leading-relaxed">{prompt.text}</div>
                   </div>
                 </Button>
               ))}
@@ -492,23 +497,23 @@ Sweetness transitions to bitterness`,
         </div>
 
         <div className="space-y-6">
-          <Card>
+          <Card className="hover-lift">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Your Poetry</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="text-2xl">Your Poetry</CardTitle>
+                  <CardDescription className="text-base">
                     {selectedPoem || "Select a prompt or write freely"}
                   </CardDescription>
                 </div>
                 <div className="flex items-center space-x-2">
                   {isRecording ? (
-                    <Button size="sm" variant="destructive" onClick={stopRecording}>
+                    <Button size="sm" variant="destructive" onClick={stopRecording} className="rounded-full">
                       <MicOff className="h-4 w-4 mr-1" />
                       {formatTime(recordingTime)}
                     </Button>
                   ) : (
-                    <Button size="sm" variant="outline" onClick={startRecording}>
+                    <Button size="sm" variant="outline" onClick={startRecording} className="rounded-full hover:bg-accent/20 transition-all duration-300">
                       <Mic className="h-4 w-4 mr-1" />
                       Record
                     </Button>
@@ -521,41 +526,42 @@ Sweetness transitions to bitterness`,
                 placeholder="Poem title (optional)"
                 value={poemTitle}
                 onChange={(e) => setPoemTitle(e.target.value)}
+                className="rounded-2xl border-2 focus:border-primary/40 transition-all duration-300"
               />
               <Textarea
                 placeholder="Let your words flow..."
-                className="min-h-80 font-mono leading-relaxed"
+                className="min-h-80 font-mono leading-loose rounded-2xl border-2 focus:border-primary/40 transition-all duration-300 resize-none"
                 value={userPoem}
                 onChange={(e) => setUserPoem(e.target.value)}
               />
               <div className="flex justify-between items-center">
                 <div className="flex space-x-2">
-                  <Button disabled={!userPoem.trim()} onClick={savePoem}>
+                  <Button disabled={!userPoem.trim()} onClick={savePoem} className="rounded-full transition-all duration-300 hover:scale-105">
                     <Save className="h-4 w-4 mr-2" />
                     Save Poem
                   </Button>
                   <Button variant="outline" onClick={() => {
                     setUserPoem('');
                     setPoemTitle('');
-                  }}>
+                  }} className="rounded-full hover:bg-accent/20 transition-all duration-300">
                     Clear
                   </Button>
                 </div>
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-muted-foreground">
                   {userPoem.split('\n').length} lines • {userPoem.trim() ? userPoem.trim().split(/\s+/).length : 0} words
                 </div>
               </div>
 
               {voiceRecordings.length > 0 && (
-                <div className="border-t pt-4">
-                  <h4 className="font-medium mb-2">Voice Recordings:</h4>
-                  <div className="space-y-1">
+                <div className="border-t pt-4 border-border">
+                  <h4 className="font-medium mb-3 text-lg">Voice Recordings:</h4>
+                  <div className="space-y-2">
                     {voiceRecordings.map((recording, index) => (
-                      <div key={index} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded text-sm">
+                      <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded-2xl text-sm hover:bg-muted/50 transition-all duration-300">
                         <span>{recording}</span>
                         <div className="space-x-1">
-                          <Button size="sm" variant="ghost">Play</Button>
-                          <Button size="sm" variant="ghost">
+                          <Button size="sm" variant="ghost" className="rounded-full">Play</Button>
+                          <Button size="sm" variant="ghost" className="rounded-full">
                             <Download className="h-3 w-3" />
                           </Button>
                         </div>
@@ -568,34 +574,34 @@ Sweetness transitions to bitterness`,
           </Card>
 
           {savedPoems.length > 0 && (
-            <Card>
+            <Card className="hover-lift">
               <CardHeader>
-                <CardTitle>Your Poetry Collection</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-2xl">Your Poetry Collection</CardTitle>
+                <CardDescription className="text-base">
                   {savedPoems.length} poems written
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3 max-h-64 overflow-y-auto">
                 {savedPoems.map((poem) => (
-                  <Card key={poem.id} className="hover:shadow-sm transition-shadow">
+                  <Card key={poem.id} className="hover:shadow-soft-lg transition-all duration-300 border-2 hover:border-accent/30">
                     <CardHeader className="pb-2">
                       <div className="flex items-center justify-between">
-                        <h4 className="font-medium">{poem.title}</h4>
-                        <span className="text-xs text-gray-500">{poem.createdAt}</span>
+                        <h4 className="font-medium text-lg">{poem.title}</h4>
+                        <span className="text-xs text-muted-foreground">{poem.createdAt}</span>
                       </div>
                       {poem.prompt && (
-                        <p className="text-xs text-gray-600 dark:text-gray-400 italic">
+                        <p className="text-xs text-muted-foreground italic leading-relaxed">
                           "{poem.prompt}"
                         </p>
                       )}
                     </CardHeader>
                     <CardContent className="pt-0">
-                      <p className="text-sm line-clamp-3 mb-2">
+                      <p className="text-sm line-clamp-3 mb-3 leading-relaxed">
                         {poem.content}
                       </p>
-                      <div className="flex items-center justify-between text-xs text-gray-500">
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
                         <span>{poem.lineCount} lines • {poem.wordCount} words</span>
-                        <Button size="sm" variant="ghost">Read Full</Button>
+                        <Button size="sm" variant="ghost" className="rounded-full hover:bg-accent/20 transition-all duration-300">Read Full</Button>
                       </div>
                     </CardContent>
                   </Card>
