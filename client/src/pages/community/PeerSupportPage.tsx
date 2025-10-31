@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { 
   ArrowLeft, MessageCircle, Heart, Search, Filter, X, ChevronDown, 
@@ -70,6 +71,13 @@ export function PeerSupportPage() {
   const [ageRange, setAgeRange] = React.useState([18, 65]);
   const [selectedLossTypes, setSelectedLossTypes] = React.useState<string[]>([]);
   const [commFrequency, setCommFrequency] = React.useState('moderate');
+
+  // Utility function for compatibility gradient
+  const getCompatibilityGradient = (compatibility: number) => {
+    const red = 255 - compatibility * 2;
+    const green = compatibility * 2.55;
+    return `linear-gradient(135deg, rgba(${red}, ${green}, 100, 0.2) 0%, rgba(${red}, ${green}, 100, 0.1) 100%)`;
+  };
 
   const activeConnections: ActiveConnection[] = [
     { id: '1', name: 'Sarah M.', lastMessage: 'Thank you for sharing that...', unreadCount: 2, avatar: '👩' },
@@ -173,7 +181,7 @@ export function PeerSupportPage() {
       
       // Filter by timeframe
       if (filters.timeframeRange !== 'all') {
-        const monthsAgo = parseInt(peer.timeframe.split(' ')[0]);
+        const monthsAgo = parseInt(peer.timeframe.split(' ')[0]) || 0;
         if (filters.timeframeRange === 'recent' && monthsAgo > 6) return false;
         if (filters.timeframeRange === 'past_year' && (monthsAgo < 6 || monthsAgo > 12)) return false;
         if (filters.timeframeRange === 'over_year' && monthsAgo <= 12) return false;
@@ -206,8 +214,8 @@ export function PeerSupportPage() {
       filtered.sort((a, b) => a.name.localeCompare(b.name));
     } else if (sortBy === 'newest') {
       filtered.sort((a, b) => {
-        const aMonths = parseInt(a.timeframe.split(' ')[0]);
-        const bMonths = parseInt(b.timeframe.split(' ')[0]);
+        const aMonths = parseInt(a.timeframe.split(' ')[0]) || 0;
+        const bMonths = parseInt(b.timeframe.split(' ')[0]) || 0;
         return aMonths - bMonths;
       });
     }
@@ -425,8 +433,7 @@ export function PeerSupportPage() {
                       </div>
                       <div className="space-y-2">
                         <Label>Details</Label>
-                        <textarea 
-                          className="w-full p-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
+                        <Textarea 
                           rows={4}
                           placeholder="Please describe your concern..."
                         />
@@ -475,7 +482,7 @@ export function PeerSupportPage() {
                   value={ageRange} 
                   onValueChange={setAgeRange}
                   min={18}
-                  max={80}
+                  max={65}
                   step={1}
                   className="w-full"
                 />
@@ -720,9 +727,7 @@ export function PeerSupportPage() {
                         )}
                         <div 
                           className="flex items-center space-x-1 px-3 py-1 rounded-full"
-                          style={{
-                            background: `linear-gradient(135deg, rgba(${255 - peer.compatibility * 2}, ${peer.compatibility * 2.55}, 100, 0.2) 0%, rgba(${255 - peer.compatibility * 2}, ${peer.compatibility * 2.55}, 100, 0.1) 100%)`
-                          }}
+                          style={{ background: getCompatibilityGradient(peer.compatibility) }}
                         >
                           <Heart className="h-4 w-4 text-red-500" />
                           <span className="text-sm font-bold">{peer.compatibility}% match</span>
