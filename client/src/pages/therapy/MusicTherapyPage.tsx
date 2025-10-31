@@ -8,6 +8,12 @@ import { Progress } from '@/components/ui/progress';
 import { ArrowLeft, Play, Pause, Volume2, VolumeX, Mic, MicOff, Download, Plus, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
+interface Recording {
+  name: string;
+  blob: Blob;
+  url: string;
+}
+
 export function MusicTherapyPage() {
   const { toast } = useToast();
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
@@ -23,7 +29,7 @@ export function MusicTherapyPage() {
 
   const [isRecording, setIsRecording] = React.useState(false);
   const [recordingTime, setRecordingTime] = React.useState(0);
-  const [recordings, setRecordings] = React.useState<Array<{ name: string; blob: Blob; url: string }>>([]);
+  const [recordings, setRecordings] = React.useState<Recording[]>([]);
   const [playlistName, setPlaylistName] = React.useState('');
   const [customPlaylist, setCustomPlaylist] = React.useState<string[]>([]);
   const [journalEntry, setJournalEntry] = React.useState('');
@@ -295,6 +301,15 @@ export function MusicTherapyPage() {
       }
     };
   }, [mediaRecorder]);
+
+  // Cleanup object URLs on unmount to prevent memory leaks
+  React.useEffect(() => {
+    return () => {
+      recordings.forEach(recording => {
+        URL.revokeObjectURL(recording.url);
+      });
+    };
+  }, [recordings]);
 
   const addToPlaylist = (track: string) => {
     setCustomPlaylist((p) => (p.includes(track) ? p : [...p, track]));

@@ -13,11 +13,21 @@ import { Switch } from '@/components/ui/switch';
 import { Wifi, WifiOff, Cloud, HardDrive, RefreshCw } from 'lucide-react';
 import { storageProvider } from '@/services/StorageProvider';
 
+interface SavedPoem {
+  id: number;
+  title: string;
+  content: string;
+  prompt?: string;
+  wordCount: number;
+  lineCount: number;
+  createdAt: string;
+}
+
 export function PoetryTherapyPage() {
   const [selectedPoem, setSelectedPoem] = React.useState('');
   const [userPoem, setUserPoem] = React.useState('');
   const [poemTitle, setPoemTitle] = React.useState('');
-  const [savedPoems, setSavedPoems] = React.useState<any[]>([]);
+  const [savedPoems, setSavedPoems] = React.useState<SavedPoem[]>([]);
   const [favoritePoems, setFavoritePoems] = React.useState<Set<number>>(new Set());
   const [isReading, setIsReading] = React.useState<number | null>(null);
   const [isRecording, setIsRecording] = React.useState(false);
@@ -28,7 +38,7 @@ export function PoetryTherapyPage() {
   const [isOnline, setIsOnline] = React.useState(navigator.onLine);
   const [isSyncing, setIsSyncing] = React.useState(false);
   const [lastSyncTime, setLastSyncTime] = React.useState<Date | null>(null);
-  const [expandedPoem, setExpandedPoem] = React.useState<any | null>(null);
+  const [expandedPoem, setExpandedPoem] = React.useState<SavedPoem | null>(null);
   
   const { toast } = useToast();
   const storageProviderInstance = React.useMemo(() => 
