@@ -16,12 +16,13 @@ setupStaticServing(app);
 // TODO: Add your API routes here
 // app.use('/api', apiRouter);
 
+// Setup SPA fallback route AFTER all other routes
+// This must be the last route registered to avoid intercepting API routes
+setupSpaFallback(app);
+
 // Export a function to start the server
 export async function startServer(port: number | string) {
   try {
-    // Setup SPA fallback route AFTER all other routes
-    setupSpaFallback(app);
-    
     app.listen(port, () => {
       console.log(`API Server running on port ${port}`);
     });

@@ -1,6 +1,9 @@
 import path from 'path';
 import express from 'express';
 
+// Configuration: Backend route prefixes that should not be handled by SPA fallback
+const BACKEND_ROUTE_PREFIXES = ['/api', '/auth', '/health', '/webhook'];
+
 /**
  * Sets up static file serving for the Express app
  * @param app Express application instance
@@ -17,15 +20,18 @@ export function setupStaticServing(app: import('express').Application): void {
 /**
  * Sets up the SPA fallback route - should be called after all other routes are registered
  * @param app Express application instance
+ * @param backendPrefixes Optional custom backend route prefixes (defaults to common patterns)
  */
-export function setupSpaFallback(app: import('express').Application): void {
+export function setupSpaFallback(
+  app: import('express').Application,
+  backendPrefixes: string[] = BACKEND_ROUTE_PREFIXES
+): void {
   const staticDir = path.join(process.cwd(), 'dist');
   
   // SPA fallback route - serve index.html for all non-API routes
   // This should be the last route registered to avoid intercepting API routes
   app.get('*', (req, res) => {
-    // Skip API routes and other backend endpoints
-    const backendPrefixes = ['/api', '/auth', '/health', '/webhook'];
+    // Skip backend routes
     const isBackendRoute = backendPrefixes.some(prefix => req.path.startsWith(prefix));
     
     if (isBackendRoute) {
