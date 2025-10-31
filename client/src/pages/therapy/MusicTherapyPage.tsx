@@ -6,8 +6,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { ArrowLeft, Play, Pause, Volume2, VolumeX, Mic, MicOff, Download, Plus, AlertTriangle } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
 
 export function MusicTherapyPage() {
+  const { toast } = useToast();
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
 
   const [currentTrack, setCurrentTrack] = React.useState<string | null>(null);
@@ -206,6 +208,11 @@ export function MusicTherapyPage() {
         
         // Stop all tracks to release the microphone
         stream.getTracks().forEach(track => track.stop());
+        
+        toast({
+          title: "Recording saved",
+          description: `${name} has been saved successfully.`,
+        });
       };
 
       recorder.start();
@@ -214,7 +221,11 @@ export function MusicTherapyPage() {
       setRecordingTime(0);
     } catch (error) {
       console.error('Error accessing microphone:', error);
-      alert('Could not access microphone. Please ensure you have granted microphone permissions.');
+      toast({
+        title: "Microphone access denied",
+        description: "Please grant microphone permissions to record audio.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -240,6 +251,11 @@ export function MusicTherapyPage() {
       audio.src = recordings[index].url;
       audio.play().catch((err) => {
         console.error('Playback failed:', err);
+        toast({
+          title: "Playback failed",
+          description: "Unable to play the recording. Please try again.",
+          variant: "destructive",
+        });
       });
       setPlayingRecording(index);
     }
