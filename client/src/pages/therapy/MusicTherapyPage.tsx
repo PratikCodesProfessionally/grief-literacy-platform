@@ -29,7 +29,6 @@ export function MusicTherapyPage() {
   const [journalEntry, setJournalEntry] = React.useState('');
   const [selectedActivity, setSelectedActivity] = React.useState<string | null>(null);
   const [mediaRecorder, setMediaRecorder] = React.useState<MediaRecorder | null>(null);
-  const [audioChunks, setAudioChunks] = React.useState<Blob[]>([]);
   const [playingRecording, setPlayingRecording] = React.useState<number | null>(null);
   const recordingAudioRef = React.useRef<HTMLAudioElement | null>(null);
 
@@ -204,7 +203,6 @@ export function MusicTherapyPage() {
         
         setRecordings((r) => [...r, { name, blob: audioBlob, url: audioUrl }]);
         setRecordingTime(0);
-        setAudioChunks([]);
         
         // Stop all tracks to release the microphone
         stream.getTracks().forEach(track => track.stop());
@@ -285,6 +283,18 @@ export function MusicTherapyPage() {
       audio.removeEventListener('ended', handleEnded);
     };
   }, []);
+
+  // Cleanup mediaRecorder on unmount
+  React.useEffect(() => {
+    return () => {
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+        // Get the stream and stop all tracks
+        const stream = mediaRecorder.stream;
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [mediaRecorder]);
 
   const addToPlaylist = (track: string) => {
     setCustomPlaylist((p) => (p.includes(track) ? p : [...p, track]));

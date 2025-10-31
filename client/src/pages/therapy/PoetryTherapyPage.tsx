@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ArrowLeft, Heart, Share, Bookmark, Volume2, Mic, MicOff, Save, Download, X } from 'lucide-react';
+import { ArrowLeft, Heart, Share, Bookmark, Volume2, Mic, MicOff, Save, Download } from 'lucide-react';
 import { ApiClient } from '@/services/ApiClient';
 import { useToast } from '@/components/ui/use-toast';
 import { Switch } from '@/components/ui/switch';
