@@ -35,7 +35,7 @@ export function setupSpaFallback(
     const isBackendRoute = backendPrefixes.some(prefix => req.path.startsWith(prefix));
     
     if (isBackendRoute) {
-      res.status(404).json({ error: 'Endpoint not found' });
+      res.status(404).json({ error: 'API endpoint not found', path: req.path });
       return;
     }
     
