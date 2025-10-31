@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ArrowLeft, Heart, Share, Bookmark, Volume2, Mic, MicOff, Save, Download } from 'lucide-react';
 import { ApiClient } from '@/services/ApiClient';
 import { useToast } from '@/components/ui/use-toast';
@@ -22,6 +23,7 @@ export function PoetryTherapyPage() {
   const [isRecording, setIsRecording] = React.useState(false);
   const [recordingTime, setRecordingTime] = React.useState(0);
   const [voiceRecordings, setVoiceRecordings] = React.useState<string[]>([]);
+  const [selectedFullPoem, setSelectedFullPoem] = React.useState<any | null>(null);
   // Neue Zustände für Storage und Sync
   const [storageType, setStorageType] = React.useState<'local' | 'cloud'>('local');
   const [isOnline, setIsOnline] = React.useState(navigator.onLine);
@@ -601,7 +603,7 @@ Sweetness transitions to bitterness`,
                       </p>
                       <div className="flex items-center justify-between text-xs text-muted-foreground">
                         <span>{poem.lineCount} lines • {poem.wordCount} words</span>
-                        <Button size="sm" variant="ghost" className="rounded-full hover:bg-accent/20 transition-all duration-300">Read Full</Button>
+                        <Button size="sm" variant="ghost" className="rounded-full hover:bg-accent/20 transition-all duration-300" onClick={() => setSelectedFullPoem(poem)}>Read Full</Button>
                       </div>
                     </CardContent>
                   </Card>
@@ -611,6 +613,43 @@ Sweetness transitions to bitterness`,
           )}
         </div>
       </div>
+
+      {/* Full Poem Dialog */}
+      <Dialog open={!!selectedFullPoem} onOpenChange={(open) => !open && setSelectedFullPoem(null)}>
+        <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">{selectedFullPoem?.title}</DialogTitle>
+            <DialogDescription>
+              {selectedFullPoem?.createdAt}
+              {selectedFullPoem?.prompt && (
+                <span className="block mt-2 italic text-sm">
+                  Prompt: "{selectedFullPoem.prompt}"
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="prose prose-sm dark:prose-invert max-w-none">
+              <p className="whitespace-pre-line leading-relaxed font-mono text-base">
+                {selectedFullPoem?.content}
+              </p>
+            </div>
+            <div className="flex items-center justify-between pt-4 border-t text-sm text-muted-foreground">
+              <span>{selectedFullPoem?.lineCount} lines • {selectedFullPoem?.wordCount} words</span>
+              <div className="flex space-x-2">
+                <Button size="sm" variant="outline" className="rounded-full">
+                  <Share className="h-3 w-3 mr-1" />
+                  Share
+                </Button>
+                <Button size="sm" variant="outline" className="rounded-full">
+                  <Download className="h-3 w-3 mr-1" />
+                  Export
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
