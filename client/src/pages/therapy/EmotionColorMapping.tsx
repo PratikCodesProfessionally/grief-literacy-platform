@@ -33,11 +33,11 @@ export const EmotionColorMapping: React.FC<EmotionColorMappingProps> = ({ mood, 
       <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg p-6 w-full max-w-md space-y-4">
         <div className="flex justify-between items-center mb-2">
           <h2 className="text-xl font-bold">Emotion Color Mapping</h2>
-          <Button size="sm" variant="ghost" onClick={onClose}>Schließen</Button>
+          <Button size="sm" variant="ghost" onClick={onClose}>Close</Button>
         </div>
 
         <p className="text-sm text-gray-600 dark:text-gray-300">
-          Wähle eine Farbe, die deine aktuelle Stimmung widerspiegelt, und klicke auf die Felder, um deine Gefühle sichtbar zu machen.
+          Choose a color that reflects your current mood, and click on the fields to make your feelings visible.
         </p>
 
         <div className="flex space-x-2">
@@ -47,7 +47,7 @@ export const EmotionColorMapping: React.FC<EmotionColorMappingProps> = ({ mood, 
               className={`w-8 h-8 rounded-full border-2 ${selectedColor === color ? 'border-black' : 'border-gray-300'}`}
               style={{ background: color }}
               onClick={() => setSelectedColor(color)}
-              aria-label={`Farbe ${color}`}
+              aria-label={`Color ${color}`}
             />
           ))}
         </div>
@@ -59,21 +59,21 @@ export const EmotionColorMapping: React.FC<EmotionColorMappingProps> = ({ mood, 
               className="w-8 h-8 rounded border border-gray-300"
               style={{ background: color }}
               onClick={() => handleCellClick(idx)}
-              aria-label={`Feld ${idx + 1}`}
+              aria-label={`Cell ${idx + 1}`}
             />
           ))}
         </div>
 
         <div className="flex items-center justify-between pt-2">
           <div className="text-xs text-gray-500 dark:text-gray-400">
-            Deine gewählte Stimmung: <span className="font-semibold">{mood}</span>
+            Your selected mood: <span className="font-semibold">{mood}</span>
           </div>
           {onComplete && (
             <Button
               size="sm"
               onClick={onComplete}
               disabled={!canComplete}
-              title={canComplete ? 'Als abgeschlossen markieren' : 'Bitte mindestens ein Feld färben'}
+              title={canComplete ? 'Mark as completed' : 'Bitte mindestens ein Cell färben'}
             >
               Mark as Completed
             </Button>

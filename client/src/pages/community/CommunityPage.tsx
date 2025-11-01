@@ -30,12 +30,6 @@ export function CommunityPage() {
       path: '/community/peer',
     },
     {
-      title: 'Share Your Story',
-      description: 'Anonymous sharing space for your experiences',
-      icon: '📝',
-      path: '/community/share',
-    },
-    {
       title: 'Memorial Wall',
       description: 'Honor and remember loved ones together',
       icon: '🕯️',
