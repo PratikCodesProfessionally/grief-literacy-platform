@@ -85,6 +85,12 @@ export function PeerSupportPage() {
   const [showSafetyGuidelines, setShowSafetyGuidelines] = React.useState(false);
   const [showAnswersSummary, setShowAnswersSummary] = React.useState(false);
 
+  // Statistics state - initialized to 0, ready for backend integration
+  // TODO: Connect to backend API to fetch real-time statistics
+  const [availablePeers, setAvailablePeers] = React.useState(0);
+  const [successfulConnections, setSuccessfulConnections] = React.useState(0);
+  const [activeSupportGroups, setActiveSupportGroups] = React.useState(0);
+
   const activeConnections: ActiveConnection[] = [
     { id: '1', name: 'Sarah M.', lastMessage: 'Thank you for sharing that...', unreadCount: 2, avatar: '👩' },
     { id: '2', name: 'Mike T.', lastMessage: 'I understand how you feel...', unreadCount: 0, avatar: '👨' },
@@ -294,7 +300,7 @@ export function PeerSupportPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Available Peers</p>
-                <p className="text-3xl font-bold text-gray-800 dark:text-white">127</p>
+                <p className="text-3xl font-bold text-gray-800 dark:text-white">{availablePeers}</p>
               </div>
               <Users className="h-10 w-10 text-blue-500" />
             </div>
@@ -305,7 +311,7 @@ export function PeerSupportPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Successful Connections</p>
-                <p className="text-3xl font-bold text-gray-800 dark:text-white">1,243</p>
+                <p className="text-3xl font-bold text-gray-800 dark:text-white">{successfulConnections}</p>
               </div>
               <TrendingUp className="h-10 w-10 text-green-500" />
             </div>
@@ -316,13 +322,24 @@ export function PeerSupportPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Active Support Groups</p>
-                <p className="text-3xl font-bold text-gray-800 dark:text-white">38</p>
+                <p className="text-3xl font-bold text-gray-800 dark:text-white">{activeSupportGroups}</p>
               </div>
               <BarChart3 className="h-10 w-10 text-purple-500" />
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Encouraging message for zero state */}
+      {availablePeers === 0 && successfulConnections === 0 && activeSupportGroups === 0 && (
+        <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+          <CardContent className="pt-6">
+            <p className="text-center text-blue-800 dark:text-blue-200 font-medium">
+              🌟 Be among the first to connect! Complete the questionnaire to help us build this supportive community.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* My Connections Section */}
       {questionnaireCompleted && matches.length > 0 && (
