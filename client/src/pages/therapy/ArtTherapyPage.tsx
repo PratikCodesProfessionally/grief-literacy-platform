@@ -141,7 +141,11 @@ export function ArtTherapyPage() {
   };
 
   const complete = (activityId: keyof typeof activityProgress) => {
-    setActivityProgress((prev) => ({ ...prev, [activityId]: 'completed' }));
+    setActivityProgress((prev) => {
+      const updated: ActivityProgress = { ...prev };
+      updated[activityId] = 'completed';
+      return updated;
+    });
     setModals({ emotion: false, collage: false, drawing: false, mandala: false, digitalStudio: false });
   };
 
