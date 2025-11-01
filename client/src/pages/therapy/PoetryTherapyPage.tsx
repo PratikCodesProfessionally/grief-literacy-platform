@@ -265,7 +265,7 @@ He wants to return to his home,
 But home is ash and bone 
 
 punctured and teared
-marred and serevered
+marred and severed
 
 The guy on immigration runs over his passport
 crushes it like a cigarette butt
