@@ -258,7 +258,7 @@ Sweetness transitions to bitterness`,
 Are you sure you belong here?
 
 A barrage of questions hits him 
-Your name looks old Ibrahim 
+Your name looks odd Ibrahim 
 
 The eyes are watery and scared
 He wants to return to his home,

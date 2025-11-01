@@ -5,17 +5,22 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, Save, FileText, Clock, CheckCircle, Mic, MicOff } from 'lucide-react';
+import { ArrowLeft, Save, FileText, Clock, CheckCircle, Mic, MicOff, Cloud, HardDrive } from 'lucide-react';
+import { StorageProviderFactory } from '@/services/StorageService';
+import type { IStorageProvider, Story } from '@/services/StorageService';
 
 export function StoryTherapyPage() {
   const [selectedPrompt, setSelectedPrompt] = React.useState('');
   const [story, setStory] = React.useState('');
-  const [savedStories, setSavedStories] = React.useState<any[]>([]);
+  const [savedStories, setSavedStories] = React.useState<Story[]>([]);
   const [isRecording, setIsRecording] = React.useState(false);
   const [recordingTime, setRecordingTime] = React.useState(0);
   const [voiceRecordings, setVoiceRecordings] = React.useState<string[]>([]);
   const [writingTimer, setWritingTimer] = React.useState(0);
   const [isWriting, setIsWriting] = React.useState(false);
+  const [storageType, setStorageType] = React.useState<'local' | 'cloud'>('local');
+  const [storageProvider, setStorageProvider] = React.useState<IStorageProvider | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
 
   const storyPrompts = [
     {
@@ -69,6 +74,35 @@ export function StoryTherapyPage() {
   ];
 
   const [completedPrompts, setCompletedPrompts] = React.useState<Set<string>>(new Set());
+
+  // Initialize storage provider
+  React.useEffect(() => {
+    const initStorage = async () => {
+      try {
+        const provider = StorageProviderFactory.createProvider(
+          storageType, 
+          'story-therapy-stories',
+          storageType === 'cloud' ? 'https://api.example.com' : undefined
+        );
+        setStorageProvider(provider);
+        
+        // Load saved stories
+        const stories = await provider.list<Story>();
+        setSavedStories(stories);
+        
+        // Update completed prompts
+        const completed = new Set(stories.map(s => s.prompt));
+        setCompletedPrompts(completed);
+        
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Failed to initialize storage:', error);
+        setIsLoading(false);
+      }
+    };
+
+    initStorage();
+  }, [storageType]);
 
   // Writing timer effect
   React.useEffect(() => {
@@ -125,23 +159,36 @@ export function StoryTherapyPage() {
     return colors[category as keyof typeof colors] || 'bg-gray-100/80 text-gray-700 border border-gray-200/50';
   };
 
-  const handleSaveStory = () => {
-    if (story.trim() && selectedPrompt) {
-      const newStory = {
-        id: Date.now(),
-        prompt: selectedPrompt,
-        content: story,
-        wordCount: story.trim().split(/\s+/).length,
-        timeSpent: writingTimer,
-        savedAt: new Date().toLocaleDateString(),
-        category: storyPrompts.find(p => p.text === selectedPrompt)?.category || 'Unknown'
-      };
-      setSavedStories([...savedStories, newStory]);
-      setCompletedPrompts(new Set([...completedPrompts, selectedPrompt]));
-      setStory('');
-      setSelectedPrompt('');
-      setIsWriting(false);
-      setWritingTimer(0);
+  const handleSaveStory = async () => {
+    if (story.trim() && selectedPrompt && storageProvider) {
+      try {
+        const newStory: Omit<Story, 'id' | 'createdAt' | 'updatedAt'> = {
+          prompt: selectedPrompt,
+          content: story,
+          wordCount: story.trim().split(/\s+/).length,
+          timeSpent: writingTimer,
+          savedAt: new Date().toLocaleDateString(),
+          category: storyPrompts.find(p => p.text === selectedPrompt)?.category || 'Unknown'
+        };
+        
+        const savedStory = await storageProvider.save(newStory as Story);
+        setSavedStories([...savedStories, savedStory]);
+        setCompletedPrompts(new Set([...completedPrompts, selectedPrompt]));
+        setStory('');
+        setSelectedPrompt('');
+        setIsWriting(false);
+        setWritingTimer(0);
+      } catch (error) {
+        console.error('Failed to save story:', error);
+        alert('Failed to save story. Please try again.');
+      }
+    }
+  };
+
+  const handleStorageTypeChange = (newType: 'local' | 'cloud') => {
+    if (storageType !== newType) {
+      setStorageType(newType);
+      setIsLoading(true);
     }
   };
 
@@ -165,6 +212,17 @@ export function StoryTherapyPage() {
 
   const completionPercentage = (completedPrompts.size / storyPrompts.length) * 100;
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground">Loading your stories...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 p-4 max-w-7xl mx-auto">
       <div className="flex items-center space-x-4">
@@ -182,6 +240,28 @@ export function StoryTherapyPage() {
             Heal through the power of storytelling and narrative
           </p>
         </div>
+        
+        {/* Storage Type Toggle */}
+        <div className="flex items-center space-x-2 bg-muted/30 rounded-full p-1">
+          <Button
+            variant={storageType === 'local' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => handleStorageTypeChange('local')}
+            className="rounded-full"
+          >
+            <HardDrive className="h-4 w-4 mr-2" />
+            Local
+          </Button>
+          <Button
+            variant={storageType === 'cloud' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => handleStorageTypeChange('cloud')}
+            className="rounded-full"
+          >
+            <Cloud className="h-4 w-4 mr-2" />
+            Cloud
+          </Button>
+        </div>
       </div>
 
       {/* Progress Overview */}
@@ -192,7 +272,7 @@ export function StoryTherapyPage() {
             <span>Your Story Journey</span>
           </CardTitle>
           <CardDescription className="text-base">
-            {completedPrompts.size} of {storyPrompts.length} prompts completed
+            {completedPrompts.size} of {storyPrompts.length} prompts completed • {storageType === 'local' ? 'Stored locally' : 'Synced to cloud'}
           </CardDescription>
         </CardHeader>
         <CardContent>
