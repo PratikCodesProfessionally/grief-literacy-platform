@@ -249,6 +249,70 @@ Sweetness transitions to bitterness`,
       category: "Transformation",
       readTime: "2 min"
     
+    },
+     {
+      id : 8,
+      title: "'Are you sure you even packed it?",
+      author: "Unknown",
+      content: `You seem comfused dear Sir? 
+Are you sure you belong here?
+
+A barrage of questions hits him 
+Your name looks old Ibrahim 
+
+The eyes are watery and scared
+He wants to return to his home,
+But home is ash and bone 
+
+punctured and teared
+marred and serevered
+
+The guy on immigration runs over his passport
+crushes it like a cigarette butt
+His attire props him up with satire
+But you look different, sire
+
+Do you think you belong here in our empire?
+
+The nervous laughter, a half smile, 
+the situation is dire
+His attire screams the truth, but the officer's eyes judge him guilty,
+a born liar, a living pyre
+
+"The story we want to tell you is of love
+Not of hate" a big billboard at the landing gate
+But something feels not right about your landing gear?
+
+He wants to tear his clothes old
+peel off the skin that marks him odd
+
+H & M, C & A, the brands that promise to make you look smart and smooth
+Prep you up for an integration school
+duty free products 
+
+A silent slave to the economy's bloom
+Operator of multiple saloons
+gets labeled as a goon, a plague, a wound
+H & M, C & A cannot bleach you into one of us
+'You loon'
+
+You have left your soul at home 
+You have landed 
+but your dignity 
+' has been delayed '
+
+I guess it must be checked out
+with your 23 kg luggage
+
+But wait you claim your bags
+and something is missing
+Something they never returned.
+
+'Are you sure you even packed it?'
+`,
+      category: "Displacement",
+      readTime: "2 min"
+    
     }
   ];
 
