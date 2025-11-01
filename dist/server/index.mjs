@@ -1,15 +1,21 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import { setupStaticServing } from './static-serve.mjs';
+import { setupStaticServing, setupSpaFallback } from './static-serve.mjs';
 dotenv.config();
 const app = express();
 // Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+// Setup static file serving
+setupStaticServing(app);
+// TODO: Add your API routes here
+// app.use('/api', apiRouter);
+// Setup SPA fallback route AFTER all other routes
+// This must be the last route registered to avoid intercepting API routes
+setupSpaFallback(app);
 // Export a function to start the server
 export async function startServer(port) {
     try {
-        setupStaticServing(app); // Immer aufrufen!
         app.listen(port, () => {
             console.log(`API Server running on port ${port}`);
         });
