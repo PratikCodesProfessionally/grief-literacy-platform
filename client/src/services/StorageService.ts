@@ -13,7 +13,7 @@
  * @interface StorageItem
  * @description Definiert die Mindestanforderungen für speicherbare Objekte
  */
-interface StorageItem {
+export interface StorageItem {
   id: string;        // Eindeutige ID
   createdAt: Date;   // Erstellungszeitpunkt
   updatedAt: Date;   // Letzter Änderungszeitpunkt
@@ -24,7 +24,7 @@ interface StorageItem {
  * @interface Poem
  * @extends StorageItem
  */
-interface Poem extends StorageItem {
+export interface Poem extends StorageItem {
   title: string;     // Titel des Gedichts
   content: string;   // Gedichttext
   authorId: string;  // Referenz zum Autor
@@ -33,11 +33,25 @@ interface Poem extends StorageItem {
 }
 
 /**
+ * Spezifisches Interface für Geschichten
+ * @interface Story
+ * @extends StorageItem
+ */
+export interface Story extends StorageItem {
+  prompt: string;    // Story-Prompt
+  content: string;   // Geschichte-Inhalt
+  wordCount: number; // Wortzahl
+  timeSpent: number; // Schreibzeit in Sekunden
+  savedAt: string;   // Speicherdatum
+  category: string;  // Kategorie (z.B. Comfort, Connection, etc.)
+}
+
+/**
  * Provider-Interface für Speicheroperationen
  * @interface IStorageProvider
  * @description Definiert CRUD-Operationen für Storage-Provider
  */
-interface IStorageProvider {
+export interface IStorageProvider {
   save<T extends StorageItem>(item: T): Promise<T>;
   get<T extends StorageItem>(id: string): Promise<T | null>;
   delete(id: string): Promise<boolean>;
@@ -95,9 +109,9 @@ class LocalStorageProvider extends BaseStorageProvider {
         id,
         createdAt: timestamp,
         updatedAt: timestamp,
-      };
+      } as T;
 
-      const items = await this.getStoredItems();
+      const items = await this.getStoredItems<T>();
       items.push(newItem);
       localStorage.setItem(this.namespace, JSON.stringify(items));
 
@@ -116,7 +130,7 @@ class LocalStorageProvider extends BaseStorageProvider {
    */
   async get<T extends StorageItem>(id: string): Promise<T | null> {
     try {
-      const items = await this.getStoredItems();
+      const items = await this.getStoredItems<T>();
       return items.find(item => item.id === id) || null;
     } catch (error) {
       console.error('LocalStorage get error:', error);
@@ -148,7 +162,7 @@ class LocalStorageProvider extends BaseStorageProvider {
    */
   async list<T extends StorageItem>(): Promise<T[]> {
     try {
-      return await this.getStoredItems();
+      return await this.getStoredItems<T>();
     } catch (error) {
       console.error('LocalStorage list error:', error);
       throw new Error('Failed to list items from local storage');
@@ -164,7 +178,7 @@ class LocalStorageProvider extends BaseStorageProvider {
    */
   async update<T extends StorageItem>(id: string, updates: Partial<T>): Promise<T> {
     try {
-      const items = await this.getStoredItems();
+      const items = await this.getStoredItems<T>();
       const itemIndex = items.findIndex(item => item.id === id);
       
       if (itemIndex === -1) {
@@ -175,7 +189,7 @@ class LocalStorageProvider extends BaseStorageProvider {
         ...items[itemIndex],
         ...updates,
         updatedAt: new Date(),
-      };
+      } as T;
 
       items[itemIndex] = updatedItem;
       localStorage.setItem(this.namespace, JSON.stringify(items));
@@ -332,7 +346,7 @@ class CloudStorageProvider extends BaseStorageProvider {
  * Factory für Storage-Provider
  * @class StorageProviderFactory
  */
-class StorageProviderFactory {
+export class StorageProviderFactory {
   /**
    * Erstellt einen Storage-Provider
    * @static
@@ -355,14 +369,6 @@ class StorageProviderFactory {
     }
   }
 }
-
-// Export der öffentlichen API
-export {
-  IStorageProvider,
-  StorageProviderFactory,
-  StorageItem,
-  Poem,
-};
 
 /**
  * @example Verwendungsbeispiel:
