@@ -282,6 +282,19 @@ export function BooksPage() {
   summary: 'Yvi Blum explores why we often find ourselves in similar toxic relationship patterns despite changing partners. With psychological insights and practical exercises, this book helps readers recognize their unconscious patterns, understand their origins, and develop healthier relationship dynamics. It\'s an empowering guide for anyone tired of repeating the same mistakes in love.',
   keyTopics: ['Relationship Patterns', 'Breaking Cycles', 'Self-Awareness', 'Healthy Boundaries', 'Personal Growth'],
   notesForHealing: 'If you recognize patterns repeating across relationships, this book helps you pause and reflect rather than react. Understanding your role in the cycle is the first step to choosing differently—not fixing others, but freeing yourself.'
+},
+{
+  title: 'Nagomi: The Japanese Secret to Finding Balance and Happiness in Everyday Life',
+  author: 'Ken Mogi',
+  description: 'A guide to the Japanese philosophy of nagomi—finding balance and harmony in all aspects of life through small, mindful adjustments.',
+  rating: 4.4,
+  category: 'Harmony & Balance',
+  pages: 176,
+  published: '2022',
+  isbn: '978-3832166878',
+  summary: 'Neuroscientist Ken Mogi explores the Japanese concept of nagomi—the art of finding balance. Through stories, science, and practical wisdom, he shows how to harmonize opposing forces in life: work and rest, body and mind, self and others. Nagomi teaches that balance isn\'t static perfection but a dynamic, gentle adjustment we make each day.',
+  keyTopics: ['Japanese Philosophy', 'Work-Life Balance', 'Mindfulness', 'Harmony', 'Mental Wellbeing', 'Sustainable Living'],
+  notesForHealing: 'When grief disrupts your equilibrium, nagomi offers permission to find a new balance—not by forcing return to "normal," but by honoring where you are now. Small, kind adjustments like rest when tired, connect when lonely,build resilience without demanding perfection.'
 }
   ];
 

@@ -254,7 +254,7 @@ Sweetness transitions to bitterness`,
       id : 8,
       title: "'Are you sure you even packed it?",
       author: "Unknown",
-      content: `You seem comfused dear Sir? 
+      content: `You seem confused dear Sir? 
 Are you sure you belong here?
 
 A barrage of questions hits him 
