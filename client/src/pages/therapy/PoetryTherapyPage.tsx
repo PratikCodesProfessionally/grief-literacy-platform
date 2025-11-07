@@ -6,12 +6,20 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ArrowLeft, Heart, Share, Bookmark, Volume2, Mic, MicOff, Save, Download } from 'lucide-react';
+import { ArrowLeft, Heart, Share, Bookmark, Volume2, Mic, MicOff, Save, Download, Play, Pause, Trash2, Check, Copy } from 'lucide-react';
 import { ApiClient } from '@/services/ApiClient';
 import { useToast } from '@/components/ui/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { Wifi, WifiOff, Cloud, HardDrive, RefreshCw } from 'lucide-react';
 import { storageProvider } from '@/services/StorageProvider';
+
+interface VoiceRecording {
+  id: number;
+  name: string;
+  blob: Blob;
+  url: string;
+  duration: number;
+}
 
 export function PoetryTherapyPage() {
   const [selectedPoem, setSelectedPoem] = React.useState('');
@@ -19,16 +27,24 @@ export function PoetryTherapyPage() {
   const [poemTitle, setPoemTitle] = React.useState('');
   const [savedPoems, setSavedPoems] = React.useState<any[]>([]);
   const [favoritePoems, setFavoritePoems] = React.useState<Set<number>>(new Set());
+  const [savedHealingPoems, setSavedHealingPoems] = React.useState<Set<number>>(new Set());
   const [isReading, setIsReading] = React.useState<number | null>(null);
   const [isRecording, setIsRecording] = React.useState(false);
   const [recordingTime, setRecordingTime] = React.useState(0);
-  const [voiceRecordings, setVoiceRecordings] = React.useState<string[]>([]);
+  const [voiceRecordings, setVoiceRecordings] = React.useState<VoiceRecording[]>([]);
   const [selectedFullPoem, setSelectedFullPoem] = React.useState<any | null>(null);
+  const [playingRecording, setPlayingRecording] = React.useState<number | null>(null);
+  
   // Neue Zustände für Storage und Sync
   const [storageType, setStorageType] = React.useState<'local' | 'cloud'>('local');
   const [isOnline, setIsOnline] = React.useState(navigator.onLine);
   const [isSyncing, setIsSyncing] = React.useState(false);
   const [lastSyncTime, setLastSyncTime] = React.useState<Date | null>(null);
+  
+  // MediaRecorder refs
+  const mediaRecorderRef = React.useRef<MediaRecorder | null>(null);
+  const audioChunksRef = React.useRef<Blob[]>([]);
+  const audioPlayerRef = React.useRef<HTMLAudioElement | null>(null);
   
   const { toast } = useToast();
   const storageProviderInstance = React.useMemo(() => 
@@ -54,6 +70,19 @@ export function PoetryTherapyPage() {
     };
   }, []);
 
+  // Cleanup audio URLs on unmount
+  React.useEffect(() => {
+    return () => {
+      voiceRecordings.forEach(recording => {
+        URL.revokeObjectURL(recording.url);
+      });
+      if (audioPlayerRef.current) {
+        audioPlayerRef.current.pause();
+        audioPlayerRef.current = null;
+      }
+    };
+  }, []);
+
   // Gedichte beim Mount laden
   React.useEffect(() => {
     const loadPoems = async () => {
@@ -65,9 +94,15 @@ export function PoetryTherapyPage() {
       }
     };
     loadPoems();
+
+    // Load saved healing poems from localStorage
+    const saved = localStorage.getItem('savedHealingPoems');
+    if (saved) {
+      setSavedHealingPoems(new Set(JSON.parse(saved)));
+    }
   }, [storageProviderInstance]);
 
-    // Sync-Funktion
+  // Sync-Funktion
   const syncPoems = async () => {
     if (!isOnline || storageType === 'local') return;
 
@@ -123,6 +158,82 @@ export function PoetryTherapyPage() {
         });
       }
     }
+  };
+
+  const saveHealingPoem = (poemId: number, poemTitle: string) => {
+    const newSaved = new Set(savedHealingPoems);
+    if (newSaved.has(poemId)) {
+      newSaved.delete(poemId);
+      toast({
+        title: "Aus Sammlung entfernt",
+        description: `"${poemTitle}" wurde aus Ihrer Sammlung entfernt`,
+      });
+    } else {
+      newSaved.add(poemId);
+      toast({
+        title: "Zur Sammlung hinzugefügt",
+        description: `"${poemTitle}" wurde zu Ihrer Sammlung hinzugefügt`,
+      });
+    }
+    setSavedHealingPoems(newSaved);
+    localStorage.setItem('savedHealingPoems', JSON.stringify(Array.from(newSaved)));
+  };
+
+  const sharePoem = async (poem: any) => {
+    const shareText = `${poem.title}\nby ${poem.author}\n\n${poem.content}`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: poem.title,
+          text: shareText,
+        });
+        toast({
+          title: "Erfolgreich geteilt",
+          description: `"${poem.title}" wurde geteilt`,
+        });
+      } catch (error) {
+        if ((error as Error).name !== 'AbortError') {
+          copyToClipboard(shareText, poem.title);
+        }
+      }
+    } else {
+      copyToClipboard(shareText, poem.title);
+    }
+  };
+
+  const copyToClipboard = async (text: string, title: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({
+        title: "In Zwischenablage kopiert",
+        description: `"${title}" wurde in die Zwischenablage kopiert`,
+      });
+    } catch (error) {
+      toast({
+        title: "Fehler",
+        description: "Konnte nicht in die Zwischenablage kopieren",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const exportPoemAsText = (poem: any) => {
+    const content = `${poem.title}\n${poem.createdAt ? `Created: ${poem.createdAt}` : ''}\n${poem.prompt ? `Prompt: "${poem.prompt}"` : ''}\n\n${poem.content}`;
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${poem.title}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Export erfolgreich",
+      description: `"${poem.title}" wurde als Textdatei exportiert`,
+    });
   };
 
   // UI-Komponenten für Storage-Controls
@@ -313,7 +424,59 @@ Something they never returned.
       category: "Displacement",
       readTime: "2 min"
     
-    }
+    },
+     {
+    id: 9,
+    title: "After the love's funeral",
+    author: "Unknown",
+    content: `Allow yourself to feel it 
+the unfeelable
+hand of divine creation 
+
+Allow yourself to see it 
+the unseeable
+disguise of eternal cosmos
+
+Don't build walls and dams like beaver 
+Pour the beaker 
+of love 
+For you are a seeker 
+of love 
+
+Let the sandstorm sway away 
+the ancient wounds 
+the cascades arrayal
+
+Let the thunderstorm carry away
+the ancient sounds 
+Of masquerades, betrayal 
+
+Let the heavy rain 
+wash away the burdens, the dues 
+needing attention, defrayal
+
+Allow yourself to hear it 
+the heresay of hope
+between the whispers of salient trees
+
+Allow yourself to taste it 
+the taste of autumn leaves
+
+Let go my friend 
+the grudges of past 
+
+See those ridges and cliffs 
+beyond the ever sailing mast
+
+Feel the dance of eternal play 
+between the stardust's lay 
+the unfathomable, aghast 
+
+The home you seek
+the ultimate the last`,
+    category: "Journey",
+    readTime: "2 min"
+  }
   ];
 
   const poetryPrompts = [
@@ -403,16 +566,138 @@ Something they never returned.
     }
   };
 
-  const startRecording = () => {
-    setIsRecording(true);
-    setRecordingTime(0);
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const recordingName = `Poetry Reading ${voiceRecordings.length + 1} (${formatTime(recordingTime)})`;
+        
+        const newRecording: VoiceRecording = {
+          id: Date.now(),
+          name: recordingName,
+          blob: audioBlob,
+          url: audioUrl,
+          duration: recordingTime
+        };
+
+        setVoiceRecordings(prev => [...prev, newRecording]);
+        
+        // Stop all tracks
+        stream.getTracks().forEach(track => track.stop());
+        
+        toast({
+          title: "Aufnahme gespeichert",
+          description: recordingName,
+        });
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+      setRecordingTime(0);
+      
+      toast({
+        title: "Aufnahme gestartet",
+        description: "Lesen Sie Ihr Gedicht vor",
+      });
+    } catch (error) {
+      console.error('Error starting recording:', error);
+      toast({
+        title: "Fehler",
+        description: "Mikrofon-Zugriff wurde verweigert",
+        variant: "destructive",
+      });
+    }
   };
 
   const stopRecording = () => {
-    setIsRecording(false);
-    const recordingName = `Poetry Reading ${voiceRecordings.length + 1} (${Math.floor(recordingTime / 60)}:${(recordingTime % 60).toString().padStart(2, '0')})`;
-    setVoiceRecordings([...voiceRecordings, recordingName]);
-    setRecordingTime(0);
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const playRecording = (recording: VoiceRecording) => {
+    if (playingRecording === recording.id) {
+      // Stop current playback
+      if (audioPlayerRef.current) {
+        audioPlayerRef.current.pause();
+        audioPlayerRef.current.currentTime = 0;
+      }
+      setPlayingRecording(null);
+    } else {
+      // Stop previous playback if any
+      if (audioPlayerRef.current) {
+        audioPlayerRef.current.pause();
+      }
+
+      // Create new audio player
+      const audio = new Audio(recording.url);
+      audioPlayerRef.current = audio;
+
+      audio.onended = () => {
+        setPlayingRecording(null);
+      };
+
+      audio.onerror = () => {
+        toast({
+          title: "Fehler",
+          description: "Aufnahme konnte nicht abgespielt werden",
+          variant: "destructive",
+        });
+        setPlayingRecording(null);
+      };
+
+      audio.play();
+      setPlayingRecording(recording.id);
+    }
+  };
+
+  const downloadRecording = (recording: VoiceRecording) => {
+    const a = document.createElement('a');
+    a.href = recording.url;
+    a.download = `${recording.name}.webm`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    
+    toast({
+      title: "Download gestartet",
+      description: `${recording.name}.webm`,
+    });
+  };
+
+  const deleteRecording = (recordingId: number) => {
+    const recording = voiceRecordings.find(r => r.id === recordingId);
+    if (recording) {
+      // Stop playback if this recording is playing
+      if (playingRecording === recordingId && audioPlayerRef.current) {
+        audioPlayerRef.current.pause();
+        setPlayingRecording(null);
+      }
+      
+      // Revoke object URL
+      URL.revokeObjectURL(recording.url);
+      
+      // Remove from state
+      setVoiceRecordings(prev => prev.filter(r => r.id !== recordingId));
+      
+      toast({
+        title: "Aufnahme gelöscht",
+        description: recording.name,
+      });
+    }
   };
 
   const formatTime = (seconds: number) => {
@@ -515,13 +800,27 @@ Something they never returned.
                       {poem.content}
                     </p>
                     <div className="flex items-center space-x-2 mt-4">
-                      <Button size="sm" variant="outline" className="rounded-full hover:bg-accent/20 transition-all duration-300">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="rounded-full hover:bg-accent/20 transition-all duration-300"
+                        onClick={() => sharePoem(poem)}
+                      >
                         <Share className="h-3 w-3 mr-1" />
                         Share
                       </Button>
-                      <Button size="sm" variant="outline" className="rounded-full hover:bg-accent/20 transition-all duration-300">
-                        <Bookmark className="h-3 w-3 mr-1" />
-                        Save
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="rounded-full hover:bg-accent/20 transition-all duration-300"
+                        onClick={() => saveHealingPoem(poem.id, poem.title)}
+                      >
+                        {savedHealingPoems.has(poem.id) ? (
+                          <Check className="h-3 w-3 mr-1" />
+                        ) : (
+                          <Bookmark className="h-3 w-3 mr-1" />
+                        )}
+                        {savedHealingPoems.has(poem.id) ? 'Saved' : 'Save'}
                       </Button>
                     </div>
                   </CardContent>
@@ -622,13 +921,37 @@ Something they never returned.
                 <div className="border-t pt-4 border-border">
                   <h4 className="font-medium mb-3 text-lg">Voice Recordings:</h4>
                   <div className="space-y-2">
-                    {voiceRecordings.map((recording, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded-2xl text-sm hover:bg-muted/50 transition-all duration-300">
-                        <span>{recording}</span>
-                        <div className="space-x-1">
-                          <Button size="sm" variant="ghost" className="rounded-full">Play</Button>
-                          <Button size="sm" variant="ghost" className="rounded-full">
+                    {voiceRecordings.map((recording) => (
+                      <div key={recording.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-2xl text-sm hover:bg-muted/50 transition-all duration-300">
+                        <span className="flex-1">{recording.name}</span>
+                        <div className="flex space-x-1">
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            className="rounded-full"
+                            onClick={() => playRecording(recording)}
+                          >
+                            {playingRecording === recording.id ? (
+                              <Pause className="h-3 w-3" />
+                            ) : (
+                              <Play className="h-3 w-3" />
+                            )}
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            className="rounded-full"
+                            onClick={() => downloadRecording(recording)}
+                          >
                             <Download className="h-3 w-3" />
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            className="rounded-full text-destructive hover:text-destructive"
+                            onClick={() => deleteRecording(recording.id)}
+                          >
+                            <Trash2 className="h-3 w-3" />
                           </Button>
                         </div>
                       </div>
@@ -701,11 +1024,25 @@ Something they never returned.
             <div className="flex items-center justify-between pt-4 border-t text-sm text-muted-foreground">
               <span>{selectedFullPoem?.lineCount} lines • {selectedFullPoem?.wordCount} words</span>
               <div className="flex space-x-2">
-                <Button size="sm" variant="outline" className="rounded-full">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="rounded-full"
+                  onClick={() => sharePoem({
+                    title: selectedFullPoem?.title,
+                    author: 'You',
+                    content: selectedFullPoem?.content
+                  })}
+                >
                   <Share className="h-3 w-3 mr-1" />
                   Share
                 </Button>
-                <Button size="sm" variant="outline" className="rounded-full">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="rounded-full"
+                  onClick={() => exportPoemAsText(selectedFullPoem)}
+                >
                   <Download className="h-3 w-3 mr-1" />
                   Export
                 </Button>
