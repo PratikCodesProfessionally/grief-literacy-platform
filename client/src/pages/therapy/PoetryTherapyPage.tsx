@@ -476,7 +476,66 @@ The home you seek
 the ultimate the last`,
     category: "Journey",
     readTime: "2 min"
-  }
+  },
+  {
+  id: 10,
+  title: "After the love's demise",
+  author: "Unknown",
+  content: `After the love's demise
+Don't collect the last breath 
+From the raging fire of heart's hearth
+Let it be gassed and released 
+Chimneyed into open earth 
+Let it recollect its memories 
+Let it have a new birth 
+
+After the love's demise 
+Let the warm tears freely flow 
+Into the cold cheek's glow 
+Let it be crystallized 
+Let it be prickly and needlized 
+Piercing through the rib cages hollow 
+
+After the love's demise 
+Let the pink tulips wilt 
+Let the white cotton quilt
+be disarrayed
+like the red emotions and orange guilt 
+lie martyred and deranged
+
+After the love's demise
+Let the letters be burned 
+Let the Shakespeares mourn 
+Let the literature be shunned 
+Let the feelings be gunned
+Mortared, rifled and bombed
+
+After the love's demise
+Let the soul be thirsty 
+of bright white light
+that lie hidden out of human sight 
+in the deep ocean's vile 
+Between the holdfast of clam's guile 
+Between the timid stars 
+far in oblivion but agile
+
+After the love's demise
+let apple fall behind Newton's head 
+Let the charity be born
+Gravity can wait instead
+Let the Schrodinger's cat be dead 
+Let the relativity be poisoned with lead 
+
+After the love's demise
+Let the microcontrollers be frozen
+Nullified and zeroed bitwise
+Let the world be taken by a bot
+Let the singularity remain a dot
+Let the black holes be wise 
+Swallow everything of universe's size`,
+  category: "Hypothesis",
+  readTime: "3 min"
+}
   ];
 
   const poetryPrompts = [
