@@ -535,7 +535,77 @@ Let the black holes be wise
 Swallow everything of universe's size`,
   category: "Hypothesis",
   readTime: "3 min"
-}
+},
+{
+  id: 11,
+  title: "Who is more naked?",
+  author: "Unknown",
+  content: `You trade in feelings that are fake
+She fakes feelings as a trade
+
+At least she is transparent without clothes 
+You are clothed with layers of masks
+
+Her betrayals negotiated in advance
+Your betrayals are fabricated and advanced
+
+She is explicit with what she sells 
+Doesnot bargain for her pay 
+And you sell products that you don't believe in
+Every Second, minute, hour and an entire day
+
+She is naked without clothes 
+Outside
+You are naked with clothes 
+Inside
+
+She manipulates her body 
+You manipulate ideas, emotions 
+
+She seems cold outside 
+People wear her warm like a blanket
+You are cold inside 
+What do you wear?
+
+She was once somebody's daughter 
+But has no aquitances now
+You have a thousand 
+But couldn't be your own friend 
+
+She does a transaction for once
+But you sip out the traction forever
+
+Soon she will be old and unattractive 
+unwanted and nostalgic 
+Her once desired body 
+Is now absurd and allergic 
+She knows it will fade - her magic 
+
+You are new and attractive 
+wanted and magnetic
+desired for your ideas and logic
+astute and energetic 
+Full of allurement and magic 
+
+Yet she is honest 
+But you seem honest
+
+Yet she is truthful 
+You seem truthful 
+
+Yet she sheds tears
+You fake tears 
+
+Yet she is transparent 
+You seem transparent 
+
+She is naked without clothes 
+Outside
+You are naked with clothes 
+Inside`,
+  category: "Unveiling",
+  readTime: "3 min"
+},
   ];
 
   const poetryPrompts = [
