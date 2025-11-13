@@ -326,35 +326,49 @@ export const AdvancedDigitalStudio: React.FC<AdvancedDigitalStudioProps> = ({
     saveToHistory();
   };
 
-  const floodFill = (ctx: CanvasRenderingContext2D, x: number, y: number, fillColor: string) => {
-    const canvas = ctx.canvas;
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const data = imageData.data;
+const floodFill = (ctx: CanvasRenderingContext2D, x: number, y: number, fillColor: string) => {
+  const canvas = ctx.canvas;
+  const rect = compositeCanvasRef.current?.getBoundingClientRect();
+  if (!rect) return;
+  
+  // Convert logical coordinates to physical pixel coordinates
+  const dpr = window.devicePixelRatio || 1;
+  const physicalX = Math.floor(x * dpr);
+  const physicalY = Math.floor(y * dpr);
+  
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imageData.data;
+  
+  const targetColor = getPixelColor(data, physicalX, physicalY, canvas.width);
+  const fillRgb = hexToRgb(fillColor);
+  
+  if (!fillRgb || colorsMatch(targetColor, fillRgb)) return;
+  
+  const stack: [number, number][] = [[physicalX, physicalY]];
+  const visited = new Set<string>();
+  const maxIterations = 100000;
+  let iterations = 0;
+  
+  while (stack.length > 0 && iterations < maxIterations) {
+    iterations++;
+    const [px, py] = stack.pop()!;
     
-    const targetColor = getPixelColor(data, x, y, canvas.width);
-    const fillRgb = hexToRgb(fillColor);
+    if (px < 0 || px >= canvas.width || py < 0 || py >= canvas.height) continue;
     
-    if (!fillRgb || colorsMatch(targetColor, fillRgb)) return;
+    const key = `${px},${py}`;
+    if (visited.has(key)) continue;
+    visited.add(key);
     
-    const stack: [number, number][] = [[x, y]];
-    const maxIterations = 50000; // Prevent infinite loops
-    let iterations = 0;
+    const currentColor = getPixelColor(data, px, py, canvas.width);
+    if (!colorsMatch(currentColor, targetColor)) continue;
     
-    while (stack.length > 0 && iterations < maxIterations) {
-      iterations++;
-      const [px, py] = stack.pop()!;
-      if (px < 0 || px >= canvas.width || py < 0 || py >= canvas.height) continue;
-      
-      const currentColor = getPixelColor(data, px, py, canvas.width);
-      if (!colorsMatch(currentColor, targetColor)) continue;
-      
-      setPixelColor(data, px, py, canvas.width, fillRgb);
-      
-      stack.push([px + 1, py], [px - 1, py], [px, py + 1], [px, py - 1]);
-    }
+    setPixelColor(data, px, py, canvas.width, fillRgb);
     
-    ctx.putImageData(imageData, 0, 0);
-  };
+    stack.push([px + 1, py], [px - 1, py], [px, py + 1], [px, py - 1]);
+  }
+  
+  ctx.putImageData(imageData, 0, 0);
+};
 
   const getPixelColor = (data: Uint8ClampedArray, x: number, y: number, width: number) => {
     const index = (y * width + x) * 4;
@@ -380,9 +394,11 @@ export const AdvancedDigitalStudio: React.FC<AdvancedDigitalStudioProps> = ({
     ] : null;
   };
 
-  const colorsMatch = (c1: number[], c2: number[]) => {
-    return c1[0] === c2[0] && c1[1] === c2[1] && c1[2] === c2[2];
-  };
+const colorsMatch = (c1: number[], c2: number[], tolerance: number = 10) => {
+  return Math.abs(c1[0] - c2[0]) <= tolerance && 
+         Math.abs(c1[1] - c2[1]) <= tolerance && 
+         Math.abs(c1[2] - c2[2]) <= tolerance;
+};
 
   const clearCanvas = () => {
     const layer = getActiveLayer();

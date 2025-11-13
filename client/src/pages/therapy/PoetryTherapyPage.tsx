@@ -568,7 +568,7 @@ You are cold inside
 What do you wear?
 
 She was once somebody's daughter 
-But has no aquitances now
+But has no acquaintances now
 You have a thousand 
 But couldn't be your own friend 
 
