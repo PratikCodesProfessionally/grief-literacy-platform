@@ -2,8 +2,12 @@ import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Sparkles } from 'lucide-react';
+import { ArrowLeft, Sparkles, LogOut } from 'lucide-react';
 import { StorageProviderFactory, StorageItem } from '@/services/StorageService';
+import { AnonymousRegistration } from '@/components/AnonymousRegistration';
+import { GroupView } from '@/components/GroupView';
+import { supportGroupsService } from '@/services/SupportGroupsService';
+import { User, SupportGroup } from '@/types/supportGroups';
 
 // Circle data interface extending StorageItem
 interface Circle extends StorageItem {
@@ -28,6 +32,9 @@ export function SupportCirclesPage() {
   const [hoveredCircle, setHoveredCircle] = React.useState<string | null>(null);
   const [userId, setUserId] = React.useState<string>('');
   const [userMembership, setUserMembership] = React.useState<UserMembership | null>(null);
+  const [user, setUser] = React.useState<User | null>(null);
+  const [selectedGroup, setSelectedGroup] = React.useState<SupportGroup | null>(null);
+  const [showGroupView, setShowGroupView] = React.useState(false);
 
   const storageProvider = React.useMemo(
     () => StorageProviderFactory.createProvider('local', 'support-circles'),
@@ -39,13 +46,23 @@ export function SupportCirclesPage() {
     []
   );
 
+  // Check if user is already registered for anonymous support groups
+  React.useEffect(() => {
+    const existingUser = supportGroupsService.getCurrentUser();
+    if (existingUser) {
+      setUser(existingUser);
+    }
+  }, []);
+
   // Initialize circles and user data
   React.useEffect(() => {
+    if (!user) return;
+
     const initializeData = async () => {
-      // Get or create anonymous user ID
+      // Get or create anonymous user ID for circle tracking (separate from support groups)
       let storedUserId = localStorage.getItem('anonymous-user-id');
       if (!storedUserId) {
-        storedUserId = `anon-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        storedUserId = user.id; // Use the support group user ID
         localStorage.setItem('anonymous-user-id', storedUserId);
       }
       setUserId(storedUserId);
@@ -135,20 +152,53 @@ export function SupportCirclesPage() {
     };
 
     initializeData();
-  }, [storageProvider, membershipProvider]);
+  }, [storageProvider, membershipProvider, user]);
+
+  const handleRegistrationComplete = (newUser: User) => {
+    setUser(newUser);
+  };
+
+  const handleLogout = () => {
+    if (window.confirm('Are you sure you want to log out? You can return anytime using this device.')) {
+      supportGroupsService.clearCurrentUser();
+      setUser(null);
+      setShowGroupView(false);
+      setSelectedGroup(null);
+    }
+  };
+
+  const handleBackFromGroup = () => {
+    setShowGroupView(false);
+    setSelectedGroup(null);
+  };
 
   const joinCircle = async (circleId: string) => {
-    if (!userId) return;
+    if (!userId || !user) return;
 
     const circle = circles.find(c => c.id === circleId);
     if (!circle) return;
 
+    console.log('Joining circle:', circle.title, 'with user:', user.username);
+
     // Check if user is already a member
     if (userMembership?.circleIds.includes(circleId)) {
-      alert('You are already part of this circle');
+      console.log('User already member, finding support group...');
+      // User is already in this circle, let them view it
+      // Find or create a support group for this circle
+      try {
+        const group = supportGroupsService.createOrJoinGroupForTopic(circle.title, user.id);
+        console.log('Found/created group:', group);
+        setSelectedGroup(group);
+        setShowGroupView(true);
+      } catch (error) {
+        console.error('Error finding group:', error);
+        alert('Error opening circle. Please try leaving and rejoining.');
+      }
       return;
     }
 
+    console.log('Adding user to circle...');
+    
     // Check if circle is full
     if (circle.memberIds.length >= circle.maxMembers) {
       // Create a new circle of the same type
@@ -159,7 +209,8 @@ export function SupportCirclesPage() {
       const savedCircle = await storageProvider.save(newCircle as Circle);
       setCircles([...circles, savedCircle]);
 
-      // Update user membership
+      // Create corresponding support group
+      await createSupportGroupForCircle(savedCircle);
       await updateUserMembership(savedCircle.id);
       alert(`This circle was full. We've created a new gathering space for you!`);
     } else {
@@ -169,7 +220,27 @@ export function SupportCirclesPage() {
       });
 
       setCircles(circles.map(c => c.id === circleId ? updatedCircle : c));
+      
+      // Create corresponding support group
+      await createSupportGroupForCircle(updatedCircle);
       await updateUserMembership(circleId);
+    }
+  };
+
+  const createSupportGroupForCircle = async (circle: Circle) => {
+    if (!user) return;
+
+    console.log('Creating support group for circle:', circle.title);
+    
+    try {
+      // Use the new high-level method that handles everything
+      const group = supportGroupsService.createOrJoinGroupForTopic(circle.title, user.id);
+      console.log('Successfully created/joined group:', group.id, group.topic);
+      setSelectedGroup(group);
+      setShowGroupView(true);
+    } catch (error) {
+      console.error('Error creating/joining support group:', error);
+      alert('Failed to join the circle. Please try again.');
     }
   };
 
@@ -219,20 +290,47 @@ export function SupportCirclesPage() {
     return userMembership?.circleIds.includes(circleId) || false;
   };
 
+  // If user is not registered, show registration
+  if (!user) {
+    return <AnonymousRegistration onComplete={handleRegistrationComplete} />;
+  }
+
+  // If viewing a specific group, show group view
+  if (showGroupView && selectedGroup) {
+    return <GroupView group={selectedGroup} user={user} onBack={handleBackFromGroup} />;
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-purple-900/20 to-slate-900 -mx-4 -my-8 px-4 py-12">
       {/* Header */}
       <div className="max-w-7xl mx-auto mb-16 space-y-6">
-        <Link to="/community">
-          <Button 
-            variant="ghost" 
-            size="sm"
-            className="text-amber-200/70 hover:text-amber-200 hover:bg-amber-200/10"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Return to Community
-          </Button>
-        </Link>
+        <div className="flex items-center justify-between">
+          <Link to="/community">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="text-amber-200/70 hover:text-amber-200 hover:bg-amber-200/10"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Return to Community
+            </Button>
+          </Link>
+          
+          <div className="flex items-center gap-4">
+            <span className="text-purple-200/70 text-sm">
+              Welcome, {user.username}
+            </span>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={handleLogout}
+              className="text-amber-200/70 hover:text-amber-200 hover:bg-amber-200/10"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
+            </Button>
+          </div>
+        </div>
         
         <div className="text-center space-y-4">
           <h1 className="text-5xl font-serif text-amber-100/90 tracking-wide">
@@ -321,10 +419,9 @@ export function SupportCirclesPage() {
                     {/* Join Button */}
                     <Button
                       onClick={() => joinCircle(circle.id)}
-                      disabled={isMember(circle.id)}
                       className={`w-full mt-4 transition-all duration-300 ${
                         isMember(circle.id)
-                          ? 'bg-emerald-900/30 text-emerald-300/70 border border-emerald-400/30 cursor-default hover:bg-emerald-900/30'
+                          ? 'bg-emerald-900/30 text-emerald-300/70 border border-emerald-400/30 hover:bg-emerald-900/40 hover:border-emerald-400/50'
                           : 'bg-gradient-to-r from-amber-500/20 to-rose-500/20 hover:from-amber-500/30 hover:to-rose-500/30 text-amber-100 border border-amber-400/30 hover:border-amber-400/50'
                       }`}
                       variant="outline"
@@ -332,10 +429,10 @@ export function SupportCirclesPage() {
                       {isMember(circle.id) ? (
                         <span className="flex items-center gap-2">
                           <Sparkles className="w-4 h-4" />
-                          You're here
+                          Enter Your Circle
                         </span>
                       ) : (
-                        'Enter Circle'
+                        'Join Circle'
                       )}
                     </Button>
                   </div>

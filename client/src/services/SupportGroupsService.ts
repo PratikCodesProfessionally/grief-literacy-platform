@@ -11,6 +11,37 @@ const GROUPS_STORAGE_KEY = 'grief-literacy-support-groups';
 // Predefined group topic templates
 const GROUP_TEMPLATES: GroupTopicTemplate[] = [
   {
+    topic: 'Loss of Parent',
+    description: 'For those honoring a mother or father',
+    icon: '🕊️',
+  },
+  {
+    topic: 'Pet Loss Haven',
+    description: 'Remembering our beloved companions',
+    icon: '🐾',
+  },
+  {
+    topic: 'Sudden Loss Sanctuary',
+    description: 'Processing the unexpected',
+    icon: '💔',
+  },
+  {
+    topic: 'Pregnancy & Infant Loss',
+    description: 'Honoring the smallest lives',
+    icon: '👶',
+  },
+  {
+    topic: 'Young Hearts Gathering',
+    description: 'For young adults (18-35) on this journey',
+    icon: '🌱',
+  },
+  {
+    topic: 'Relationship Transitions',
+    description: 'Grieving love that has changed',
+    icon: '💫',
+  },
+  // Original templates
+  {
     topic: 'Anxiety Support',
     description: 'A safe space to share experiences and coping strategies for anxiety',
     icon: '🌊',
@@ -130,8 +161,16 @@ class SupportGroupsService {
    * Create a new group for a topic
    */
   private createGroup(topic: string): SupportGroup {
-    const template = GROUP_TEMPLATES.find(t => t.topic === topic);
-    if (!template) throw new Error('Invalid topic');
+    let template = GROUP_TEMPLATES.find(t => t.topic === topic);
+    
+    // If template doesn't exist, create a dynamic one
+    if (!template) {
+      template = {
+        topic: topic,
+        description: `Support group for ${topic}`,
+        icon: '🫂',
+      };
+    }
 
     return {
       id: this.generateId(),
@@ -271,6 +310,41 @@ class SupportGroupsService {
    */
   getAvailableGroupsForTopic(topic: string): SupportGroup[] {
     return this.getGroupsByTopic(topic).filter(g => g.members.length < g.maxCapacity);
+  }
+
+  /**
+   * Create or join a group for a specific topic
+   * This is a high-level method that handles all the logic
+   */
+  createOrJoinGroupForTopic(topic: string, userId: string): SupportGroup {
+    console.log('createOrJoinGroupForTopic called:', topic, userId);
+    
+    const allGroups = this.getGroupsByTopic(topic);
+    console.log('Found groups for topic:', allGroups.length);
+    
+    const availableGroups = allGroups.filter(g => g.members.length < g.maxCapacity);
+    console.log('Available groups (not full):', availableGroups.length);
+    
+    if (availableGroups.length > 0) {
+      // Join first available group
+      console.log('Joining available group:', availableGroups[0].id);
+      return this.joinGroup(availableGroups[0].id, userId);
+    } else if (allGroups.length > 0) {
+      // All groups are full, create a new one
+      console.log('All groups full, creating new one via joinGroup');
+      return this.joinGroup(allGroups[0].id, userId); // This will auto-create
+    } else {
+      // No groups exist, create the first one
+      console.log('No groups exist, creating first group for topic:', topic);
+      const newGroup = this.createGroup(topic);
+      newGroup.members.push(userId);
+      const groups = this.getAllGroups();
+      groups.push(newGroup);
+      this.saveGroups(groups);
+      this.updateUserMemberships(userId, newGroup.id);
+      console.log('Created new group:', newGroup.id, newGroup.topic);
+      return newGroup;
+    }
   }
 }
 
