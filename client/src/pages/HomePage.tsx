@@ -6,6 +6,7 @@ import {
   Users, 
   Flower2, 
   BookOpen,
+  Gamepad2,
   ArrowRight
 } from 'lucide-react';
 import { GrandmaSue } from '@/components/GrandmaSue';
@@ -138,6 +139,65 @@ export function HomePage() {
           </motion.p>
         </div>
       </section>
+
+      {/* Interactive Journey CTA - Featured Card */}
+      <motion.section
+        className="py-8 px-4"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.3 }}
+        variants={fadeUpVariant}
+      >
+        <div className="max-w-7xl mx-auto">
+          <Link to="/journey" className="group block">
+            <div className="relative overflow-hidden bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 
+                          rounded-3xl p-8 md:p-12
+                          shadow-2xl hover:shadow-3xl
+                          transform hover:scale-[1.02] hover:-translate-y-2
+                          transition-all duration-500 ease-out
+                          border-2 border-white/20
+                          cursor-pointer
+                          focus:outline-none focus:ring-4 focus:ring-violet-300/50 focus:ring-offset-2
+                          active:scale-[1.01] active:-translate-y-1">
+              
+              {/* Animated background pattern */}
+              <div className="absolute inset-0 opacity-10">
+                <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] animate-pulse" />
+              </div>
+
+              <div className="relative flex flex-col md:flex-row items-center gap-6 md:gap-8">
+                {/* Icon */}
+                <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-white/20 backdrop-blur-sm
+                              flex items-center justify-center
+                              shadow-lg group-hover:shadow-xl
+                              group-hover:scale-110 group-hover:rotate-6
+                              transition-all duration-500 ease-out">
+                  <Gamepad2 className="w-12 h-12 md:w-16 md:h-16 text-white
+                                     group-hover:scale-110
+                                     transition-transform duration-300" />
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 text-center md:text-left">
+                  <h3 className="text-3xl md:text-4xl font-bold text-white mb-3
+                               group-hover:scale-105 transition-transform duration-300 origin-left">
+                    Start Interactive Journey
+                  </h3>
+                  <p className="text-lg md:text-xl text-white/90 leading-relaxed mb-4">
+                    Explore a peaceful 2D world and discover healing stations at your own pace. 
+                    Walk through therapy, community, tools, and meditation areas.
+                  </p>
+                  <div className="inline-flex items-center text-white font-semibold text-lg
+                                group-hover:translate-x-2 transition-transform duration-300">
+                    <span>Begin Your Journey</span>
+                    <ArrowRight className="w-6 h-6 ml-2 group-hover:translate-x-2 transition-transform duration-300" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Link>
+        </div>
+      </motion.section>
 
       {/* Feature Cards - Messenger-Inspired Design with Scroll Animations */}
       <motion.section 
