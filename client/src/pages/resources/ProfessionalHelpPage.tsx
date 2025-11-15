@@ -366,8 +366,8 @@ export function ProfessionalHelpPage() {
               <span>When to Seek Help</span>
             </CardTitle>
           </CardHeader>
-          <CardContent className="text-blue-700 dark:text-blue-300">
-            <ul className="space-y-2 text-sm">
+          <CardContent>
+            <ul className="space-y-2 text-sm text-gray-800 dark:text-gray-200">
               <li>• Feeling overwhelmed by grief for extended periods</li>
               <li>• Unable to function in daily activities</li>
               <li>• Thoughts of self-harm or suicide</li>
@@ -386,8 +386,8 @@ export function ProfessionalHelpPage() {
               <span>Types of Professional Help</span>
             </CardTitle>
           </CardHeader>
-          <CardContent className="text-green-700 dark:text-green-300">
-            <ul className="space-y-2 text-sm">
+          <CardContent>
+            <ul className="space-y-2 text-sm text-gray-800 dark:text-gray-200">
               <li>• <strong>Grief Counselors:</strong> Specialized in bereavement support</li>
               <li>• <strong>Therapists:</strong> Individual therapy for complex grief</li>
               <li>• <strong>Support Groups:</strong> Connect with others in similar situations</li>

@@ -199,27 +199,28 @@ export function MusicTherapyPage() {
     switch (selectedActivity) {
       case 'playlist':
         return (
-          <Card className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20">
+          <Card className="bg-gradient-to-br from-purple-50/50 via-pink-50/50 to-rose-50/50 dark:from-purple-900/10 dark:to-pink-900/10 hover-lift border-2">
             <CardHeader>
-              <CardTitle>Create Memorial Playlist</CardTitle>
-              <CardDescription>Build a special playlist in honor of your loved one</CardDescription>
+              <CardTitle className="text-2xl">Create Memorial Playlist</CardTitle>
+              <CardDescription className="text-base">Build a special playlist in honor of your loved one</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <Input
                 placeholder="Playlist name (e.g., 'Songs for Mom')"
                 value={playlistName}
                 onChange={(e) => setPlaylistName(e.target.value)}
+                className="rounded-2xl border-2 focus:border-primary/40 transition-all duration-300"
               />
               <div className="space-y-2">
-                <h4 className="font-medium">Current Playlist:</h4>
+                <h4 className="font-medium text-lg">Current Playlist:</h4>
                 {customPlaylist.length === 0 ? (
-                  <p className="text-sm text-gray-500">No songs added yet. Click the + button next to any track to add it.</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">No songs added yet. Click the + button next to any track to add it.</p>
                 ) : (
-                  <div className="space-y-1">
+                  <div className="space-y-2">
                     {customPlaylist.map((track, index) => (
-                      <div key={index} className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded">
+                      <div key={index} className="flex items-center justify-between p-3 bg-white/80 dark:bg-gray-800/80 rounded-2xl hover:bg-white dark:hover:bg-gray-800 transition-all duration-300">
                         <span className="text-sm">{track}</span>
-                        <Button size="sm" variant="outline" onClick={() => handlePlay(track)}>
+                        <Button size="sm" variant="outline" onClick={() => handlePlay(track)} className="rounded-full">
                           {currentTrack === track && isPlaying ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
                         </Button>
                       </div>
@@ -227,7 +228,7 @@ export function MusicTherapyPage() {
                   </div>
                 )}
               </div>
-              <Button disabled={customPlaylist.length === 0 || !playlistName}>
+              <Button disabled={customPlaylist.length === 0 || !playlistName} className="rounded-full transition-all duration-300 hover:scale-105">
                 <Download className="h-4 w-4 mr-2" />
                 Save Playlist
               </Button>
@@ -236,19 +237,19 @@ export function MusicTherapyPage() {
         );
       case 'journal':
         return (
-          <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
+          <Card className="bg-gradient-to-br from-blue-50/50 via-indigo-50/50 to-purple-50/50 dark:from-blue-900/10 dark:to-indigo-900/10 hover-lift border-2">
             <CardHeader>
-              <CardTitle>Music Journal</CardTitle>
-              <CardDescription>Write about the memories this music brings</CardDescription>
+              <CardTitle className="text-2xl">Music Journal</CardTitle>
+              <CardDescription className="text-base">Write about the memories this music brings</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <Textarea
                 placeholder="What memories does this song bring back? How does it make you feel about your loved one?"
                 value={journalEntry}
                 onChange={(e) => setJournalEntry(e.target.value)}
-                className="min-h-32"
+                className="min-h-32 rounded-2xl border-2 focus:border-primary/40 transition-all duration-300 resize-none leading-loose"
               />
-              <Button disabled={!journalEntry.trim()}>Save Journal Entry</Button>
+              <Button disabled={!journalEntry.trim()} className="rounded-full transition-all duration-300 hover:scale-105">Save Journal Entry</Button>
             </CardContent>
           </Card>
         );
@@ -260,28 +261,35 @@ export function MusicTherapyPage() {
   // --- Render ----------------------------------------------------------------
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 p-4 max-w-7xl mx-auto">
       {/* hidden audio element */}
       <audio ref={audioRef} preload="metadata" playsInline />
 
       <div className="flex items-center space-x-4">
         <Link to="/therapy">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" className="rounded-full shadow-soft hover:shadow-soft-lg transition-all duration-300">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Therapy
           </Button>
         </Link>
-        <h1 className="text-3xl font-bold text-gray-800 dark:text-white">🎵 Music Therapy</h1>
+        <div className="flex-1">
+          <h1 className="text-4xl font-semibold mb-2 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            🎵 Music Therapy
+          </h1>
+          <p className="text-lg text-muted-foreground">
+            Find healing through the power of sound and melody
+          </p>
+        </div>
       </div>
 
       {/* AI Generated Content Disclaimer */}
-      <Card className="bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800">
+      <Card className="bg-amber-50/50 dark:bg-amber-900/10 border-2 border-amber-200/50 dark:border-amber-800/50 hover-lift">
         <CardContent className="pt-6">
           <div className="flex items-start space-x-3">
-            <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
+            <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5" />
             <div>
               <h4 className="font-medium text-amber-800 dark:text-amber-200">AI Generated Music Content</h4>
-              <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+              <p className="text-sm text-amber-700 dark:text-amber-300 mt-1 leading-relaxed">
                 All music tracks and audio content are AI-generated for demonstration purposes. This is not actual copyrighted music.
                 The therapeutic concepts are based on established music therapy practices.
               </p>
@@ -292,12 +300,12 @@ export function MusicTherapyPage() {
 
       {/* Now Playing */}
       {currentTrack && (
-        <Card className="bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/20 border-purple-200 dark:border-purple-800">
+        <Card className="bg-gradient-to-br from-primary/5 via-accent/5 to-secondary/5 border-2 border-primary/20 hover-lift">
           <CardHeader>
-            <CardTitle className="flex items-center justify-between">
+            <CardTitle className="flex items-center justify-between text-2xl">
               <span>Now Playing: {currentTrack}</span>
               <div className="flex items-center space-x-2">
-                <Button size="sm" variant="outline" onClick={toggleMute}>
+                <Button size="sm" variant="outline" onClick={toggleMute} className="rounded-full hover:bg-accent/20 transition-all duration-300">
                   {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
                 </Button>
                 <div className="flex items-center space-x-2 w-24">
@@ -307,7 +315,7 @@ export function MusicTherapyPage() {
                     max={100}
                     value={isMuted ? 0 : volume}
                     onChange={(e) => handleVolumeChange(Number(e.target.value))}
-                    className="w-full"
+                    className="w-full accent-primary"
                   />
                 </div>
               </div>
@@ -315,51 +323,51 @@ export function MusicTherapyPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <Progress value={progress} className="h-2" />
+              <Progress value={progress} className="h-3 rounded-full" />
               {/* Seek slider */}
               <div className="flex items-center gap-3">
-                <span className="text-xs tabular-nums text-gray-600 dark:text-gray-400">{formatTime(currentTime)}</span>
+                <span className="text-xs tabular-nums text-muted-foreground min-w-[3rem]">{formatTime(currentTime)}</span>
                 <input
                   type="range"
                   min={0}
                   max={100}
                   value={progress}
                   onChange={(e) => seekToPercent(Number(e.target.value))}
-                  className="w-full"
+                  className="w-full accent-primary"
                   aria-label="Seek"
                 />
-                <span className="text-xs tabular-nums text-gray-600 dark:text-gray-400">{formatTime(duration)}</span>
+                <span className="text-xs tabular-nums text-muted-foreground min-w-[3rem]">{formatTime(duration)}</span>
               </div>
 
               <div className="flex items-center justify-center space-x-4">
-                <Button size="lg" onClick={() => seekToPercent(0)} variant="outline">⏮</Button>
-                <Button size="lg" onClick={() => handlePlay(currentTrack)} className="rounded-full w-16 h-16">
+                <Button size="lg" onClick={() => seekToPercent(0)} variant="outline" className="rounded-full hover:bg-accent/20 transition-all duration-300">⏮</Button>
+                <Button size="lg" onClick={() => handlePlay(currentTrack)} className="rounded-full w-16 h-16 shadow-soft-lg hover:scale-105 transition-all duration-300">
                   {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
                 </Button>
-                <Button size="lg" onClick={() => seekToPercent(100)} variant="outline">⏭</Button>
+                <Button size="lg" onClick={() => seekToPercent(100)} variant="outline" className="rounded-full hover:bg-accent/20 transition-all duration-300">⏭</Button>
               </div>
             </div>
           </CardContent>
         </Card>
       )}
 
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className="grid lg:grid-cols-2 gap-8">
         <div className="space-y-6">
           {musicCategories.map((category, index) => (
-            <Card key={index} className={`bg-gradient-to-br ${category.color}`}>
+            <Card key={index} className={`bg-gradient-to-br ${category.color} hover-lift border-2`}>
               <CardHeader>
                 <div className="flex items-center space-x-3">
-                  <div className="text-2xl">{category.icon}</div>
+                  <div className="text-3xl">{category.icon}</div>
                   <div>
-                    <CardTitle className="text-lg">{category.title}</CardTitle>
-                    <CardDescription>{category.description}</CardDescription>
+                    <CardTitle className="text-xl">{category.title}</CardTitle>
+                    <CardDescription className="text-base">{category.description}</CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {category.tracks.map((track, trackIndex) => (
-                    <div key={trackIndex} className="flex items-center justify-between p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg">
+                    <div key={trackIndex} className="flex items-center justify-between p-3 bg-white/60 dark:bg-gray-800/60 rounded-2xl hover:bg-white/80 dark:hover:bg-gray-800/80 transition-all duration-300 backdrop-blur-sm border border-white/50">
                       <span className="text-sm font-medium">{track}</span>
                       <div className="flex items-center space-x-2">
                         <Button
@@ -367,10 +375,11 @@ export function MusicTherapyPage() {
                           variant="ghost"
                           onClick={() => addToPlaylist(track)}
                           title="Add to playlist"
+                          className="rounded-full hover:bg-accent/30 transition-all duration-300"
                         >
                           <Plus className="h-4 w-4" />
                         </Button>
-                        <Button size="sm" variant="outline" onClick={() => handlePlay(track)}>
+                        <Button size="sm" variant="outline" onClick={() => handlePlay(track)} className="rounded-full hover:bg-accent/30 transition-all duration-300">
                           {currentTrack === track && isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                         </Button>
                       </div>
@@ -383,51 +392,51 @@ export function MusicTherapyPage() {
         </div>
 
         <div className="space-y-6">
-          <Card>
+          <Card className="hover-lift">
             <CardHeader>
-              <CardTitle>Music Activities</CardTitle>
-              <CardDescription>Interactive ways to engage with music therapy</CardDescription>
+              <CardTitle className="text-2xl">Music Activities</CardTitle>
+              <CardDescription className="text-base">Interactive ways to engage with music therapy</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               {activities.map((activity, index) => (
                 <Button
                   key={index}
                   variant={selectedActivity === activity.id ? "default" : "outline"}
-                  className="w-full text-left justify-start h-auto p-4"
+                  className="w-full text-left justify-start h-auto p-4 rounded-2xl transition-all duration-300 hover:shadow-soft hover:scale-[1.02]"
                   onClick={() => setSelectedActivity(selectedActivity === activity.id ? null : activity.id)}
                 >
                   <div>
-                    <div className="font-medium">{activity.title}</div>
-                    <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">{activity.description}</div>
+                    <div className="font-medium text-base leading-relaxed">{activity.title}</div>
+                    <div className="text-xs text-muted-foreground mt-1 leading-relaxed">{activity.description}</div>
                   </div>
                 </Button>
               ))}
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="hover-lift">
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Mic className="h-5 w-5" />
+              <CardTitle className="flex items-center space-x-2 text-2xl">
+                <Mic className="h-6 w-6 text-primary" />
                 <span>Voice Recording</span>
               </CardTitle>
-              <CardDescription>Record your voice sharing memories or singing</CardDescription>
+              <CardDescription className="text-base">Record your voice sharing memories or singing</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="text-center space-y-4">
                 {isRecording ? (
-                  <div className="space-y-3">
-                    <div className="text-red-500 text-4xl animate-pulse">🔴</div>
-                    <div className="text-lg font-mono">{formatTime(recordingTime)}</div>
-                    <Button onClick={stopRecording} variant="destructive">
+                  <div className="space-y-4 p-6 bg-gradient-to-br from-red-50/50 to-pink-50/50 dark:from-red-900/10 dark:to-pink-900/10 rounded-2xl">
+                    <div className="text-red-500 text-5xl animate-pulse">🔴</div>
+                    <div className="text-2xl font-mono font-semibold">{formatTime(recordingTime)}</div>
+                    <Button onClick={stopRecording} variant="destructive" className="rounded-full shadow-soft-lg transition-all duration-300 hover:scale-105">
                       <MicOff className="h-4 w-4 mr-2" />
                       Stop Recording
                     </Button>
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    <div className="text-4xl">🎤</div>
-                    <Button onClick={startRecording}>
+                  <div className="space-y-4 p-6">
+                    <div className="text-5xl">🎤</div>
+                    <Button onClick={startRecording} className="rounded-full shadow-soft-lg transition-all duration-300 hover:scale-105">
                       <Mic className="h-4 w-4 mr-2" />
                       Start Recording
                     </Button>
@@ -437,13 +446,13 @@ export function MusicTherapyPage() {
 
               {recordings.length > 0 && (
                 <div className="space-y-2">
-                  <h4 className="font-medium">Your Recordings:</h4>
+                  <h4 className="font-medium text-lg">Your Recordings:</h4>
                   {recordings.map((rec, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                    <div key={idx} className="flex items-center justify-between p-3 bg-muted/30 rounded-2xl hover:bg-muted/50 transition-all duration-300">
                       <span className="text-sm">{rec}</span>
                       <div className="space-x-1">
-                        <Button size="sm" variant="ghost"><Play className="h-3 w-3" /></Button>
-                        <Button size="sm" variant="ghost"><Download className="h-3 w-3" /></Button>
+                        <Button size="sm" variant="ghost" className="rounded-full"><Play className="h-3 w-3" /></Button>
+                        <Button size="sm" variant="ghost" className="rounded-full"><Download className="h-3 w-3" /></Button>
                       </div>
                     </div>
                   ))}
