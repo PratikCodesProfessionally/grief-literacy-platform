@@ -275,8 +275,8 @@ export function ArtTherapyPage() {
                     </div>
                     <div className="flex-1">
                       <CardTitle className="text-xl mb-1">{activity.title}</CardTitle>
-                      <CardDescription className="text-sm mb-3">{activity.description}</CardDescription>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">{activity.detailedDescription}</p>
+                      <CardDescription className="text-sm mb-3 text-gray-700 dark:text-gray-300">{activity.description}</CardDescription>
+                      <p className="text-xs text-gray-800 dark:text-gray-300 font-medium">{activity.detailedDescription}</p>
                     </div>
                   </div>
                   <div className="flex flex-col items-end space-y-2">
