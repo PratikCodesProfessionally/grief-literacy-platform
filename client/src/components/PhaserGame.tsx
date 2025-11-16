@@ -10,12 +10,59 @@ export function PhaserGame() {
   const gameRef = React.useRef<Phaser.Game | null>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
   
+  // Add mobile meta tags
+  React.useEffect(() => {
+    // Prevent zooming
+    const metaViewport = document.querySelector('meta[name="viewport"]');
+    if (metaViewport) {
+      metaViewport.setAttribute('content', 
+        'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no'
+      );
+    }
+    
+    // Add mobile-web-app meta tags
+    const mobileCapable = document.createElement('meta');
+    mobileCapable.name = 'mobile-web-app-capable';
+    mobileCapable.content = 'yes';
+    document.head.appendChild(mobileCapable);
+    
+    const appleCapable = document.createElement('meta');
+    appleCapable.name = 'apple-mobile-web-app-capable';
+    appleCapable.content = 'yes';
+    document.head.appendChild(appleCapable);
+    
+    const appleStatus = document.createElement('meta');
+    appleStatus.name = 'apple-mobile-web-app-status-bar-style';
+    appleStatus.content = 'black-fullscreen';
+    document.head.appendChild(appleStatus);
+    
+    // Cleanup
+    return () => {
+      document.head.removeChild(mobileCapable);
+      document.head.removeChild(appleCapable);
+      document.head.removeChild(appleStatus);
+    };
+  }, []);
+  
   React.useEffect(() => {
     if (!containerRef.current) return;
     
     // Create Phaser game
     const config = createGameConfig('phaser-game-container');
     gameRef.current = new Phaser.Game(config);
+    
+    // Handle window resize and orientation changes
+    const handleResize = () => {
+      if (gameRef.current) {
+        gameRef.current.scale.resize(window.innerWidth, window.innerHeight);
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+    
+    // Initial resize
+    setTimeout(handleResize, 100);
     
     // Wait for scene to be ready
     const checkScene = setInterval(() => {
@@ -34,6 +81,8 @@ export function PhaserGame() {
     // Cleanup
     return () => {
       clearInterval(checkScene);
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
       
       // Clean up scene
       const scene = gameRef.current?.scene.getScene('HealingWorldScene') as HealingWorldScene;
@@ -50,7 +99,20 @@ export function PhaserGame() {
   }, [navigate]);
   
   return (
-    <div className="relative w-full h-screen bg-sky-100 overflow-hidden">
+    <div 
+      className="relative w-full h-screen bg-sky-100 overflow-hidden"
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        touchAction: 'none',
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+        WebkitTouchCallout: 'none',
+        WebkitTapHighlightColor: 'transparent'
+      }}>
       {/* Back button */}
       <button
         onClick={() => navigate('/')}
@@ -73,6 +135,14 @@ export function PhaserGame() {
         id="phaser-game-container" 
         ref={containerRef}
         className="w-full h-full"
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          touchAction: 'none'
+        }}
       />
       
       {/* Instructions overlay (hidden on mobile) */}

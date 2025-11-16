@@ -190,3 +190,44 @@
     color: hsl(210, 15%, 25%) !important;
   }
 }
+
+/* Phaser Game Mobile Optimizations */
+#phaser-game-container {
+  touch-action: none !important;
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+#phaser-game-container canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  touch-action: none !important;
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+}
+
+/* Prevent text size adjustment on mobile */
+@media screen and (max-width: 768px) {
+  body {
+    -webkit-text-size-adjust: 100% !important;
+    -moz-text-size-adjust: 100% !important;
+    -ms-text-size-adjust: 100% !important;
+    text-size-adjust: 100% !important;
+  }
+  
+  #phaser-game-container {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    overflow: hidden !important;
+  }
+}

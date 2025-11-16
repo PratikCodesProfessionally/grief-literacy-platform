@@ -7,18 +7,12 @@ export const createGameConfig = (parent: string): Phaser.Types.Core.GameConfig =
   parent,
   backgroundColor: '#e0f2fe', // sky-100
   scale: {
-    mode: Phaser.Scale.FIT,
+    mode: Phaser.Scale.RESIZE,
     autoCenter: Phaser.Scale.CENTER_BOTH,
-    width: 1920,
-    height: 1080,
-    min: {
-      width: 800,
-      height: 600
-    },
-    max: {
-      width: 1920,
-      height: 1080
-    }
+    width: window.innerWidth,
+    height: window.innerHeight,
+    expandParent: true,
+    fullscreenTarget: parent
   },
   physics: {
     default: 'arcade',
@@ -36,5 +30,13 @@ export const createGameConfig = (parent: string): Phaser.Types.Core.GameConfig =
   fps: {
     target: 60,
     forceSetTimeOut: false
+  },
+  dom: {
+    createContainer: true
+  },
+  input: {
+    touch: {
+      capture: true
+    }
   }
 });

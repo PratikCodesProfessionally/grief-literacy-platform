@@ -13,6 +13,7 @@ export class HealingWorldScene extends Phaser.Scene {
   private currentPrompt?: Phaser.GameObjects.Container;
   private isMobile: boolean = false;
   private helpText?: Phaser.GameObjects.Text;
+  private scaleRatio: number = 1;
   
   // Navigation callback (set from React)
   public onNavigate?: (route: string) => void;
@@ -22,6 +23,12 @@ export class HealingWorldScene extends Phaser.Scene {
   }
   
   create(): void {
+    // Calculate scale ratio for responsive design
+    this.calculateScaleRatio();
+    
+    // Handle resize events
+    this.scale.on('resize', this.handleResize, this);
+    
     // Detect mobile
     this.isMobile = this.sys.game.device.os.android || 
                     this.sys.game.device.os.iOS ||
@@ -29,13 +36,11 @@ export class HealingWorldScene extends Phaser.Scene {
                     this.sys.game.device.os.iPhone ||
                     ('ontouchstart' in window);
     
-    // Set world bounds
-    this.physics.world.setBounds(
-      0, 
-      0, 
-      GAME_CONSTANTS.WORLD_WIDTH, 
-      GAME_CONSTANTS.WORLD_HEIGHT
-    );
+    // Set world bounds with scaled dimensions
+    const worldWidth = GAME_CONSTANTS.WORLD_WIDTH;
+    const worldHeight = this.scale.height;
+    
+    this.physics.world.setBounds(0, 0, worldWidth, worldHeight);
     
     // Create world elements
     this.createParallaxBackground();
@@ -67,21 +72,25 @@ export class HealingWorldScene extends Phaser.Scene {
   }
   
   private createGround(): void {
+    // Use responsive height
+    const groundY = this.scale.height - 180;
+    
     // Create simple ground
     const ground = this.add.rectangle(
       GAME_CONSTANTS.WORLD_WIDTH / 2,
-      GAME_CONSTANTS.GROUND_Y,
+      groundY,
       GAME_CONSTANTS.WORLD_WIDTH,
       180,
       0x059669 // emerald-600 (grass)
     );
     ground.setOrigin(0.5, 0);
     ground.setDepth(2);
+    ground.setData('isGround', true);
     
     // Add path
     const path = this.add.rectangle(
       GAME_CONSTANTS.WORLD_WIDTH / 2,
-      GAME_CONSTANTS.GROUND_Y + 20,
+      groundY + 20,
       GAME_CONSTANTS.WORLD_WIDTH,
       60,
       0xfbbf24 // amber-400 (path)
@@ -248,11 +257,11 @@ export class HealingWorldScene extends Phaser.Scene {
         fontSize: '16px',
         color: '#475569',
         backgroundColor: '#f1f5f9',
-        padding: { x: 16, y: 8 },
-        alpha: 0.9
+        padding: { x: 16, y: 8 }
       }
     );
     this.helpText.setOrigin(0.5);
+    this.helpText.setAlpha(0.9);
     this.helpText.setScrollFactor(0);
     this.helpText.setDepth(99);
   }
@@ -413,6 +422,44 @@ export class HealingWorldScene extends Phaser.Scene {
     
     if (this.mobileControls) {
       this.mobileControls.destroy();
+      this.mobileControls = undefined;
+    }
+    
+    // Remove resize listener
+    this.scale.off('resize', this.handleResize, this);
+  }
+  
+  private calculateScaleRatio(): void {
+    // Calculate scale ratio based on screen size for responsive design
+    const baseHeight = 1080;
+    this.scaleRatio = this.scale.height / baseHeight;
+  }
+  
+  private handleResize(gameSize: Phaser.Structs.Size): void {
+    // Recalculate scale ratio
+    this.calculateScaleRatio();
+    
+    // Update camera
+    const width = gameSize.width;
+    const height = gameSize.height;
+    
+    this.cameras.main.setViewport(0, 0, width, height);
+    
+    // Update world bounds
+    this.physics.world.setBounds(0, 0, GAME_CONSTANTS.WORLD_WIDTH, height);
+    
+    // Reposition ground if needed
+    const ground = this.children.getAll().find(child => 
+      child instanceof Phaser.GameObjects.Rectangle && child.fillColor === 0x059669
+    );
+    if (ground) {
+      (ground as Phaser.GameObjects.Rectangle).setY(height - 180);
+    }
+    
+    // Update mobile controls position if they exist
+    if (this.mobileControls && this.isMobile) {
+      this.mobileControls.destroy();
+      this.createMobileControls();
     }
   }
 }
