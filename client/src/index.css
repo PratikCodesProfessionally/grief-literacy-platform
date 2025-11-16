@@ -133,3 +133,60 @@
 .animation-delay-4000 {
   animation-delay: 4s;
 }
+
+/* Microsoft Edge specific fixes */
+@supports (-ms-ime-align: auto) {
+  /* Force light mode backgrounds in Edge */
+  html,
+  body,
+  #root {
+    background-color: hsl(210, 30%, 98%) !important;
+    color: hsl(210, 15%, 25%) !important;
+    color-scheme: light !important;
+    -ms-high-contrast-adjust: none !important;
+    forced-color-adjust: none !important;
+  }
+  
+  /* Override Edge's dark mode card backgrounds */
+  .bg-gradient-to-br,
+  [class*="bg-gradient"],
+  [class*="bg-purple"],
+  [class*="bg-pink"],
+  [class*="bg-orange"],
+  [class*="bg-slate"] {
+    forced-color-adjust: none !important;
+    -ms-high-contrast-adjust: none !important;
+  }
+  
+  /* Ensure all cards remain visible in Edge */
+  div[class*="Card"],
+  section,
+  article {
+    forced-color-adjust: none !important;
+  }
+}
+
+/* Additional Edge compatibility using media query */
+@media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+  * {
+    forced-color-adjust: none !important;
+    -ms-high-contrast-adjust: none !important;
+  }
+  
+  html {
+    color-scheme: light !important;
+  }
+}
+
+/* Prevent Windows dark mode from affecting the app */
+@media (prefers-color-scheme: dark) {
+  /* Only apply if NOT using .dark class intentionally */
+  html:not(.dark) {
+    color-scheme: light !important;
+  }
+  
+  html:not(.dark) body {
+    background-color: hsl(210, 30%, 98%) !important;
+    color: hsl(210, 15%, 25%) !important;
+  }
+}
