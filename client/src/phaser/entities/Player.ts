@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { GAME_CONSTANTS } from '../config/constants';
 
-export class Player extends Phaser.GameObjects.Rectangle {
+export class Player extends Phaser.GameObjects.Container {
   private cursors?: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasdKeys?: any;
   private isMoving: boolean = false;
@@ -10,25 +10,72 @@ export class Player extends Phaser.GameObjects.Rectangle {
   private joystickInput: { x: number; y: number } | null = null;
   public interactPressed: boolean = false;
   
+  private torso!: Phaser.GameObjects.Ellipse;
+  private head!: Phaser.GameObjects.Arc;
+  private leftLeg!: Phaser.GameObjects.Rectangle;
+  private rightLeg!: Phaser.GameObjects.Rectangle;
+  private leftArm!: Phaser.GameObjects.Rectangle;
+  private rightArm!: Phaser.GameObjects.Rectangle;
+  private walkAnimation: number = 0;
+  
   constructor(scene: Phaser.Scene, x: number, y: number) {
-    super(
-      scene, 
-      x, 
-      y, 
-      GAME_CONSTANTS.PLAYER_WIDTH, 
-      GAME_CONSTANTS.PLAYER_HEIGHT, 
-      0x6366f1 // indigo-500
-    );
+    super(scene, x, y);
     
     scene.add.existing(this);
-    this.setOrigin(0.5, 0.5);
-    this.setScale(GAME_CONSTANTS.PLAYER_SCALE);
+    this.setSize(GAME_CONSTANTS.PLAYER_WIDTH, GAME_CONSTANTS.PLAYER_HEIGHT);
     
-    // Add simple shadow
-    this.setStrokeStyle(3, 0x4338ca, 1); // indigo-700
+    this.createCharacter();
     
     // Setup input
     this.setupInput(scene);
+  }
+  
+  private createCharacter(): void {
+    const bodyColor = 0x3b82f6; // blue-500
+    const skinColor = 0xfbbf24; // amber-400
+    const accentColor = 0x1e40af; // blue-800
+    
+    // Shadow
+    const shadow = this.scene.add.ellipse(0, 35, 40, 15, 0x000000, 0.3);
+    this.add(shadow);
+    
+    // Legs
+    this.leftLeg = this.scene.add.rectangle(-8, 15, 10, 30, bodyColor);
+    this.rightLeg = this.scene.add.rectangle(8, 15, 10, 30, bodyColor);
+    this.add(this.leftLeg);
+    this.add(this.rightLeg);
+    
+    // Body (torso)
+    this.torso = this.scene.add.ellipse(0, -5, 35, 45, bodyColor);
+    this.add(this.torso);
+    
+    // Arms
+    this.leftArm = this.scene.add.rectangle(-18, 0, 8, 25, bodyColor);
+    this.rightArm = this.scene.add.rectangle(18, 0, 8, 25, bodyColor);
+    this.leftArm.setOrigin(0.5, 0.3);
+    this.rightArm.setOrigin(0.5, 0.3);
+    this.add(this.leftArm);
+    this.add(this.rightArm);
+    
+    // Head
+    this.head = this.scene.add.circle(0, -25, 15, skinColor);
+    this.add(this.head);
+    
+    // Eyes
+    const leftEye = this.scene.add.circle(-5, -27, 2, 0x000000);
+    const rightEye = this.scene.add.circle(5, -27, 2, 0x000000);
+    this.add(leftEye);
+    this.add(rightEye);
+    
+    // Smile
+    const smile = this.scene.add.arc(0, -22, 6, 0, 180, false, 0x000000);
+    smile.setStrokeStyle(1.5, 0x000000);
+    smile.isFilled = false;
+    this.add(smile);
+    
+    // Hair/Hat
+    const hair = this.scene.add.arc(0, -32, 16, 180, 360, false, accentColor);
+    this.add(hair);
   }
   
   private setupInput(scene: Phaser.Scene): void {
@@ -50,6 +97,39 @@ export class Player extends Phaser.GameObjects.Rectangle {
   
   update(delta: number): void {
     this.handleMovement(delta);
+    this.animateWalking(delta);
+  }
+  
+  private animateWalking(delta: number): void {
+    if (this.isMoving) {
+      // Update walk animation
+      this.walkAnimation += delta * 0.008;
+      
+      // Leg animation (alternating walk)
+      const legAngle = Math.sin(this.walkAnimation) * 0.3;
+      this.leftLeg.rotation = legAngle;
+      this.rightLeg.rotation = -legAngle;
+      
+      // Arm animation (opposite to legs for natural walk)
+      const armAngle = Math.sin(this.walkAnimation) * 0.2;
+      this.leftArm.rotation = -armAngle;
+      this.rightArm.rotation = armAngle;
+      
+      // Slight body bob
+      this.torso.y = -5 + Math.abs(Math.sin(this.walkAnimation)) * 2;
+      this.head.y = -25 + Math.abs(Math.sin(this.walkAnimation)) * 2;
+    } else {
+      // Reset to idle position
+      this.leftLeg.rotation = Phaser.Math.Linear(this.leftLeg.rotation, 0, 0.1);
+      this.rightLeg.rotation = Phaser.Math.Linear(this.rightLeg.rotation, 0, 0.1);
+      this.leftArm.rotation = Phaser.Math.Linear(this.leftArm.rotation, 0, 0.1);
+      this.rightArm.rotation = Phaser.Math.Linear(this.rightArm.rotation, 0, 0.1);
+      this.torso.y = Phaser.Math.Linear(this.torso.y, -5, 0.1);
+      this.head.y = Phaser.Math.Linear(this.head.y, -25, 0.1);
+    }
+    
+    // Flip character based on direction
+    this.setScale(this.facingDirection === 'left' ? -1 : 1, 1);
   }
   
   private handleMovement(delta: number): void {
@@ -92,13 +172,6 @@ export class Player extends Phaser.GameObjects.Rectangle {
     
     // World bounds
     this.x = Phaser.Math.Clamp(this.x, 50, GAME_CONSTANTS.WORLD_WIDTH - 50);
-    
-    // Visual feedback: slight rotation when moving
-    if (this.isMoving) {
-      this.rotation = Math.sin(Date.now() / 200) * 0.05;
-    } else {
-      this.rotation = 0;
-    }
   }
   
   public setJoystickInput(x: number, y: number): void {
