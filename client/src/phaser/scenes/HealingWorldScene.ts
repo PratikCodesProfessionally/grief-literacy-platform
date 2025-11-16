@@ -87,6 +87,20 @@ export class HealingWorldScene extends Phaser.Scene {
     ground.setDepth(2);
     ground.setData('isGround', true);
     
+    // Add grass texture (darker stripes)
+    for (let i = 0; i < 50; i++) {
+      const grassStripe = this.add.rectangle(
+        (GAME_CONSTANTS.WORLD_WIDTH / 50) * i,
+        groundY + (i % 2) * 5,
+        GAME_CONSTANTS.WORLD_WIDTH / 50,
+        15,
+        0x047857, // emerald-700
+        0.3
+      );
+      grassStripe.setOrigin(0, 0);
+      grassStripe.setDepth(2);
+    }
+    
     // Add path
     const path = this.add.rectangle(
       GAME_CONSTANTS.WORLD_WIDTH / 2,
@@ -98,60 +112,98 @@ export class HealingWorldScene extends Phaser.Scene {
     path.setOrigin(0.5, 0);
     path.setDepth(3);
     path.setAlpha(0.6);
+    
+    // Add path texture (dashed lines)
+    for (let i = 0; i < 100; i++) {
+      const dash = this.add.rectangle(
+        (GAME_CONSTANTS.WORLD_WIDTH / 100) * i,
+        groundY + 50,
+        40,
+        2,
+        0xf59e0b, // amber-500
+        0.4
+      );
+      dash.setDepth(3);
+    }
   }
   
   private createStations(): void {
     STATION_POSITIONS.forEach((station, index) => {
-      // Create station base
-      const stationBase = this.add.rectangle(
-        station.x,
-        station.y,
-        station.width,
-        station.height,
-        station.color,
-        0.3
+      const groundY = this.scale.height - 180;
+      const signX = station.x;
+      const signY = groundY - 80; // Position sign above ground
+      
+      // Create wooden sign post
+      const post = this.add.rectangle(
+        signX,
+        groundY - 40,
+        12,
+        80,
+        0x92400e // brown-800 (dark wood)
       );
-      stationBase.setStrokeStyle(4, station.color, 0.8);
-      stationBase.setDepth(5);
+      post.setDepth(5);
+      
+      // Create sign board
+      const signBoard = this.add.rectangle(
+        signX,
+        signY,
+        160,
+        100,
+        0xfef3c7 // amber-100 (light wood)
+      );
+      signBoard.setStrokeStyle(3, 0x92400e, 1); // brown border
+      signBoard.setDepth(6);
+      
+      // Add decorative corners
+      const cornerSize = 8;
+      const corners = [
+        [signX - 75, signY - 45], // top-left
+        [signX + 75, signY - 45], // top-right
+        [signX - 75, signY + 45], // bottom-left
+        [signX + 75, signY + 45]  // bottom-right
+      ];
+      
+      corners.forEach(([x, y]) => {
+        const corner = this.add.circle(x, y, cornerSize / 2, 0x92400e);
+        corner.setDepth(7);
+      });
       
       // Add icon/emoji
       const icon = this.add.text(
-        station.x,
-        station.y - 40,
+        signX,
+        signY - 25,
         station.icon,
         {
           fontFamily: 'Arial',
-          fontSize: '64px'
+          fontSize: '32px'
         }
       );
       icon.setOrigin(0.5);
-      icon.setDepth(6);
+      icon.setDepth(8);
       
-      // Add station name
+      // Add station name on sign
       const nameText = this.add.text(
-        station.x,
-        station.y + 60,
+        signX,
+        signY + 15,
         station.name,
         {
           fontFamily: 'Arial',
-          fontSize: '24px',
-          color: '#1e293b', // slate-800
-          stroke: '#ffffff',
-          strokeThickness: 4,
+          fontSize: '14px',
+          color: '#78350f', // amber-900
           align: 'center',
           fontStyle: 'bold'
         }
       );
       nameText.setOrigin(0.5);
-      nameText.setDepth(10);
+      nameText.setDepth(8);
       
-      // Create interaction zone
+      // Create interaction zone around sign
       const zone = new InteractionZone(
         this,
-        station.x,
-        station.y,
-        station.width + 100,
-        station.height + 100,
+        signX,
+        signY,
+        200,
+        150,
         station.id,
         station.name,
         station.color,
@@ -160,25 +212,26 @@ export class HealingWorldScene extends Phaser.Scene {
       
       this.interactionZones.push(zone);
       
-      // Add subtle pulse effect
+      // Add subtle sway effect to sign
       this.tweens.add({
-        targets: [stationBase, icon],
-        scale: { from: 1, to: 1.05 },
-        alpha: { from: 0.8, to: 1 },
-        duration: GAME_CONSTANTS.GLOW_PULSE_DURATION,
+        targets: [signBoard, icon, nameText],
+        rotation: { from: -0.02, to: 0.02 },
+        duration: 2000 + (index * 200),
         yoyo: true,
         repeat: -1,
-        ease: 'Sine.easeInOut',
-        delay: index * 200
+        ease: 'Sine.easeInOut'
       });
     });
   }
   
   private createPlayer(): void {
+    const groundY = this.scale.height - 180;
+    const playerY = groundY - 25; // Position player on ground (half height of ~50px)
+    
     this.player = new Player(
       this,
       GAME_CONSTANTS.PLAYER_START_X,
-      GAME_CONSTANTS.PLAYER_START_Y
+      playerY
     );
     this.player.setDepth(50);
     
