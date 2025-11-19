@@ -1,6 +1,6 @@
 export const GAME_CONSTANTS = {
   // World dimensions
-  WORLD_WIDTH: 8000,
+  WORLD_WIDTH: 14000, // Extended world
   WORLD_HEIGHT: 1080,
   GROUND_Y: 900,
   
@@ -110,4 +110,67 @@ export const STATION_POSITIONS: StationConfig[] = [
     color: 0x8b5cf6, // violet-500
     icon: '🧘'
   }
+];
+
+// NPC configurations
+export const NPC_CONFIGS = [
+  {
+    id: 'grandma-sue',
+    name: 'Grandma Sue',
+    x: 800,
+    y: 700,
+    color: 0xf472b6, // pink-400
+    emoji: '👵',
+    dialogue: [
+      'Hello dear! Remember, healing is not linear.',
+      'Take your time on this journey.',
+      'Every step forward is progress, no matter how small.',
+      'You are stronger than you know.',
+      'It\'s okay to rest when you need to.'
+    ],
+    moveRange: 200,
+    speed: 30
+  },
+  {
+    id: 'guide',
+    name: 'Guide',
+    x: 3500,
+    y: 650,
+    color: 0x60a5fa, // blue-400
+    emoji: '🦋',
+    dialogue: [
+      'Welcome, traveler!',
+      'Explore at your own pace.',
+      'There are treasures to find along the way.',
+      'Each station offers something unique.'
+    ],
+    moveRange: 150,
+    speed: 40
+  },
+  {
+    id: 'companion',
+    name: 'Friend',
+    x: 9000,
+    y: 680,
+    color: 0x34d399, // emerald-400
+    emoji: '🐦',
+    dialogue: [
+      'You\'re doing great!',
+      'Look how far you\'ve come.',
+      'The journey continues ahead.',
+      'I believe in you!'
+    ],
+    moveRange: 250,
+    speed: 50
+  }
+];
+
+// Inspirational quotes for benches
+export const BENCH_QUOTES = [
+  '"You are braver than you believe, stronger than you seem, and smarter than you think." - A.A. Milne',
+  '"The only way out is through." - Robert Frost',
+  '"You have within you right now, everything you need to deal with whatever comes." - Brian Tracy',
+  '"Healing takes time, and asking for help is a courageous step." - Mariska Hargitay',
+  '"Hope is being able to see that there is light despite all the darkness." - Desmond Tutu',
+  '"Every day may not be good, but there is something good in every day." - Alice Morse Earle'
 ];

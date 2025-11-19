@@ -2,6 +2,7 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom/client';
 import App from './App';
 import ErrorBoundary from './ErrorBoundary';
+import { registerSW } from 'virtual:pwa-register';
 
 import './index.css';
 
@@ -14,6 +15,18 @@ function updateDarkClass(e = null) {
 
 updateDarkClass();
 darkQuery.addEventListener('change', updateDarkClass);
+
+// Register Service Worker for PWA
+const updateSW = registerSW({
+  onNeedRefresh() {
+    if (confirm('Neue Version verfügbar! Jetzt aktualisieren?')) {
+      updateSW(true);
+    }
+  },
+  onOfflineReady() {
+    console.log('App ist bereit für Offline-Nutzung');
+  },
+});
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

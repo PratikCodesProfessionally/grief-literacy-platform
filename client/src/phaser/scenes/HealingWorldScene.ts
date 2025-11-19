@@ -1,17 +1,28 @@
 import Phaser from 'phaser';
 import { Player } from '../entities/Player';
 import { InteractionZone } from '../entities/InteractionZone';
+import { NPC } from '../entities/NPC';
+import { Butterfly } from '../entities/Butterfly';
+import { Tree } from '../entities/Tree';
+import { Fountain } from '../entities/InteractiveObjects';
 import { ParallaxBackground } from '../systems/ParallaxBackground';
 import { MobileControls } from '../ui/MobileControls';
-import { GAME_CONSTANTS, STATION_POSITIONS } from '../config/constants';
+import { GAME_CONSTANTS, STATION_POSITIONS, NPC_CONFIGS, BENCH_QUOTES } from '../config/constants';
 
 export class HealingWorldScene extends Phaser.Scene {
   private player!: Player;
   private parallaxBg!: ParallaxBackground;
   private interactionZones: InteractionZone[] = [];
+  private npcs: NPC[] = [];
+  private butterflies: Butterfly[] = [];
+  private trees: Tree[] = [];
+  private fountains: Fountain[] = [];
   private mobileControls?: MobileControls;
   private currentPrompt?: Phaser.GameObjects.Container;
+  private currentNPCDialogue?: Phaser.GameObjects.Container;
+  private currentTreeQuote?: Phaser.GameObjects.Container;
   private isMobile: boolean = false;
+  private isTablet: boolean = false;
   private helpText?: Phaser.GameObjects.Text;
   private scaleRatio: number = 1;
   
@@ -29,7 +40,11 @@ export class HealingWorldScene extends Phaser.Scene {
     // Handle resize events
     this.scale.on('resize', this.handleResize, this);
     
-    // Detect mobile
+    // Detect mobile and tablet
+    const userAgent = navigator.userAgent.toLowerCase();
+    this.isTablet = /ipad|android(?!.*mobile)|tablet/.test(userAgent) ||
+                    (window.innerWidth >= 768 && window.innerWidth <= 1024);
+    
     this.isMobile = this.sys.game.device.os.android || 
                     this.sys.game.device.os.iOS ||
                     this.sys.game.device.os.iPad ||
@@ -45,7 +60,10 @@ export class HealingWorldScene extends Phaser.Scene {
     // Create world elements
     this.createParallaxBackground();
     this.createGround();
+    this.createInteractiveObjects();
     this.createStations();
+    this.createNPCs();
+    this.createButterflies();
     this.createPlayer();
     this.setupCamera();
     this.createUI();
@@ -348,6 +366,54 @@ export class HealingWorldScene extends Phaser.Scene {
     }
   }
   
+  private createInteractiveObjects(): void {
+    const groundY = this.scale.height - 180;
+    
+    // Place trees with quotes
+    const treePositions = [
+      { x: 1800, quote: BENCH_QUOTES[0], size: 'large' as const },
+      { x: 3800, quote: BENCH_QUOTES[1], size: 'medium' as const },
+      { x: 6500, quote: BENCH_QUOTES[2], size: 'large' as const },
+      { x: 9200, quote: BENCH_QUOTES[3], size: 'medium' as const },
+      { x: 11800, quote: BENCH_QUOTES[4], size: 'large' as const },
+      { x: 13000, quote: BENCH_QUOTES[5], size: 'medium' as const }
+    ];
+    
+    treePositions.forEach(({ x, quote, size }) => {
+      const tree = new Tree(this, x, groundY - 40, quote, size);
+      this.trees.push(tree);
+    });
+    
+    // Place fountains
+    const fountainPositions = [2500, 7800, 12800];
+    fountainPositions.forEach(x => {
+      const fountain = new Fountain(this, x, groundY - 80);
+      this.fountains.push(fountain);
+    });
+  }
+  
+  private createNPCs(): void {
+    NPC_CONFIGS.forEach(config => {
+      const npc = new NPC(this, config);
+      this.npcs.push(npc);
+    });
+  }
+  
+  private createButterflies(): void {
+    const groundY = this.scale.height - 180;
+    const butterflyColors = [0xff6b9d, 0xfbbf24, 0x60a5fa, 0xa78bfa, 0x34d399];
+    
+    // Distribute butterflies across the world
+    for (let i = 0; i < 25; i++) {
+      const x = Phaser.Math.Between(500, GAME_CONSTANTS.WORLD_WIDTH - 500);
+      const y = Phaser.Math.Between(groundY - 400, groundY - 100);
+      const color = Phaser.Utils.Array.GetRandom(butterflyColors);
+      
+      const butterfly = new Butterfly(this, x, y, color);
+      this.butterflies.push(butterfly);
+    }
+  }
+  
   update(time: number, delta: number): void {
     // Update player
     this.player.update(delta);
@@ -355,8 +421,17 @@ export class HealingWorldScene extends Phaser.Scene {
     // Update parallax
     this.parallaxBg.update(this.cameras.main);
     
+    // Update NPCs
+    this.npcs.forEach(npc => npc.update(delta));
+    
+    // Update butterflies
+    this.butterflies.forEach(butterfly => butterfly.update(delta));
+    
     // Check interactions
     this.checkInteractions();
+    this.checkNPCInteractions();
+    this.checkButterflyCollections();
+    this.checkTreeInteractions();
     
     // Update mobile controls
     if (this.mobileControls) {
@@ -379,14 +454,21 @@ export class HealingWorldScene extends Phaser.Scene {
     
     // Show/hide prompt
     if (nearStation && !this.currentPrompt) {
+      console.log('[SCENE] 📍 Showing prompt for:', nearStation.displayName);
       this.showInteractionPrompt(nearStation);
     } else if (!nearStation && this.currentPrompt) {
       this.hideInteractionPrompt();
     }
     
-    // Handle interaction
-    if (nearStation && this.player.getInteractPressed()) {
-      nearStation.interact();
+    // Handle interaction - CRITICAL: Check press status FIRST
+    if (nearStation) {
+      const interactPressed = this.player.getInteractPressed();
+      if (interactPressed) {
+        console.log('[SCENE] 🚀🚀🚀 TRIGGERING INTERACTION FOR:', nearStation.displayName);
+        console.log('[SCENE] Zone position:', nearStation.x, nearStation.y);
+        console.log('[SCENE] Player position:', this.player.x, this.player.y);
+        nearStation.interact();
+      }
     }
   }
   
@@ -464,6 +546,141 @@ export class HealingWorldScene extends Phaser.Scene {
     });
   }
   
+  private checkNPCInteractions(): void {
+    const interactPressed = this.player.getInteractPressed();
+    
+    for (const npc of this.npcs) {
+      if (npc.isPlayerNearby(this.player.x, this.player.y)) {
+        if (interactPressed && !this.currentNPCDialogue) {
+          console.log('Interacting with NPC:', npc.getName()); // Debug
+          this.showNPCDialogue(npc);
+        }
+        return;
+      }
+    }
+  }
+  
+  private showNPCDialogue(npc: NPC): void {
+    const dialogue = npc.getDialogue();
+    
+    const dialogueContainer = this.add.container(npc.x, npc.y - 100);
+    dialogueContainer.setDepth(250);
+    
+    // Background
+    const bg = this.add.rectangle(0, 0, 350, 80, 0xf1f5f9, 0.98);
+    bg.setStrokeStyle(3, 0xf472b6);
+    
+    // NPC name
+    const nameText = this.add.text(0, -20, npc.getName(), {
+      fontFamily: 'Arial',
+      fontSize: '14px',
+      color: '#f472b6',
+      fontStyle: 'bold'
+    });
+    nameText.setOrigin(0.5);
+    
+    // Dialogue text
+    const dialogueText = this.add.text(0, 10, dialogue, {
+      fontFamily: 'Arial',
+      fontSize: '15px',
+      color: '#1e293b',
+      align: 'center',
+      wordWrap: { width: 320 }
+    });
+    dialogueText.setOrigin(0.5);
+    
+    dialogueContainer.add([bg, nameText, dialogueText]);
+    
+    // Fade in
+    dialogueContainer.setAlpha(0);
+    this.tweens.add({
+      targets: dialogueContainer,
+      alpha: 1,
+      y: npc.y - 110,
+      duration: 300,
+      ease: 'Back.easeOut'
+    });
+    
+    this.currentNPCDialogue = dialogueContainer;
+    
+    // Auto-hide after 4 seconds
+    this.time.delayedCall(4000, () => {
+      if (this.currentNPCDialogue === dialogueContainer) {
+        this.hideNPCDialogue();
+      }
+    });
+  }
+  
+  private hideNPCDialogue(): void {
+    if (!this.currentNPCDialogue) return;
+    
+    this.tweens.add({
+      targets: this.currentNPCDialogue,
+      alpha: 0,
+      y: this.currentNPCDialogue.y - 10,
+      duration: 200,
+      ease: 'Power2',
+      onComplete: () => {
+        this.currentNPCDialogue?.destroy();
+        this.currentNPCDialogue = undefined;
+      }
+    });
+  }
+  
+  private checkButterflyCollections(): void {
+    for (const butterfly of this.butterflies) {
+      if (butterfly.isPlayerNearby(this.player.x, this.player.y)) {
+        butterfly.collect();
+        this.showFloatingMessage('Beautiful! 🦋', this.player.x, this.player.y - 80, 0xff6b9d);
+        break; // Only collect one at a time
+      }
+    }
+  }
+  
+  private checkTreeInteractions(): void {
+    const interactPressed = this.player.getInteractPressed();
+    
+    for (const tree of this.trees) {
+      if (tree.isPlayerNearby(this.player.x, this.player.y)) {
+        if (interactPressed && !this.currentTreeQuote) {
+          console.log('Interacting with tree'); // Debug
+          this.currentTreeQuote = tree.showQuote(this);
+          
+          // Auto-hide after 8 seconds
+          this.time.delayedCall(8000, () => {
+            if (this.currentTreeQuote) {
+              tree.hideQuote(this.currentTreeQuote, this);
+              this.currentTreeQuote = undefined;
+            }
+          });
+        }
+        return;
+      }
+    }
+  }
+  
+  private showFloatingMessage(text: string, x: number, y: number, color: number): void {
+    const message = this.add.text(x, y, text, {
+      fontFamily: 'Arial',
+      fontSize: '18px',
+      color: '#ffffff',
+      backgroundColor: `#${color.toString(16).padStart(6, '0')}`,
+      padding: { x: 12, y: 6 },
+      align: 'center'
+    });
+    message.setOrigin(0.5);
+    message.setDepth(300);
+    
+    this.tweens.add({
+      targets: message,
+      y: y - 50,
+      alpha: 0,
+      duration: 2000,
+      ease: 'Power2',
+      onComplete: () => message.destroy()
+    });
+  }
+  
   public cleanup(): void {
     // Clean up when component unmounts
     if (this.parallaxBg) {
@@ -472,6 +689,21 @@ export class HealingWorldScene extends Phaser.Scene {
     
     this.interactionZones.forEach(zone => zone.destroy());
     this.interactionZones = [];
+    
+    this.npcs.forEach(npc => npc.destroy());
+    this.npcs = [];
+    
+    this.butterflies.forEach(butterfly => butterfly.destroy());
+    this.butterflies = [];
+    
+    this.trees.forEach(tree => tree.destroy());
+    this.trees = [];
+    
+    this.fountains.forEach(fountain => {
+      fountain.cleanup();
+      fountain.destroy();
+    });
+    this.fountains = [];
     
     if (this.mobileControls) {
       this.mobileControls.destroy();

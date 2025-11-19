@@ -9,6 +9,7 @@ export class Player extends Phaser.GameObjects.Container {
   private velocity: { x: number; y: number } = { x: 0, y: 0 };
   private joystickInput: { x: number; y: number } | null = null;
   public interactPressed: boolean = false;
+  private interactCooldown: number = 0; // Cooldown timer in milliseconds
   
   private torso!: Phaser.GameObjects.Ellipse;
   private head!: Phaser.GameObjects.Arc;
@@ -98,6 +99,14 @@ export class Player extends Phaser.GameObjects.Container {
   update(delta: number): void {
     this.handleMovement(delta);
     this.animateWalking(delta);
+    
+    // Decrease cooldown timer
+    if (this.interactCooldown > 0) {
+      this.interactCooldown -= delta;
+      if (this.interactCooldown <= 0) {
+        this.interactCooldown = 0;
+      }
+    }
   }
   
   private animateWalking(delta: number): void {
@@ -183,13 +192,22 @@ export class Player extends Phaser.GameObjects.Container {
   }
   
   public setMobileInteract(pressed: boolean): void {
-    this.interactPressed = pressed;
+    if (pressed && this.interactCooldown <= 0) {
+      console.log('[PLAYER] ✅ setMobileInteract(true) - interactPressed flag SET with 500ms cooldown');
+      this.interactPressed = true;
+      this.interactCooldown = 500; // 500ms cooldown to prevent double-triggers
+    } else if (pressed && this.interactCooldown > 0) {
+      console.log('[PLAYER] ⏳ setMobileInteract ignored - cooldown active:', this.interactCooldown);
+    }
   }
   
   public getInteractPressed(): boolean {
-    const pressed = this.interactPressed;
-    this.interactPressed = false; // Reset after reading
-    return pressed;
+    if (this.interactPressed) {
+      console.log('[PLAYER] ✅ getInteractPressed() returning TRUE');
+      this.interactPressed = false; // Reset immediately after one read
+      return true;
+    }
+    return false;
   }
   
   public getFacingDirection(): 'left' | 'right' {

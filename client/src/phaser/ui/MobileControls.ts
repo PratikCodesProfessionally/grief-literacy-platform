@@ -10,6 +10,7 @@ export class MobileControls {
     isDragging: boolean;
   };
   private interactButton: Phaser.GameObjects.Container;
+  private interactButtonPressed: boolean = false;
   private isVisible: boolean = false;
   
   constructor(scene: Phaser.Scene) {
@@ -23,8 +24,10 @@ export class MobileControls {
   }
   
   private createJoystick(): any {
-    const baseX = 120;
-    const baseY = this.scene.scale.height - 120;
+    // Position based on screen size - much higher on screen
+    const isSmallScreen = this.scene.scale.width < 768;
+    const baseX = isSmallScreen ? 80 : 120;
+    const baseY = this.scene.scale.height - (isSmallScreen ? 150 : 180);
     
     // Joystick base
     const base = this.scene.add.circle(
@@ -32,11 +35,11 @@ export class MobileControls {
       baseY,
       GAME_CONSTANTS.JOYSTICK_RADIUS,
       0x475569, // gray-600
-      GAME_CONSTANTS.JOYSTICK_BASE_ALPHA
+      0.7 // Increased opacity for better visibility
     );
     base.setScrollFactor(0);
     base.setDepth(1000);
-    base.setStrokeStyle(2, 0xffffff, 0.5);
+    base.setStrokeStyle(3, 0xffffff, 0.8); // Thicker border for visibility
     
     // Joystick thumb
     const thumb = this.scene.add.circle(
@@ -44,11 +47,11 @@ export class MobileControls {
       baseY,
       GAME_CONSTANTS.JOYSTICK_RADIUS * 0.5,
       0x0ea5e9, // sky-500
-      0.9
+      1 // Full opacity
     );
     thumb.setScrollFactor(0);
     thumb.setDepth(1001);
-    thumb.setStrokeStyle(2, 0xffffff, 0.8);
+    thumb.setStrokeStyle(3, 0xffffff, 1); // Thicker border
     
     const joystick = {
       base,
@@ -110,8 +113,11 @@ export class MobileControls {
   }
   
   private createInteractButton(): Phaser.GameObjects.Container {
-    const btnX = this.scene.scale.width - 120;
-    const btnY = this.scene.scale.height - 120;
+    // Position based on screen size - much higher on screen
+    const isSmallScreen = this.scene.scale.width < 768;
+    const btnX = this.scene.scale.width - (isSmallScreen ? 80 : 120);
+    const btnY = this.scene.scale.height - (isSmallScreen ? 150 : 180);
+    const buttonSize = isSmallScreen ? GAME_CONSTANTS.BUTTON_SIZE : GAME_CONSTANTS.BUTTON_SIZE * 1.1;
     
     const container = this.scene.add.container(btnX, btnY);
     container.setScrollFactor(0);
@@ -121,49 +127,85 @@ export class MobileControls {
     const bg = this.scene.add.circle(
       0,
       0,
-      GAME_CONSTANTS.BUTTON_SIZE / 2,
+      buttonSize / 2,
       0x8b5cf6, // violet-500
-      0.9
+      0.95 // Increased opacity
     );
-    bg.setStrokeStyle(3, 0xffffff, 0.8);
-    bg.setInteractive();
+    bg.setStrokeStyle(4, 0xffffff, 0.9); // Thicker border for visibility
+    bg.setInteractive({ useHandCursor: true });
     
     // Button text
     const text = this.scene.add.text(0, 0, '↑', {
       fontFamily: 'Arial',
-      fontSize: '40px',
+      fontSize: '48px', // Larger for better visibility
       color: '#ffffff',
       fontStyle: 'bold'
     });
     text.setOrigin(0.5);
+    text.setShadow(2, 2, '#000000', 4); // Add shadow for better contrast
     
-    container.add([bg, text]);
-    
-    // Touch events
-    let isPressed = false;
-    
-    bg.on('pointerdown', () => {
-      isPressed = true;
-      bg.setScale(0.9);
-      bg.setFillStyle(0x7c3aed); // violet-600
+    // Add small instruction text below
+    const instructionText = this.scene.add.text(0, 55, 'ENTER', {
+      fontFamily: 'Arial',
+      fontSize: '12px',
+      color: '#ffffff',
+      fontStyle: 'bold'
     });
+    instructionText.setOrigin(0.5);
+    instructionText.setAlpha(0.8);
     
-    bg.on('pointerup', () => {
-      isPressed = false;
+    container.add([bg, text, instructionText]);
+    
+    // Improved touch handling for mobile
+    let touchActive = false;
+    
+    const handleTouchStart = (pointer: any) => {
+      touchActive = true;
+      this.interactButtonPressed = true;
+      bg.setScale(0.85);
+      bg.setFillStyle(0x7c3aed);
+      
+      // Visual feedback - pulse effect
+      this.scene.tweens.add({
+        targets: bg,
+        scale: 0.95,
+        duration: 100,
+        yoyo: true,
+        ease: 'Power2'
+      });
+      
+      console.log('Button pressed!'); // Debug
+    };
+    
+    const handleTouchEnd = () => {
+      touchActive = false;
       bg.setScale(1);
-      bg.setFillStyle(0x8b5cf6); // violet-500
+      bg.setFillStyle(0x8b5cf6);
+    };
+    
+    // Make the entire container interactive, not just bg
+    container.setSize(buttonSize, buttonSize);
+    container.setInteractive();
+    
+    // Use container events for better touch detection
+    container.on('pointerdown', (pointer: any) => {
+      handleTouchStart(pointer);
     });
     
-    bg.on('pointerout', () => {
-      if (isPressed) {
-        isPressed = false;
-        bg.setScale(1);
-        bg.setFillStyle(0x8b5cf6);
+    container.on('pointerup', () => {
+      handleTouchEnd();
+    });
+    
+    container.on('pointerout', () => {
+      if (touchActive) {
+        handleTouchEnd();
       }
     });
     
-    // Store pressed state
-    (container as any).isPressed = () => isPressed;
+    // Also keep bg interactive as backup
+    bg.setInteractive();
+    bg.on('pointerdown', handleTouchStart);
+    bg.on('pointerup', handleTouchEnd);
     
     return container;
   }
@@ -187,9 +229,12 @@ export class MobileControls {
       player.clearJoystickInput();
     }
     
-    // Update interact button
-    const pressed = (this.interactButton as any).isPressed();
-    player.setMobileInteract(pressed);
+    // Update interact button - simplified for reliability
+    if (this.interactButtonPressed) {
+      console.log('[MOBILE] ========== BUTTON PRESSED - SETTING INTERACT ==========');
+      player.setMobileInteract(true);
+      this.interactButtonPressed = false;
+    }
   }
   
   public show(): void {

@@ -36,7 +36,15 @@ export const createGameConfig = (parent: string): Phaser.Types.Core.GameConfig =
   },
   input: {
     touch: {
-      capture: true
+      capture: true,
+      target: parent
+    },
+    activePointers: 3, // Allow multiple touches
+    mouse: {
+      preventDefaultWheel: false,
+      preventDefaultDown: true,
+      preventDefaultUp: true,
+      preventDefaultMove: true
     }
   }
 });
