@@ -6,7 +6,7 @@ export class Player extends Phaser.GameObjects.Container {
   private wasdKeys?: any;
   private isMoving: boolean = false;
   private facingDirection: 'left' | 'right' = 'right';
-  private velocity: { x: number; y: number } = { x: 0, y: 0 };
+  public velocity: { x: number; y: number } = { x: 0, y: 0 };
   private joystickInput: { x: number; y: number } | null = null;
   public interactPressed: boolean = false;
   private interactCooldown: number = 0; // Cooldown timer in milliseconds
@@ -208,6 +208,19 @@ export class Player extends Phaser.GameObjects.Container {
       return true;
     }
     return false;
+  }
+  
+  public peekInteractPressed(): boolean {
+    return this.interactPressed;
+  }
+  
+  public consumeInteractPressed(): boolean {
+    const wasPressed = this.interactPressed;
+    if (wasPressed) {
+      console.log('[PLAYER] 🔽 consumeInteractPressed() - flag consumed');
+      this.interactPressed = false;
+    }
+    return wasPressed;
   }
   
   public getFacingDirection(): 'left' | 'right' {

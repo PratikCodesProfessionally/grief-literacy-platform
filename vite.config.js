@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import { VitePWA } from 'vite-plugin-pwa';
 
-export const vitePort = 3000;
+export const vitePort = 5173;
 
 export default defineConfig(({ mode }) => {
   return {

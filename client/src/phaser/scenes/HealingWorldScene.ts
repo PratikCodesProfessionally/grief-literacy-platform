@@ -427,11 +427,38 @@ export class HealingWorldScene extends Phaser.Scene {
     // Update butterflies
     this.butterflies.forEach(butterfly => butterfly.update(delta));
     
-    // Check interactions
-    this.checkInteractions();
-    this.checkNPCInteractions();
+    // Check interactions in priority order (only one will consume the press)
+    const interactPressed = this.player.peekInteractPressed();
+    
+    // Priority 1: Stations (most important)
+    if (interactPressed) {
+      const consumed = this.checkInteractions();
+      if (consumed) {
+        console.log('[UPDATE] Station interaction consumed press');
+        // Continue to other checks for display purposes
+      }
+    }
+    
+    // Priority 2: NPCs
+    if (interactPressed && !this.currentNPCDialogue) {
+      const consumed = this.checkNPCInteractions();
+      if (consumed) {
+        console.log('[UPDATE] NPC interaction consumed press');
+      }
+    }
+    
+    // Priority 3: Trees  
+    if (interactPressed && !this.currentTreeQuote) {
+      const consumed = this.checkTreeInteractions();
+      if (consumed) {
+        console.log('[UPDATE] Tree interaction consumed press');
+      }
+    }
+    
+    // Always check for passive tree display
+    this.checkPassiveTreeDisplay();
+    
     this.checkButterflyCollections();
-    this.checkTreeInteractions();
     
     // Update mobile controls
     if (this.mobileControls) {
@@ -439,7 +466,7 @@ export class HealingWorldScene extends Phaser.Scene {
     }
   }
   
-  private checkInteractions(): void {
+  private checkInteractions(): boolean {
     let nearStation: InteractionZone | null = null;
     
     // Find nearest station in range
@@ -460,16 +487,17 @@ export class HealingWorldScene extends Phaser.Scene {
       this.hideInteractionPrompt();
     }
     
-    // Handle interaction - CRITICAL: Check press status FIRST
-    if (nearStation) {
-      const interactPressed = this.player.getInteractPressed();
-      if (interactPressed) {
-        console.log('[SCENE] 🚀🚀🚀 TRIGGERING INTERACTION FOR:', nearStation.displayName);
-        console.log('[SCENE] Zone position:', nearStation.x, nearStation.y);
-        console.log('[SCENE] Player position:', this.player.x, this.player.y);
-        nearStation.interact();
-      }
+    // Handle interaction - consume press if used
+    if (nearStation && this.player.peekInteractPressed()) {
+      this.player.consumeInteractPressed();
+      console.log('[SCENE] 🚀🚀🚀 TRIGGERING INTERACTION FOR:', nearStation.displayName);
+      console.log('[SCENE] Zone position:', nearStation.x, nearStation.y);
+      console.log('[SCENE] Player position:', this.player.x, this.player.y);
+      nearStation.interact();
+      return true; // Consumed
     }
+    
+    return false; // Not consumed
   }
   
   private showInteractionPrompt(zone: InteractionZone): void {
@@ -546,18 +574,19 @@ export class HealingWorldScene extends Phaser.Scene {
     });
   }
   
-  private checkNPCInteractions(): void {
-    const interactPressed = this.player.getInteractPressed();
-    
+  private checkNPCInteractions(): boolean {
     for (const npc of this.npcs) {
       if (npc.isPlayerNearby(this.player.x, this.player.y)) {
-        if (interactPressed && !this.currentNPCDialogue) {
-          console.log('Interacting with NPC:', npc.getName()); // Debug
+        if (this.player.peekInteractPressed() && !this.currentNPCDialogue) {
+          this.player.consumeInteractPressed();
+          console.log('[SCENE] 💬 Interacting with NPC:', npc.getName());
           this.showNPCDialogue(npc);
+          return true; // Consumed
         }
-        return;
+        return false; // Near but didn't interact
       }
     }
+    return false; // Not near any NPC
   }
   
   private showNPCDialogue(npc: NPC): void {
@@ -637,13 +666,13 @@ export class HealingWorldScene extends Phaser.Scene {
     }
   }
   
-  private checkTreeInteractions(): void {
-    const interactPressed = this.player.getInteractPressed();
-    
+  private checkTreeInteractions(): boolean {
     for (const tree of this.trees) {
-      if (tree.isPlayerNearby(this.player.x, this.player.y)) {
-        if (interactPressed && !this.currentTreeQuote) {
-          console.log('Interacting with tree'); // Debug
+      if (tree.isPlayerNearby(this.player.x, this.player.y, 120)) {
+        // Support manual trigger with interact button
+        if (this.player.peekInteractPressed() && !this.currentTreeQuote) {
+          this.player.consumeInteractPressed();
+          console.log('[SCENE] 🌳 Manual tree interaction');
           this.currentTreeQuote = tree.showQuote(this);
           
           // Auto-hide after 8 seconds
@@ -653,8 +682,32 @@ export class HealingWorldScene extends Phaser.Scene {
               this.currentTreeQuote = undefined;
             }
           });
+          return true; // Consumed
         }
-        return;
+        return false; // Near tree but didn't interact
+      }
+    }
+    return false; // Not near any tree
+  }
+  
+  private checkPassiveTreeDisplay(): void {
+    // Auto-show quote when player stops near tree (no button needed)
+    for (const tree of this.trees) {
+      if (tree.isPlayerNearby(this.player.x, this.player.y, 100)) {
+        const playerStopped = Math.abs(this.player.velocity.x) < 1;
+        if (!this.currentTreeQuote && playerStopped) {
+          console.log('[SCENE] 🌳 Auto-showing tree quote (player stopped)');
+          this.currentTreeQuote = tree.showQuote(this);
+          
+          // Auto-hide after 6 seconds
+          this.time.delayedCall(6000, () => {
+            if (this.currentTreeQuote) {
+              tree.hideQuote(this.currentTreeQuote, this);
+              this.currentTreeQuote = undefined;
+            }
+          });
+        }
+        return; // Only check one tree at a time
       }
     }
   }
