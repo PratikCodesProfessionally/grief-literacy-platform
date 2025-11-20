@@ -610,7 +610,6 @@ Inside`,
   id: 'letter-in-beige-bag',
   title: 'The Letter in the Beige Bag',
   author: 'Unknown',
-  date: '2025-11-16',
   content: `As I opened the upper self of my cupboard 
 Hidden was a beige bag 
 Perhaps it must have had a jetlag 
@@ -657,8 +656,65 @@ I tried to catch the scent
 a quick speed it had gained
 I could feel it again 
 The love that had strayed in vain`,
-  emotion: 'bittersweet',
-  tags: ['love', 'memory', 'loss', 'nostalgia', 'letters']
+  category: "bittersweet",
+  readTime: "2 min"
+},
+{
+  id: 12,
+  title: "A poem not written",
+  author: "Unknown",
+  content: `Untouched by love, not smitten 
+That has no tangible feelings 
+Nor is grief-ridden
+Before its last heartbeat was drummed or beaten
+A pure non-existence
+
+There are no rhythms
+or multiple of -isms
+Beyond the cosmic seasons
+or any blue clouds of loveism
+Couldn't be touched by any cynicism 
+Nor is used as a bait in activism
+And suffers no criticism
+
+A lost tragedy of words 
+Mourned by nobody 
+and has no visions
+A poem not written
+
+No ink wasted
+No eyes blinked 
+No hearts broken
+An unparched love letter 
+A blank note 
+A dark nothing 
+A white nothing 
+A colorness nothing 
+A poem not written
+
+Bears no name
+Bears no heritage 
+Has no language 
+No letters or semblance 
+No earthly baggage 
+A birth unborn
+A death undied
+A life unlived 
+A poem not written
+
+A rebellion of some kind
+By not existing 
+A creation of some mind 
+By not being 
+A disturbance of some kind
+By not disrupting
+
+A Silence
+A void
+A presence through Absence
+A poem not written`,
+  category: "A non-Existence",
+  readTime: "2 min"
 }
   ];
 
