@@ -5,8 +5,8 @@ import { GAME_CONSTANTS } from '../config/constants';
 export class MobileControls {
   private scene: Phaser.Scene;
   private joystick: {
-    base: Phaser.GameObjects.Circle;
-    thumb: Phaser.GameObjects.Circle;
+    base: Phaser.GameObjects.Arc;
+    thumb: Phaser.GameObjects.Arc;
     isDragging: boolean;
   };
   private interactButton: Phaser.GameObjects.Container;

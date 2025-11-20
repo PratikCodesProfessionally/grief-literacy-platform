@@ -2,9 +2,11 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom/client';
 import App from './App';
 import ErrorBoundary from './ErrorBoundary';
-import { registerSW } from 'virtual:pwa-register';
 
 import './index.css';
+
+// @ts-ignore - PWA plugin type
+import { registerSW } from 'virtual:pwa-register';
 
 const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
