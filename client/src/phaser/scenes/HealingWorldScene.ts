@@ -4,9 +4,13 @@ import { InteractionZone } from '../entities/InteractionZone';
 import { NPC } from '../entities/NPC';
 import { Butterfly } from '../entities/Butterfly';
 import { Tree } from '../entities/Tree';
+import { Flower } from '../entities/Flower';
+import { FallenLeaves } from '../entities/FallenLeaves';
+import { SnowLayer } from '../entities/SnowLayer';
 import { Fountain } from '../entities/InteractiveObjects';
 import { ParallaxBackground } from '../systems/ParallaxBackground';
 import { MobileControls } from '../ui/MobileControls';
+import { SeasonManager, Season } from '../systems/SeasonManager';
 import { GAME_CONSTANTS, STATION_POSITIONS, NPC_CONFIGS, BENCH_QUOTES } from '../config/constants';
 
 export class HealingWorldScene extends Phaser.Scene {
@@ -15,12 +19,17 @@ export class HealingWorldScene extends Phaser.Scene {
   private interactionZones: InteractionZone[] = [];
   private npcs: NPC[] = [];
   private butterflies: Butterfly[] = [];
+  private flowers: Flower[] = [];
   private trees: Tree[] = [];
   private fountains: Fountain[] = [];
+  private fallenLeaves?: FallenLeaves;
+  private snowLayer?: SnowLayer;
   private mobileControls?: MobileControls;
   private currentPrompt?: Phaser.GameObjects.Container;
   private currentNPCDialogue?: Phaser.GameObjects.Container;
   private currentTreeQuote?: Phaser.GameObjects.Container;
+  private seasonManager!: SeasonManager;
+  private seasonUI?: Phaser.GameObjects.Container;
   private isMobile: boolean = false;
   private isTablet: boolean = false;
   private helpText?: Phaser.GameObjects.Text;
@@ -58,6 +67,7 @@ export class HealingWorldScene extends Phaser.Scene {
     this.physics.world.setBounds(0, 0, worldWidth, worldHeight);
     
     // Create world elements
+    this.initializeSeasons();
     this.createParallaxBackground();
     this.createGround();
     this.createInteractiveObjects();
@@ -72,6 +82,9 @@ export class HealingWorldScene extends Phaser.Scene {
     if (this.isMobile) {
       this.createMobileControls();
     }
+    
+    // Create season UI
+    this.createSeasonUI();
     
     // Add ambient effects
     this.addAmbientEffects();
@@ -400,17 +413,50 @@ export class HealingWorldScene extends Phaser.Scene {
   }
   
   private createButterflies(): void {
+    // Butterflies are now managed by updateButterflies() based on season
+    // Initial creation happens in initializeSeasons()
+  }
+  
+  private updateButterflies(count: number): void {
     const groundY = this.scale.height - 180;
     const butterflyColors = [0xff6b9d, 0xfbbf24, 0x60a5fa, 0xa78bfa, 0x34d399];
     
-    // Distribute butterflies across the world
-    for (let i = 0; i < 25; i++) {
+    // Remove excess butterflies
+    while (this.butterflies.length > count) {
+      const butterfly = this.butterflies.pop();
+      butterfly?.destroy();
+    }
+    
+    // Add new butterflies if needed
+    while (this.butterflies.length < count) {
       const x = Phaser.Math.Between(500, GAME_CONSTANTS.WORLD_WIDTH - 500);
       const y = Phaser.Math.Between(groundY - 400, groundY - 100);
-      const color = Phaser.Utils.Array.GetRandom(butterflyColors);
       
-      const butterfly = new Butterfly(this, x, y, color);
+      // Species is randomly selected in Butterfly constructor
+      const butterfly = new Butterfly(this, x, y);
       this.butterflies.push(butterfly);
+    }
+  }
+  
+  private updateFlowers(config: { enabled: boolean, colors: number[], count: number } | undefined): void {
+    // Remove all existing flowers
+    this.flowers.forEach(flower => flower.destroy());
+    this.flowers = [];
+    
+    if (!config || !config.enabled) return;
+    
+    const groundY = this.scale.height - 180;
+    
+    // Create new flowers
+    for (let i = 0; i < config.count; i++) {
+      const x = Phaser.Math.Between(300, GAME_CONSTANTS.WORLD_WIDTH - 300);
+      const y = groundY + Phaser.Math.Between(-5, 5); // Near ground level
+      const color = Phaser.Utils.Array.GetRandom(config.colors);
+      const size = Phaser.Math.FloatBetween(0.8, 1.2);
+      
+      const flower = new Flower(this, x, y, color, size);
+      flower.bloom(i * 50); // Staggered bloom animation
+      this.flowers.push(flower);
     }
   }
   
@@ -457,8 +503,6 @@ export class HealingWorldScene extends Phaser.Scene {
     
     // Always check for passive tree display
     this.checkPassiveTreeDisplay();
-    
-    this.checkButterflyCollections();
     
     // Update mobile controls
     if (this.mobileControls) {
@@ -656,15 +700,7 @@ export class HealingWorldScene extends Phaser.Scene {
     });
   }
   
-  private checkButterflyCollections(): void {
-    for (const butterfly of this.butterflies) {
-      if (butterfly.isPlayerNearby(this.player.x, this.player.y)) {
-        butterfly.collect();
-        this.showFloatingMessage('Beautiful! 🦋', this.player.x, this.player.y - 80, 0xff6b9d);
-        break; // Only collect one at a time
-      }
-    }
-  }
+
   
   private checkTreeInteractions(): boolean {
     for (const tree of this.trees) {
@@ -800,4 +836,158 @@ export class HealingWorldScene extends Phaser.Scene {
       this.createMobileControls();
     }
   }
+  
+  private initializeSeasons(): void {
+    this.seasonManager = new SeasonManager(this, 'spring');
+    
+    // Initialize butterflies and flowers for spring
+    const config = this.seasonManager.getSeasonConfig();
+    this.updateButterflies(config.butterflyCount);
+    this.updateFlowers(config.flowers);
+    
+    // Listen to season change events
+    this.events.on('seasonChanged', (season: Season) => {
+      console.log(`🌸 Season changed to: ${season}`);
+      this.updateTreesForSeason();
+    });
+  }
+  
+  private createSeasonUI(): void {
+    const seasons: Season[] = ['spring', 'summer', 'autumn', 'winter'];
+    const seasonEmojis = {
+      spring: '🌸',
+      summer: '☀️',
+      autumn: '🍂',
+      winter: '❄️'
+    };
+    
+    // Create UI container
+    this.seasonUI = this.add.container(0, 0);
+    this.seasonUI.setScrollFactor(0);
+    this.seasonUI.setDepth(1001);
+    
+    const buttonSize = 50;
+    const spacing = 60;
+    const startX = 20;
+    const startY = 20;
+    
+    seasons.forEach((season, index) => {
+      const x = startX + (index * spacing);
+      const y = startY;
+      
+      // Background circle
+      const bg = this.add.circle(x, y, buttonSize / 2, 0xffffff, 0.9);
+      bg.setStrokeStyle(3, 0x8b5cf6);
+      bg.setInteractive({ useHandCursor: true });
+      bg.setScrollFactor(0);
+      
+      // Emoji
+      const emoji = this.add.text(x, y, seasonEmojis[season], {
+        fontSize: '28px'
+      });
+      emoji.setOrigin(0.5);
+      emoji.setScrollFactor(0);
+      
+      // Click handler
+      bg.on('pointerdown', () => {
+        this.seasonManager.changeSeason(season);
+        this.updateSeasonUI(season);
+      });
+      
+      bg.on('pointerover', () => {
+        bg.setScale(1.1);
+      });
+      
+      bg.on('pointerout', () => {
+        bg.setScale(1);
+      });
+      
+      this.seasonUI!.add([bg, emoji]);
+    });
+    
+    // Add season name label
+    const currentSeason = this.seasonManager.getCurrentSeason();
+    const seasonConfig = this.seasonManager.getSeasonConfig();
+    const label = this.add.text(startX, startY + 60, seasonConfig.name, {
+      fontSize: '16px',
+      color: '#1f2937',
+      fontStyle: 'bold',
+      backgroundColor: '#ffffff',
+      padding: { x: 10, y: 5 }
+    });
+    label.setScrollFactor(0);
+    label.setAlpha(0.9);
+    this.seasonUI!.add(label);
+  }
+  
+  private updateSeasonUI(currentSeason: Season): void {
+    // Update label
+    const label = this.seasonUI?.list.find(child => 
+      child instanceof Phaser.GameObjects.Text && child.text.length > 3
+    ) as Phaser.GameObjects.Text;
+    
+    if (label) {
+      const config = this.seasonManager.getSeasonConfig();
+      label.setText(config.name);
+    }
+  }
+  
+  private updateTreesForSeason(): void {
+    const config = this.seasonManager.getSeasonConfig();
+    const currentSeason = this.seasonManager.getCurrentSeason();
+    
+    // Update all trees with new colors
+    this.trees.forEach(tree => {
+      tree.updateSeason(currentSeason, config.treeColors);
+    });
+    
+    // Update butterflies count
+    this.updateButterflies(config.butterflyCount);
+    
+    // Update flowers
+    this.updateFlowers(config.flowers);
+    
+    // Update ground layers based on season
+    this.updateGroundLayers(currentSeason, config);
+    
+    console.log(`🌳 Updated ${this.trees.length} trees, ${this.butterflies.length} butterflies, ${this.flowers.length} flowers for ${config.name}`);
+  }
+
+  private updateGroundLayers(season: Season, config: any): void {
+    const groundY = this.scale.height - 180;
+
+    // Remove existing ground layers
+    if (this.fallenLeaves) {
+      this.fallenLeaves.fadeOut();
+      this.fallenLeaves = undefined;
+    }
+    if (this.snowLayer) {
+      this.snowLayer.fadeOut();
+      this.snowLayer = undefined;
+    }
+
+    // Add season-specific ground layers
+    if (season === 'autumn' && config.groundDetails?.fallenLeaves?.enabled) {
+      this.fallenLeaves = new FallenLeaves(
+        this,
+        GAME_CONSTANTS.WORLD_WIDTH,
+        groundY,
+        config.groundDetails.fallenLeaves.density,
+        config.groundDetails.fallenLeaves.colors
+      );
+    } else if (season === 'winter' && config.snowCoverage && config.snowCoverage > 0) {
+      this.snowLayer = new SnowLayer(
+        this,
+        GAME_CONSTANTS.WORLD_WIDTH,
+        groundY,
+        config.groundDetails?.snowDepth || 12
+      );
+      
+      // Add snow sparkles for winter
+      if (this.snowLayer) {
+        this.snowLayer.addSparkles(30);
+      }
+    }
+  }
 }
+
