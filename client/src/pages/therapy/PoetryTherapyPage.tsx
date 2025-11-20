@@ -960,7 +960,12 @@ A poem not written`,
       'Journey': 'bg-slate-100/80 text-slate-700 dark:bg-slate-900/30 dark:text-slate-300 border border-slate-200/50',
       'Guilt': 'bg-gray-100/80 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300 border border-gray-200/50',
       'Simplicity': 'bg-emerald-100/80 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 border border-emerald-200/50',
-      'Transformation': 'bg-fuchsia-100/80 text-fuchsia-700 dark:bg-fuchsia-900/30 dark:text-fuchsia-300 border border-fuchsia-200/50'
+      'Transformation': 'bg-fuchsia-100/80 text-fuchsia-700 dark:bg-fuchsia-900/30 dark:text-fuchsia-300 border border-fuchsia-200/50',
+      'Displacement': 'bg-red-100/80 text-red-700 dark:bg-red-900/30 dark:text-red-300 border border-red-200/50',
+      'Hypothesis': 'bg-sky-100/80 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300 border border-sky-200/50',
+      'Unveiling': 'bg-lime-100/80 text-lime-700 dark:bg-lime-900/30 dark:text-lime-300 border border-lime-200/50',
+      'bittersweet': 'bg-yellow-100/80 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 border border-yellow-200/50',
+      'A non-Existence': 'bg-cyan-100/80 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300 border border-cyan-200/50'
     };
     return colors[category as keyof typeof colors] || 'bg-gray-100/80 text-gray-700 border border-gray-200/50';
   };
