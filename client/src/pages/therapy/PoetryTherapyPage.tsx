@@ -426,7 +426,7 @@ Something they never returned.
     
     },
      {
-    id: 9,
+    id: 10,
     title: "After the love's funeral",
     author: "Unknown",
     content: `Allow yourself to feel it 
@@ -478,7 +478,7 @@ the ultimate the last`,
     readTime: "2 min"
   },
   {
-  id: 10,
+  id: 9,
   title: "After the love's demise",
   author: "Unknown",
   content: `After the love's demise
@@ -607,7 +607,7 @@ Inside`,
   readTime: "3 min"
 },
 {
-  id: 'letter-in-beige-bag',
+  id: 11,
   title: 'The Letter in the Beige Bag',
   author: 'Unknown',
   content: `As I opened the upper self of my cupboard 
