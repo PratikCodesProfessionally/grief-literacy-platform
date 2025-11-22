@@ -1,4 +1,4 @@
-import { startServer } from '../server/index.js';
+import { startServer } from '../server/index.mts';
 import { createServer } from 'vite';
 
 let viteServer;

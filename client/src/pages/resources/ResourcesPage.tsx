@@ -1,9 +1,6 @@
 import * as React from 'react';
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Star, Book, GraduationCap, Globe, Phone } from 'lucide-react';
+import { Book, GraduationCap, Globe, Phone } from 'lucide-react';
 import { CoursesPage } from './CoursesPage';
 import { BooksPage } from './BooksPage';
 import { ProfessionalHelpPage } from './ProfessionalHelpPage';
@@ -11,321 +8,268 @@ import { ProfessionalHelpPage } from './ProfessionalHelpPage';
 export function ResourcesPage() {
   const location = useLocation();
   const isMainPage = location.pathname === '/resources';
-
-  const bookRecommendations = [
-    {
-      title: 'Option B',
-      author: 'Sheryl Sandberg & Adam Grant',
-      description: 'Building resilience in the face of adversity',
-      rating: 4.8,
-      category: 'Resilience',
-      pages: 240,
-      published: '2017',
-      isbn: '978-1524732684'
-    },
-    {
-      title: 'The Year of Magical Thinking',
-      author: 'Joan Didion',
-      description: 'A powerful memoir about grief and survival',
-      rating: 4.6,
-      category: 'Memoir',
-      pages: 227,
-      published: '2005',
-      isbn: '978-1400078431'
-    },
-    {
-      title: 'It\'s OK That You\'re Not OK',
-      author: 'Megan Devine',
-      description: 'Meeting grief and loss in a culture that doesn\'t understand',
-      rating: 4.9,
-      category: 'Self-Help',
-      pages: 208,
-      published: '2017',
-      isbn: '978-1622039074'
-    },
-    {
-      title: 'The Wild Edge of Sorrow',
-      author: 'Francis Weller',
-      description: 'Rituals of renewal and the sacred work of grief',
-      rating: 4.7,
-      category: 'Spiritual',
-      pages: 256,
-      published: '2015',
-      isbn: '978-1583949764'
-    },
-    {
-      title: 'When the Body Says No',
-      author: 'Gabor Maté',
-      description: 'The cost of hidden stress and emotional suppression',
-      rating: 4.6,
-      category: 'Health',
-      pages: 320,
-      published: '2003',
-      isbn: '978-0470923351'
-    },
-    {
-      title: 'The Body Keeps the Score',
-      author: 'Bessel van der Kolk',
-      description: 'Brain, mind, and body in the healing of trauma',
-      rating: 4.8,
-      category: 'Psychology',
-      pages: 464,
-      published: '2014',
-      isbn: '978-0670785933'
-    },
-    {
-  title: 'Motherless Daughters',
-  author: 'Hope Edelman',
-  description: 'The legacy of loss for women who lost their mothers early',
-  rating: 4.5,
-  category: 'Family',
-  pages: 384,
-  published: '1994',
-  isbn: '978-0385311908'
-},
-{
-  title: 'A Grief Observed',
-  author: 'C.S. Lewis',
-  description: 'Classic exploration of grief written after the death of his wife',
-  rating: 4.4,
-  category: 'Memoir',
-  pages: 96,
-  published: '1961',
-  isbn: '978-0060652883'
-},
-{
-  title: 'Pet Loss and Human Emotion',
-  author: 'Cheri Barton Ross',
-  description: 'Guide to understanding and healing from pet loss',
-  rating: 4.3,
-  category: 'Pet Loss',
-  pages: 192,
-  published: '2013',
-  isbn: '978-0415656948'
-},
-{
-  title: 'The Art of Procrastination',
-  author: 'John Perry',
-  description: 'A witty guide to turning procrastination into productivity',
-  rating: 4.2,
-  category: 'Self-Help',
-  pages: 112,
-  published: '2012',
-  isbn: '978-0761171676'
-},
-{
-  title: 'Immun gegen toxische Menschen',
-  author: 'Lisa Irani & Anna Eckert',
-  description: 'Psychological tools for recognizing and protecting yourself from toxic people (German only)',
-  rating: 4.3,
-  category: 'Self-Help',
-  pages: 288,
-  published: '2024',
-  isbn: '978-3833892660'
-}
-  ];
-
-  const courses = [
-    {
-      title: 'Understanding Grief Stages',
-      duration: '2 hours',
-      lessons: 8,
-      description: 'Learn about different models of grief and how they apply to your experience',
-      students: 1247,
-      rating: 4.8
-    },
-    {
-      title: 'Grief in Different Cultures',
-      duration: '1.5 hours',
-      lessons: 6,
-      description: 'Explore how different cultures around the world understand and process grief',
-      students: 892,
-      rating: 4.9
-    },
-    {
-      title: 'Supporting Others in Grief',
-      duration: '3 hours',
-      lessons: 12,
-      description: 'How to offer meaningful support to friends and family who are grieving',
-      students: 2156,
-      rating: 4.7
-    },
-  ];
+  const [activeBubble, setActiveBubble] = React.useState(0);
+  const [isPaused, setIsPaused] = React.useState(false);
+  const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+  const autoScrollTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+  const pauseTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
   const resources = [
     {
+      id: 'books',
       title: 'Self-Help Books',
       description: 'Curated recommendations for books on grief, healing, and resilience',
-      icon: <Book className="h-6 w-6" />,
+      icon: Book,
       path: '/resources/books',
-      count: `${bookRecommendations.length} books`
+      count: '11 books',
+      gradient: 'from-amber-100/70 to-orange-100/70',
     },
     {
+      id: 'courses',
       title: 'Educational Courses',
       description: 'Short courses on grief literacy and emotional wellness',
-      icon: <GraduationCap className="h-6 w-6" />,
+      icon: GraduationCap,
       path: '/resources/courses',
-      count: `${courses.length} courses`
+      count: '3 courses',
+      gradient: 'from-purple-100/70 to-indigo-100/70',
     },
     {
+      id: 'cultural',
       title: 'Cultural Practices',
       description: 'Learn how different cultures approach grief and mourning',
-      icon: <Globe className="h-6 w-6" />,
+      icon: Globe,
       path: '/resources/cultural',
-      count: 'Global wisdom'
+      count: 'Global wisdom',
+      gradient: 'from-green-100/70 to-emerald-100/70',
     },
     {
+      id: 'professional',
       title: 'Professional Help',
       description: 'Crisis hotlines and professional grief support resources',
-      icon: <Phone className="h-6 w-6" />,
+      icon: Phone,
       path: '/resources/professional',
-      count: 'Crisis support'
+      count: 'Crisis support',
+      gradient: 'from-rose-100/70 to-pink-100/70',
     },
   ];
 
+  const scrollToBubble = React.useCallback((index: number) => {
+    if (scrollContainerRef.current) {
+      const container = scrollContainerRef.current;
+      const bubbleHeight = container.scrollHeight / resources.length;
+      container.scrollTo({
+        top: bubbleHeight * index,
+        behavior: 'smooth',
+      });
+      setActiveBubble(index);
+    }
+  }, [resources.length]);
+
+  React.useEffect(() => {
+    const startAutoScroll = () => {
+      if (!isPaused) {
+        autoScrollTimerRef.current = setInterval(() => {
+          setActiveBubble((prev) => {
+            const next = (prev + 1) % resources.length;
+            scrollToBubble(next);
+            return next;
+          });
+        }, 8000);
+      }
+    };
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!prefersReducedMotion) {
+      startAutoScroll();
+    }
+
+    return () => {
+      if (autoScrollTimerRef.current) {
+        clearInterval(autoScrollTimerRef.current);
+      }
+    };
+  }, [isPaused, resources.length, scrollToBubble]);
+
+  const handleScroll = React.useCallback(() => {
+    if (scrollContainerRef.current && !isPaused) {
+      const container = scrollContainerRef.current;
+      const bubbleHeight = container.scrollHeight / resources.length;
+      const scrollPosition = container.scrollTop;
+      const newIndex = Math.round(scrollPosition / bubbleHeight);
+      
+      if (newIndex !== activeBubble && newIndex >= 0 && newIndex < resources.length) {
+        setActiveBubble(newIndex);
+      }
+    }
+  }, [activeBubble, resources.length, isPaused]);
+
+  const handleUserInteraction = () => {
+    setIsPaused(true);
+    
+    if (pauseTimerRef.current) {
+      clearTimeout(pauseTimerRef.current);
+    }
+    
+    pauseTimerRef.current = setTimeout(() => {
+      setIsPaused(false);
+    }, 2000);
+  };
+
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowDown' && activeBubble < resources.length - 1) {
+        e.preventDefault();
+        scrollToBubble(activeBubble + 1);
+        handleUserInteraction();
+      } else if (e.key === 'ArrowUp' && activeBubble > 0) {
+        e.preventDefault();
+        scrollToBubble(activeBubble - 1);
+        handleUserInteraction();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeBubble, resources.length, scrollToBubble]);
+
   if (isMainPage) {
     return (
-      <div className="space-y-8">
-        <div className="text-center space-y-4">
-          <h1 className="text-4xl font-bold text-gray-800 dark:text-white">
+      <div className="relative min-h-screen bg-gradient-to-b from-amber-50 via-orange-50 to-yellow-100 -mx-4 -my-8 overflow-hidden">
+        <header className="relative z-30 text-center pt-12 md:pt-16 pb-6 md:pb-8 px-4">
+          <h1 className="text-4xl md:text-5xl font-serif font-light text-gray-800 mb-3 md:mb-4 tracking-wide animate-fade-in">
             Learning Resources
           </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+          <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
             Educational content, books, and courses to deepen your understanding of grief and healing
           </p>
+        </header>
+
+        <div 
+          ref={scrollContainerRef}
+          onScroll={handleScroll}
+          onWheel={handleUserInteraction}
+          onTouchStart={handleUserInteraction}
+          className="relative h-[60vh] md:h-[65vh] overflow-y-scroll snap-y snap-mandatory scrollbar-hide scroll-smooth"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          role="region"
+          aria-label="Learning resources carousel"
+          aria-live="polite"
+        >
+          {resources.map((resource, index) => {
+            const isActive = activeBubble === index;
+            
+            return (
+              <div
+                key={resource.id}
+                className="h-[60vh] md:h-[65vh] snap-center flex items-center justify-center px-4"
+              >
+                <Link
+                  to={resource.path}
+                  className={`
+                    relative w-56 h-56 md:w-64 md:h-64 lg:w-72 lg:h-72
+                    rounded-full
+                    bg-gradient-to-br ${resource.gradient}
+                    backdrop-blur-sm border-2 border-amber-200/40
+                    flex flex-col items-center justify-center gap-3 md:gap-4 p-8
+                    shadow-lg shadow-amber-200/50
+                    transition-all duration-700 ease-out
+                    cursor-pointer
+                    ${isActive 
+                      ? 'scale-100 opacity-100 z-20' 
+                      : 'scale-90 opacity-70'
+                    }
+                    hover:scale-102 hover:opacity-100 hover:shadow-xl hover:shadow-amber-300/50
+                  `}
+                  onMouseEnter={() => {
+                    setIsPaused(true);
+                    if (pauseTimerRef.current) {
+                      clearTimeout(pauseTimerRef.current);
+                    }
+                  }}
+                  onMouseLeave={handleUserInteraction}
+                  aria-label={`${resource.title}: ${resource.description}`}
+                  aria-current={isActive ? 'true' : 'false'}
+                >
+                  <div className={`absolute inset-0 rounded-full bg-white/30 transition-opacity duration-700 ${isActive ? 'opacity-40' : 'opacity-20'}`} />
+                  
+                  <div className="relative z-10 flex flex-col items-center gap-3 md:gap-4 px-6">
+                    <resource.icon className="w-14 h-14 md:w-16 md:h-16 text-gray-700 drop-shadow-sm" />
+                    <h3 className="text-xl md:text-2xl font-normal text-gray-800 text-center leading-tight">
+                      {resource.title}
+                    </h3>
+                    {isActive && (
+                      <>
+                        <p className="text-xs md:text-sm text-gray-600 text-center animate-fade-in">
+                          {resource.description}
+                        </p>
+                        <div className="text-xs text-amber-700 font-medium bg-amber-100/50 px-3 py-1 rounded-full">
+                          {resource.count}
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  <div className="absolute inset-0 rounded-full bg-white/20 opacity-0 hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+                  
+                  {isActive && (
+                    <div className="absolute inset-0 rounded-full animate-gentle-float pointer-events-none" />
+                  )}
+                </Link>
+              </div>
+            );
+          })}
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="fixed bottom-20 md:bottom-16 left-1/2 transform -translate-x-1/2 z-30 flex gap-3">
           {resources.map((resource, index) => (
-            <Card key={index} className="hover:shadow-lg transition-shadow group">
-              <CardHeader>
-                <div className="flex items-center space-x-3">
-                  <div className="text-2xl group-hover:scale-110 transition-transform">{resource.icon}</div>
-                  <div className="flex-1">
-                    <CardTitle className="flex items-center justify-between">
-                      <span>{resource.title}</span>
-                      <Badge variant="outline" className="text-xs">
-                        {resource.count}
-                      </Badge>
-                    </CardTitle>
-                    <CardDescription>{resource.description}</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Link to={resource.path}>
-                  <Button className="w-full">Explore</Button>
-                </Link>
-              </CardContent>
-            </Card>
+            <button
+              key={resource.id}
+              onClick={() => {
+                scrollToBubble(index);
+                handleUserInteraction();
+              }}
+              className={`
+                rounded-full transition-all duration-500
+                ${activeBubble === index 
+                  ? 'w-2.5 h-2.5 bg-amber-400 shadow-sm' 
+                  : 'w-2 h-2 bg-amber-200 hover:bg-amber-300'
+                }
+              `}
+              aria-label={`Go to ${resource.title}`}
+              aria-current={activeBubble === index ? 'true' : 'false'}
+            />
           ))}
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Book className="h-5 w-5" />
-                <span>Featured Books</span>
-              </CardTitle>
-              <CardDescription>
-                Recommended reading for your grief journey
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {bookRecommendations.slice(0, 4).map((book, index) => (
-                <Card key={index} className="hover:shadow-sm transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-semibold text-sm">{book.title}</h3>
-                      <Badge variant="secondary" className="text-xs">
-                        {book.category}
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
-                      by {book.author}
-                    </p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
-                      {book.description}
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-1">
-                        <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                        <span className="text-xs">{book.rating}</span>
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {book.pages} pages • {book.published}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-              <Button variant="outline" className="w-full" asChild>
-                <Link to="/resources/books">View All Books</Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <GraduationCap className="h-5 w-5" />
-                <span>Popular Courses</span>
-              </CardTitle>
-              <CardDescription>
-                Start learning with our most popular courses
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {courses.map((course, index) => (
-                <Card key={index} className="hover:shadow-sm transition-shadow">
-                  <CardContent className="p-4">
-                    <h3 className="font-semibold text-sm mb-1">{course.title}</h3>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
-                      {course.description}
-                    </p>
-                    <div className="flex items-center justify-between text-xs text-gray-500">
-                      <div className="flex items-center space-x-3">
-                        <span>{course.lessons} lessons</span>
-                        <span>{course.duration}</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                        <span>{course.rating}</span>
-                      </div>
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {course.students.toLocaleString()} students enrolled
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-              <Button className="w-full" asChild>
-                <Link to="/resources/courses">Browse All Courses</Link>
-              </Button>
-            </CardContent>
-          </Card>
+        <div className="fixed bottom-8 md:bottom-6 left-1/2 transform -translate-x-1/2 z-30">
+          <p className="text-gray-500 text-xs md:text-sm text-center animate-fade-in">
+            Click to explore resources • Use arrow keys to navigate
+          </p>
         </div>
 
-        <Card className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20">
-          <CardHeader>
-            <CardTitle>Need Professional Support?</CardTitle>
-            <CardDescription>
-              Sometimes professional guidance can make all the difference in your healing journey
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col sm:flex-row gap-4">
-            <Button variant="outline" className="flex-1" asChild>
-              <Link to="/resources/professional">Crisis Hotlines</Link>
-            </Button>
-            <Button variant="outline" className="flex-1" asChild>
-              <Link to="/resources/professional">Professional Resources</Link>
-            </Button>
-            <Button variant="outline" className="flex-1" asChild>
-              <Link to="/resources/professional">Support Groups</Link>
-            </Button>
-          </CardContent>
-        </Card>
+        <style>{`
+          .scrollbar-hide::-webkit-scrollbar { display: none; }
+          @keyframes fade-in {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          .animate-fade-in { animation: fade-in 0.8s ease-out; }
+          @keyframes gentle-float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+          }
+          .animate-gentle-float { animation: gentle-float 4s ease-in-out infinite; }
+          .scroll-smooth { scroll-behavior: smooth; }
+          .hover\\:scale-102:hover { transform: scale(1.02); }
+          @media (prefers-reduced-motion: reduce) {
+            * {
+              animation-duration: 0.01ms !important;
+              animation-iteration-count: 1 !important;
+              transition-duration: 0.01ms !important;
+              scroll-behavior: auto !important;
+            }
+          }
+        `}</style>
       </div>
     );
   }
@@ -335,7 +279,6 @@ export function ResourcesPage() {
       <Route path="/courses" element={<CoursesPage />} />
       <Route path="/books" element={<BooksPage />} />
       <Route path="/professional" element={<ProfessionalHelpPage />} />
-      {/* Additional routes can be added here */}
     </Routes>
   );
 }

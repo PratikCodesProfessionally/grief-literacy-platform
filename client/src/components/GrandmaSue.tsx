@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Mic, MicOff, Volume2, VolumeX, Loader2 } from 'lucide-react';
 
 interface Message {
   id: string;
@@ -10,6 +11,7 @@ interface Message {
   content: string;
   timestamp: Date;
   feedback?: 'helpful' | 'not-helpful';
+  isVoice?: boolean;
 }
 
 interface ConversationContext {
@@ -34,7 +36,17 @@ export function GrandmaSue() {
       previousTopics: [],
     },
   });
+  
+  // Voice-related states
+  const [isListening, setIsListening] = React.useState(false);
+  const [isSpeaking, setIsSpeaking] = React.useState(false);
+  const [voiceEnabled, setVoiceEnabled] = React.useState(false);
+  const [transcript, setTranscript] = React.useState('');
+  const [permissionDenied, setPermissionDenied] = React.useState(false);
+  
   const scrollRef = React.useRef<HTMLDivElement>(null);
+  const recognitionRef = React.useRef<SpeechRecognition | null>(null);
+  const synthRef = React.useRef<SpeechSynthesisUtterance | null>(null);
 
   // Load conversation history from localStorage on mount
   React.useEffect(() => {
@@ -78,6 +90,62 @@ export function GrandmaSue() {
   React.useEffect(() => {
     localStorage.setItem('grandmaSue_context', JSON.stringify(context));
   }, [context]);
+
+  // Initialize Speech Recognition
+  React.useEffect(() => {
+    if (typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      
+      if (recognitionRef.current) {
+        recognitionRef.current.continuous = true;
+        recognitionRef.current.interimResults = true;
+        recognitionRef.current.lang = 'en-US';
+        
+        recognitionRef.current.onresult = (event: any) => {
+          let interimTranscript = '';
+          let finalTranscript = '';
+          
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+              finalTranscript += transcript + ' ';
+            } else {
+              interimTranscript += transcript;
+            }
+          }
+          
+          setTranscript(finalTranscript || interimTranscript);
+          
+          if (finalTranscript) {
+            setInput(prev => prev + finalTranscript);
+          }
+        };
+        
+        recognitionRef.current.onerror = (event: any) => {
+          console.error('Speech recognition error:', event.error);
+          if (event.error === 'not-allowed') {
+            setPermissionDenied(true);
+          }
+          setIsListening(false);
+        };
+        
+        recognitionRef.current.onend = () => {
+          setIsListening(false);
+          setTranscript('');
+        };
+      }
+    }
+    
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      if (synthRef.current) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
 
   React.useEffect(() => {
     if (scrollRef.current) {
@@ -240,11 +308,17 @@ export function GrandmaSue() {
       role: 'user',
       content: input.trim(),
       timestamp: new Date(),
+      isVoice: voiceEnabled,
     };
 
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsTyping(true);
+
+    // Stop listening when user sends message
+    if (isListening) {
+      stopListening();
+    }
 
     setTimeout(() => {
       const response = generateSmartResponse(userMessage.content, messages);
@@ -254,11 +328,123 @@ export function GrandmaSue() {
         role: 'assistant',
         content: response,
         timestamp: new Date(),
+        isVoice: voiceEnabled,
       };
 
       setMessages(prev => [...prev, assistantMessage]);
       setIsTyping(false);
+      
+      // Speak response if voice is enabled
+      if (voiceEnabled) {
+        speakResponse(response);
+      }
     }, 1500 + Math.random() * 1000);
+  };
+
+  // Voice interaction handlers
+  const startListening = () => {
+    if (recognitionRef.current && !isListening) {
+      try {
+        recognitionRef.current.start();
+        setIsListening(true);
+        setPermissionDenied(false);
+      } catch (error) {
+        console.error('Failed to start recognition:', error);
+      }
+    }
+  };
+
+  const stopListening = () => {
+    if (recognitionRef.current && isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+      setTranscript('');
+    }
+  };
+
+  const speakResponse = (text: string) => {
+    const speak = () => {
+      const utterance = new SpeechSynthesisUtterance(text);
+      
+      // Configure Grandma Sue's voice characteristics for warmth and empathy
+      utterance.rate = 0.9; // Slightly faster for more natural conversation
+      utterance.pitch = 1.1; // Warmer, more expressive tone
+      utterance.volume = 1.0;
+      utterance.lang = 'en-US';
+      
+      // Try to find a reliable female voice
+      const voices = window.speechSynthesis.getVoices();
+      console.log('Available voices:', voices.length);
+      
+      // Priority order: Google UK/US Female > any female voice > en-US default
+      const femaleVoice = 
+        voices.find(voice => voice.name.includes('Google UK English Female')) ||
+        voices.find(voice => voice.name.includes('Google US English Female')) ||
+        voices.find(voice => voice.name.includes('Microsoft Zira')) ||
+        voices.find(voice => voice.name.toLowerCase().includes('female') && voice.lang.startsWith('en')) ||
+        voices.find(voice => voice.lang === 'en-US' && !voice.localService);
+      
+      if (femaleVoice) {
+        console.log('Selected voice:', femaleVoice.name);
+        utterance.voice = femaleVoice;
+      } else {
+        console.log('Using default voice');
+      }
+      
+      utterance.onstart = () => {
+        console.log('✓ Speech started');
+        setIsSpeaking(true);
+      };
+      
+      utterance.onend = () => {
+        console.log('✓ Speech ended normally');
+        setIsSpeaking(false);
+      };
+      
+      utterance.onerror = (event) => {
+        console.error('✗ Speech error:', event.error);
+        // Only log detailed error in development
+        if (event.error !== 'interrupted') {
+          console.error('Error details:', event);
+        }
+        setIsSpeaking(false);
+      };
+      
+      synthRef.current = utterance;
+      
+      // Speak immediately
+      window.speechSynthesis.speak(utterance);
+      console.log('🗣️ Speaking:', text.substring(0, 50) + '...');
+    };
+    
+    // Wait for voices to load if needed
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length === 0) {
+      console.log('⏳ Waiting for voices to load...');
+      window.speechSynthesis.onvoiceschanged = () => {
+        console.log('✓ Voices loaded');
+        speak();
+      };
+    } else {
+      speak();
+    }
+  };
+
+  const stopSpeaking = () => {
+    if (window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+    }
+    setIsSpeaking(false);
+  };
+
+  const toggleVoice = () => {
+    const newVoiceState = !voiceEnabled;
+    setVoiceEnabled(newVoiceState);
+    
+    if (!newVoiceState) {
+      stopListening();
+      stopSpeaking();
+    }
   };
 
   const handleFeedback = (messageId: string, feedback: 'helpful' | 'not-helpful') => {
@@ -366,6 +552,12 @@ export function GrandmaSue() {
                               : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
                           }`}
                         >
+                          {message.isVoice && (
+                            <div className="flex items-center gap-1 mb-1 text-xs opacity-70">
+                              <Mic className="w-3 h-3" />
+                              <span>Voice message</span>
+                            </div>
+                          )}
                           <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</p>
                           <p className="text-xs mt-1 opacity-70">
                             {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -389,6 +581,15 @@ export function GrandmaSue() {
                           >
                             👎
                           </button>
+                          {message.isVoice && (
+                            <button
+                              onClick={() => speakResponse(message.content)}
+                              className="text-xs text-gray-500 hover:text-purple-600 transition-colors flex items-center gap-1"
+                              title="Play again"
+                            >
+                              <Volume2 className="w-3 h-3" />
+                            </button>
+                          )}
                         </div>
                       )}
                       {message.feedback && (
@@ -412,19 +613,86 @@ export function GrandmaSue() {
                 </div>
               </ScrollArea>
               <div className="space-y-2">
-                <Textarea
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyPress}
-                  placeholder="Share what is on your mind..."
-                  className="min-h-[80px] resize-none text-sm"
-                  disabled={isTyping}
-                />
+                {permissionDenied && (
+                  <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-2 text-xs text-yellow-800 dark:text-yellow-200">
+                    <p className="font-medium">🎤 Microphone Access Needed</p>
+                    <p className="mt-1">I'll need access to your microphone to hear you, dear. Your voice is processed securely and not stored. Please enable microphone permissions in your browser settings.</p>
+                  </div>
+                )}
+                
+                {isListening && transcript && (
+                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-2 text-sm">
+                    <p className="text-xs text-blue-600 dark:text-blue-400 mb-1">Listening...</p>
+                    <p className="text-blue-900 dark:text-blue-100 italic">{transcript}</p>
+                  </div>
+                )}
+                
+                {isSpeaking && (
+                  <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-2 text-xs text-purple-800 dark:text-purple-200 flex items-center gap-2">
+                    <Volume2 className="w-4 h-4 animate-pulse" />
+                    <span>Grandma Sue is speaking...</span>
+                  </div>
+                )}
+                
+                <div className="flex gap-2">
+                  <Textarea
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyPress}
+                    placeholder={voiceEnabled ? "Speak or type what's on your mind..." : "Share what is on your mind..."}
+                    className="min-h-[80px] resize-none text-sm flex-1"
+                    disabled={isTyping || isListening}
+                  />
+                  
+                  {/* Voice Control Buttons */}
+                  <div className="flex flex-col gap-2">
+                    <Button
+                      variant={voiceEnabled ? "default" : "outline"}
+                      size="sm"
+                      onClick={toggleVoice}
+                      className="w-10 h-10 p-0"
+                      title={voiceEnabled ? "Disable voice mode" : "Enable voice mode"}
+                    >
+                      {voiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+                    </Button>
+                    
+                    {voiceEnabled && (
+                      <Button
+                        variant={isListening ? "destructive" : "secondary"}
+                        size="sm"
+                        onClick={isListening ? stopListening : startListening}
+                        className="w-10 h-10 p-0"
+                        disabled={isTyping}
+                        title={isListening ? "Stop listening" : "Start listening"}
+                      >
+                        {isListening ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Mic className="w-4 h-4" />
+                        )}
+                      </Button>
+                    )}
+                    
+                    {isSpeaking && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={stopSpeaking}
+                        className="w-10 h-10 p-0"
+                        title="Stop speaking"
+                      >
+                        <MicOff className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                
                 <div className="flex justify-between items-center gap-2">
-                  <p className="text-xs text-gray-500 flex-1">
+                  <p className="text-xs text-gray-500 flex-1 flex items-center gap-2">
                     💙 Learning from {messages.length} messages
+                    {voiceEnabled && <span className="text-purple-500">🎤 Voice enabled</span>}
                   </p>
-                  <Button onClick={handleSend} disabled={!input.trim() || isTyping} size="sm">
+                  <Button onClick={handleSend} disabled={!input.trim() || isTyping || isListening} size="sm">
                     Send
                   </Button>
                 </div>
