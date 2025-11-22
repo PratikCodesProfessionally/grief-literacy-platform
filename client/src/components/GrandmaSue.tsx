@@ -363,39 +363,77 @@ export function GrandmaSue() {
   };
 
   const speakResponse = (text: string) => {
-    // Stop any ongoing speech
-    window.speechSynthesis.cancel();
+    const speak = () => {
+      const utterance = new SpeechSynthesisUtterance(text);
+      
+      // Configure Grandma Sue's voice characteristics for warmth and empathy
+      utterance.rate = 0.9; // Slightly faster for more natural conversation
+      utterance.pitch = 1.1; // Warmer, more expressive tone
+      utterance.volume = 1.0;
+      utterance.lang = 'en-US';
+      
+      // Try to find a reliable female voice
+      const voices = window.speechSynthesis.getVoices();
+      console.log('Available voices:', voices.length);
+      
+      // Priority order: Google UK/US Female > any female voice > en-US default
+      const femaleVoice = 
+        voices.find(voice => voice.name.includes('Google UK English Female')) ||
+        voices.find(voice => voice.name.includes('Google US English Female')) ||
+        voices.find(voice => voice.name.includes('Microsoft Zira')) ||
+        voices.find(voice => voice.name.toLowerCase().includes('female') && voice.lang.startsWith('en')) ||
+        voices.find(voice => voice.lang === 'en-US' && !voice.localService);
+      
+      if (femaleVoice) {
+        console.log('Selected voice:', femaleVoice.name);
+        utterance.voice = femaleVoice;
+      } else {
+        console.log('Using default voice');
+      }
+      
+      utterance.onstart = () => {
+        console.log('✓ Speech started');
+        setIsSpeaking(true);
+      };
+      
+      utterance.onend = () => {
+        console.log('✓ Speech ended normally');
+        setIsSpeaking(false);
+      };
+      
+      utterance.onerror = (event) => {
+        console.error('✗ Speech error:', event.error);
+        // Only log detailed error in development
+        if (event.error !== 'interrupted') {
+          console.error('Error details:', event);
+        }
+        setIsSpeaking(false);
+      };
+      
+      synthRef.current = utterance;
+      
+      // Speak immediately
+      window.speechSynthesis.speak(utterance);
+      console.log('🗣️ Speaking:', text.substring(0, 50) + '...');
+    };
     
-    const utterance = new SpeechSynthesisUtterance(text);
-    
-    // Configure Grandma Sue's voice characteristics
-    utterance.rate = 0.85; // Slower, elderly pace
-    utterance.pitch = 0.95; // Slightly lower pitch
-    utterance.volume = 1.0;
-    
-    // Try to find a female voice
+    // Wait for voices to load if needed
     const voices = window.speechSynthesis.getVoices();
-    const femaleVoice = voices.find(voice => 
-      voice.name.toLowerCase().includes('female') || 
-      voice.name.toLowerCase().includes('woman') ||
-      voice.name.toLowerCase().includes('samantha') ||
-      voice.name.toLowerCase().includes('victoria')
-    ) || voices.find(voice => voice.lang.startsWith('en'));
-    
-    if (femaleVoice) {
-      utterance.voice = femaleVoice;
+    if (voices.length === 0) {
+      console.log('⏳ Waiting for voices to load...');
+      window.speechSynthesis.onvoiceschanged = () => {
+        console.log('✓ Voices loaded');
+        speak();
+      };
+    } else {
+      speak();
     }
-    
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
-    
-    synthRef.current = utterance;
-    window.speechSynthesis.speak(utterance);
   };
 
   const stopSpeaking = () => {
-    window.speechSynthesis.cancel();
+    if (window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+    }
     setIsSpeaking(false);
   };
 
