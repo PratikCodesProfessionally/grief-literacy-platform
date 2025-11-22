@@ -360,42 +360,46 @@ export function ArtTherapyPage() {
         </Card>
 
         <div className="grid md:grid-cols-2 gap-6">
-          <Card className="bg-gradient-to-br from-green-50 to-teal-50 dark:from-green-900/20 dark:to-teal-900/20 border-green-200 dark:border-green-800">
+          <Card className="bg-gradient-to-br from-green-50 to-teal-50 dark:from-green-900/30 dark:to-teal-900/30 border-green-300 dark:border-green-700">
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Users className="h-5 w-5 text-green-600" />
+              <CardTitle className="flex items-center space-x-2 text-green-900 dark:text-green-100" style={{ WebkitFontSmoothing: 'antialiased', fontWeight: 600 }}>
+                <Users className="h-5 w-5 text-green-700 dark:text-green-300" />
                 <span>Community Gallery</span>
               </CardTitle>
-              <CardDescription>See inspiring artwork from others on their healing journey (anonymous)</CardDescription>
+              <CardDescription className="text-gray-800 dark:text-gray-200 font-medium" style={{ WebkitFontSmoothing: 'antialiased' }}>
+                See inspiring artwork from others on their healing journey (anonymous)
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-center py-6">
                 <div className="text-3xl mb-3">🖼️</div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                <p className="text-sm text-gray-900 dark:text-gray-100 mb-4 font-medium" style={{ WebkitFontSmoothing: 'antialiased', lineHeight: '1.7' }}>
                   A safe space to share and be inspired by others' creative expressions
                 </p>
-                <Button variant="outline" className="border-green-300 text-green-700 hover:bg-green-50">
+                <Button variant="outline" className="border-green-400 text-green-900 dark:text-green-100 dark:border-green-600 hover:bg-green-100 dark:hover:bg-green-900/50 font-semibold btn-clear-state">
                   Explore Gallery
                 </Button>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-amber-200 dark:border-amber-800">
+          <Card className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 border-amber-300 dark:border-amber-700">
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Mic className="h-5 w-5 text-amber-600" />
+              <CardTitle className="flex items-center space-x-2 text-amber-900 dark:text-amber-100" style={{ WebkitFontSmoothing: 'antialiased', fontWeight: 600 }}>
+                <Mic className="h-5 w-5 text-amber-700 dark:text-amber-300" />
                 <span>Voice Reflection</span>
               </CardTitle>
-              <CardDescription>Record your thoughts and feelings about your artwork</CardDescription>
+              <CardDescription className="text-gray-800 dark:text-gray-200 font-medium" style={{ WebkitFontSmoothing: 'antialiased' }}>
+                Record your thoughts and feelings about your artwork
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-center py-6">
-                <div className="text-3xl mb-3">🎙️</div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                <div className="text-3xl mb-3">🎤️</div>
+                <p className="text-sm text-gray-900 dark:text-gray-100 mb-4 font-medium" style={{ WebkitFontSmoothing: 'antialiased', lineHeight: '1.7' }}>
                   Speak about your creative process and emotional discoveries
                 </p>
-                <Button variant="outline" className="border-amber-300 text-amber-700 hover:bg-amber-50">
+                <Button variant="outline" className="border-amber-400 text-amber-900 dark:text-amber-100 dark:border-amber-600 hover:bg-amber-100 dark:hover:bg-amber-900/50 font-semibold btn-clear-state">
                   Start Recording
                 </Button>
               </div>

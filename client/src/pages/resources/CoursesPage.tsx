@@ -234,15 +234,15 @@ export function CoursesPage() {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Courses
           </Button>
-          <Card className="bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-900/20 dark:to-purple-900/20 border-pink-200 dark:border-pink-800">
+          <Card className="bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-900/30 dark:to-purple-900/30 border-pink-300 dark:border-pink-700">
             <CardHeader>
-              <CardTitle className="text-2xl">{course.title}</CardTitle>
+              <CardTitle className="text-2xl text-gray-900 dark:text-gray-100" style={{ WebkitFontSmoothing: 'antialiased', fontWeight: 600 }}>{course.title}</CardTitle>
               <CardDescription>
-                <span className="text-pink-600 font-semibold">Coming Soon</span>
+                <span className="text-pink-700 dark:text-pink-300 font-bold" style={{ WebkitFontSmoothing: 'antialiased' }}>Coming Soon</span>
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-700 dark:text-gray-300 mb-4">
+              <p className="text-gray-900 dark:text-gray-100 mb-4 font-medium" style={{ WebkitFontSmoothing: 'antialiased', lineHeight: '1.7' }}>
                 This course will help you discover how creative expression can support grief healing.
               </p>
               <div className="flex items-center space-x-2">
@@ -253,7 +253,7 @@ export function CoursesPage() {
                   {course.level}
                 </Badge>
               </div>
-              <div className="mt-6 text-sm text-gray-500 dark:text-gray-400">
+              <div className="mt-6 text-sm text-gray-700 dark:text-gray-300 font-medium">
                 Please check back soon for updates!
               </div>
             </CardContent>
@@ -302,19 +302,19 @@ export function CoursesPage() {
         </Card>
 
         {/* Lektion und Fortschritt */}
-        <Card className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20">
+        <Card className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 border-blue-300 dark:border-blue-700">
           <CardHeader>
-            <CardTitle className="flex items-center justify-between">
+            <CardTitle className="flex items-center justify-between text-gray-900 dark:text-gray-100" style={{ WebkitFontSmoothing: 'antialiased', fontWeight: 600 }}>
               <span>{currentLessonContent}</span>
               <Badge className={getLevelColor(course.level)}>{course.level}</Badge>
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-gray-800 dark:text-gray-200 font-medium" style={{ WebkitFontSmoothing: 'antialiased' }}>
               Lesson {currentLesson + 1}: {currentLessonContent}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <Progress value={progress} className="h-2" />
-            <div className="text-sm text-gray-600 dark:text-gray-400">
+            <div className="text-sm text-gray-900 dark:text-gray-100 font-medium">
               {Math.round(progress)}% Complete ({completedLessons[selectedCourse] || 0} of {course.lessons} lessons)
             </div>
           </CardContent>
@@ -482,10 +482,10 @@ export function CoursesPage() {
 
       {/* Fortschritt für eingeschriebene Kurse */}
       {enrolledCourses.size > 0 && (
-        <Card className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20">
+        <Card className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/30 dark:to-blue-900/30 border-green-300 dark:border-green-700">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <BookOpen className="h-5 w-5 text-green-600" />
+            <CardTitle className="flex items-center space-x-2 text-gray-900 dark:text-gray-100" style={{ WebkitFontSmoothing: 'antialiased', fontWeight: 600 }}>
+              <BookOpen className="h-5 w-5 text-green-700 dark:text-green-300" />
               <span>Your Learning Progress</span>
             </CardTitle>
           </CardHeader>
@@ -512,7 +512,7 @@ export function CoursesPage() {
                     <CardContent>
                       <div className="space-y-3">
                         <Progress value={progress} className="h-2" />
-                        <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+                        <div className="flex justify-between text-sm text-gray-900 dark:text-gray-100 font-medium">
                           <span>{completedLessons[courseId] || 0} of {course.lessons} lessons</span>
                           <span>{Math.round(progress)}% complete</span>
                         </div>

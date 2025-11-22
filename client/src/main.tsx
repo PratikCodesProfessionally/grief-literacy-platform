@@ -4,9 +4,13 @@ import App from './App';
 import ErrorBoundary from './ErrorBoundary';
 
 import './index.css';
+import { textRenderingOptimizer } from './lib/textRenderingOptimizer';
 
 // @ts-ignore - PWA plugin type
 import { registerSW } from 'virtual:pwa-register';
+
+// Initialize text rendering optimizer for crystal-clear display across all browsers
+textRenderingOptimizer;
 
 const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
 

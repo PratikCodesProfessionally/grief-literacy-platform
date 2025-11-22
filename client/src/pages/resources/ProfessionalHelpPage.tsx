@@ -359,63 +359,63 @@ export function ProfessionalHelpPage() {
 
       {/* Additional Support Information */}
       <div className="grid md:grid-cols-2 gap-6">
-        <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+        <Card className="bg-blue-50 dark:bg-blue-900/30 border-blue-300 dark:border-blue-700">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2 text-blue-800 dark:text-blue-200">
+            <CardTitle className="flex items-center space-x-2 text-blue-900 dark:text-blue-100" style={{ WebkitFontSmoothing: 'antialiased', fontWeight: 600 }}>
               <Heart className="h-5 w-5" />
               <span>When to Seek Help</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ul className="space-y-2 text-sm text-gray-800 dark:text-gray-200">
-              <li>• Feeling overwhelmed by grief for extended periods</li>
-              <li>• Unable to function in daily activities</li>
-              <li>• Thoughts of self-harm or suicide</li>
-              <li>• Substance abuse as a coping mechanism</li>
-              <li>• Isolation from friends and family</li>
-              <li>• Physical symptoms affecting your health</li>
-              <li>• Anniversary reactions become too difficult</li>
+            <ul className="space-y-3 text-sm" style={{ WebkitFontSmoothing: 'antialiased' }}>
+              <li className="text-gray-900 dark:text-gray-100 font-medium">• Feeling overwhelmed by grief for extended periods</li>
+              <li className="text-gray-900 dark:text-gray-100 font-medium">• Unable to function in daily activities</li>
+              <li className="text-gray-900 dark:text-gray-100 font-medium">• Thoughts of self-harm or suicide</li>
+              <li className="text-gray-900 dark:text-gray-100 font-medium">• Substance abuse as a coping mechanism</li>
+              <li className="text-gray-900 dark:text-gray-100 font-medium">• Isolation from friends and family</li>
+              <li className="text-gray-900 dark:text-gray-100 font-medium">• Physical symptoms affecting your health</li>
+              <li className="text-gray-900 dark:text-gray-100 font-medium">• Anniversary reactions become too difficult</li>
             </ul>
           </CardContent>
         </Card>
 
-        <Card className="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
+        <Card className="bg-green-50 dark:bg-green-900/30 border-green-300 dark:border-green-700">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2 text-green-800 dark:text-green-200">
+            <CardTitle className="flex items-center space-x-2 text-green-900 dark:text-green-100" style={{ WebkitFontSmoothing: 'antialiased', fontWeight: 600 }}>
               <MapPin className="h-5 w-5" />
               <span>Types of Professional Help</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ul className="space-y-2 text-sm text-gray-800 dark:text-gray-200">
-              <li>• <strong>Grief Counselors:</strong> Specialized in bereavement support</li>
-              <li>• <strong>Therapists:</strong> Individual therapy for complex grief</li>
-              <li>• <strong>Support Groups:</strong> Connect with others in similar situations</li>
-              <li>• <strong>Psychiatrists:</strong> Medical support for severe symptoms</li>
-              <li>• <strong>Crisis Lines:</strong> Immediate support when needed</li>
-              <li>• <strong>Online Support:</strong> Accessible help from home</li>
+            <ul className="space-y-3 text-sm" style={{ WebkitFontSmoothing: 'antialiased' }}>
+              <li className="text-gray-900 dark:text-gray-100">• <strong className="font-bold text-gray-900 dark:text-white">Grief Counselors:</strong> Specialized in bereavement support</li>
+              <li className="text-gray-900 dark:text-gray-100">• <strong className="font-bold text-gray-900 dark:text-white">Therapists:</strong> Individual therapy for complex grief</li>
+              <li className="text-gray-900 dark:text-gray-100">• <strong className="font-bold text-gray-900 dark:text-white">Support Groups:</strong> Connect with others in similar situations</li>
+              <li className="text-gray-900 dark:text-gray-100">• <strong className="font-bold text-gray-900 dark:text-white">Psychiatrists:</strong> Medical support for severe symptoms</li>
+              <li className="text-gray-900 dark:text-gray-100">• <strong className="font-bold text-gray-900 dark:text-white">Crisis Lines:</strong> Immediate support when needed</li>
+              <li className="text-gray-900 dark:text-gray-100">• <strong className="font-bold text-gray-900 dark:text-white">Online Support:</strong> Accessible help from home</li>
             </ul>
           </CardContent>
         </Card>
       </div>
 
       {/* Future Professional Services Notice */}
-      <Card className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20">
+      <Card className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 border-purple-300 dark:border-purple-700">
         <CardHeader>
-          <CardTitle className="text-purple-800 dark:text-purple-200">
+          <CardTitle className="text-purple-900 dark:text-purple-100" style={{ WebkitFontSmoothing: 'antialiased', fontWeight: 600 }}>
             🔮 Coming Soon: Integrated Professional Services
           </CardTitle>
-          <CardDescription className="text-purple-600 dark:text-purple-300">
+          <CardDescription className="text-purple-800 dark:text-purple-200 font-medium" style={{ WebkitFontSmoothing: 'antialiased' }}>
             We're working on connecting you directly with local grief counselors and therapists
           </CardDescription>
         </CardHeader>
-        <CardContent className="text-purple-700 dark:text-purple-300">
-          <p className="text-sm mb-4">
+        <CardContent className="text-purple-900 dark:text-purple-100">
+          <p className="text-sm mb-4 font-medium" style={{ WebkitFontSmoothing: 'antialiased', lineHeight: '1.7' }}>
             Soon you'll be able to find, book, and connect with local professional grief counselors 
             directly through our platform. Until then, please use the resources above to find 
             qualified help in your area.
           </p>
-          <Button variant="outline" className="border-purple-300 text-purple-700 hover:bg-purple-50">
+          <Button variant="outline" className="border-purple-400 text-purple-900 dark:text-purple-100 dark:border-purple-600 hover:bg-purple-100 dark:hover:bg-purple-900/50 font-semibold btn-clear-state">
             Notify Me When Available
           </Button>
         </CardContent>
