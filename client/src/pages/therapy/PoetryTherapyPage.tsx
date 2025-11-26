@@ -247,6 +247,50 @@ Sweetness transitions to bitterness`,
       category: "Transformation",
       readTime: "2 min"
     
+    },
+    {
+      id: 8,
+      title: "Our Paths May Cross Again",
+      author: "Unknown",
+      content: `Our paths may cross again 
+But this time I will be without those red roses 
+Hearts coarsened by battles of life 
+Feet hardened by walking through trenches and mosses
+May not remember the teeny tiny sparkle of fire 
+that gave rise to the emotions on pyre 
+of innocence of our youth 
+
+Our paths may cross again 
+But this time I will be without those pink tulips 
+The well of hope might have dried ages ago
+And the thirsted lips 
+have been cracked in the deserted deserts eons ago
+Lost in the mirage of a false oasis
+of reunion of our souls
+
+Our paths may cross again 
+But this time I will be without those white lilies
+Feelings squeezed between buildings of cities
+where once our paths trodded a common story
+Between the skyscrapers of our ambitions
+Hammered by the forces of responsibilities
+carried on the shoulders 
+of battle-worn soldiers 
+of forgotten dreams
+
+Our paths may cross again 
+But this time I will be without those lotus petals
+and warm hugs that once calmed you to settle
+Turned cold by the humanity's blindness
+Turned soured by the life unkindness 
+where once we pledged to love the unloveable
+in the sober evening 
+by the oceanside believing 
+the eternity of our love's ephemerality
+
+Our paths may cross again...`,
+      category: "Love",
+      readTime: "3 min"
     }
   ];
 
