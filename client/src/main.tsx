@@ -4,6 +4,13 @@ import App from './App';
 import ErrorBoundary from './ErrorBoundary';
 
 import './index.css';
+import { textRenderingOptimizer } from './lib/textRenderingOptimizer';
+
+// @ts-ignore - PWA plugin type
+import { registerSW } from 'virtual:pwa-register';
+
+// Initialize text rendering optimizer for crystal-clear display across all browsers
+textRenderingOptimizer;
 
 const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
@@ -14,6 +21,18 @@ function updateDarkClass(e = null) {
 
 updateDarkClass();
 darkQuery.addEventListener('change', updateDarkClass);
+
+// Register Service Worker for PWA
+const updateSW = registerSW({
+  onNeedRefresh() {
+    if (confirm('Neue Version verfügbar! Jetzt aktualisieren?')) {
+      updateSW(true);
+    }
+  },
+  onOfflineReady() {
+    console.log('App ist bereit für Offline-Nutzung');
+  },
+});
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

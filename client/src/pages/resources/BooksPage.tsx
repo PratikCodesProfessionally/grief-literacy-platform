@@ -269,12 +269,50 @@ export function BooksPage() {
   isbn: '978-1072551386',
   summary: 'This book offers a scientifically grounded and easy-to-follow 5-step approach to mastering emotions like fear, anger, and sadness. Dr. Beeker combines psychological insights with practical exercises to help readers achieve emotional balance, break negative cycles, and regain mental clarity. It’s an empowering read for anyone seeking long-term emotional resilience and peace of mind.',
   keyTopics: ['Emotional Regulation', 'Mindfulness', 'Cognitive Techniques', 'Self-Awareness', 'Stress Management']
+},
+{
+  title: 'New Love, Same Shit!?',
+  author: 'Yvi Blum',
+  description: 'Why we keep repeating the same mistakes in relationships and how to finally break the cycle. Part of the GU Beziehungen series.',
+  rating: 4.6,
+  category: 'Self-Help',
+  pages: 256,
+  published: '2024',
+  isbn: '978-3833892073',
+  summary: 'Yvi Blum explores why we often find ourselves in similar toxic relationship patterns despite changing partners. With psychological insights and practical exercises, this book helps readers recognize their unconscious patterns, understand their origins, and develop healthier relationship dynamics. It\'s an empowering guide for anyone tired of repeating the same mistakes in love.',
+  keyTopics: ['Relationship Patterns', 'Breaking Cycles', 'Self-Awareness', 'Healthy Boundaries', 'Personal Growth'],
+  notesForHealing: 'If you recognize patterns repeating across relationships, this book helps you pause and reflect rather than react. Understanding your role in the cycle is the first step to choosing differently—not fixing others, but freeing yourself.'
+},
+{
+  title: 'Nagomi: The Japanese Secret to Finding Balance and Happiness in Everyday Life',
+  author: 'Ken Mogi',
+  description: 'A guide to the Japanese philosophy of nagomi—finding balance and harmony in all aspects of life through small, mindful adjustments.',
+  rating: 4.4,
+  category: 'Harmony & Balance',
+  pages: 176,
+  published: '2022',
+  isbn: '978-3832166878',
+  summary: 'Neuroscientist Ken Mogi explores the Japanese concept of nagomi—the art of finding balance. Through stories, science, and practical wisdom, he shows how to harmonize opposing forces in life: work and rest, body and mind, self and others. Nagomi teaches that balance isn\'t static perfection but a dynamic, gentle adjustment we make each day.',
+  keyTopics: ['Japanese Philosophy', 'Work-Life Balance', 'Mindfulness', 'Harmony', 'Mental Wellbeing', 'Sustainable Living'],
+  notesForHealing: 'When grief disrupts your equilibrium, nagomi offers permission to find a new balance—not by forcing return to "normal," but by honoring where you are now. Small, kind adjustments like rest when tired, connect when lonely,build resilience without demanding perfection.'
+},
+{
+  title: 'The Richest Man in Babylon',
+  author: 'George S. Clason',
+  description: 'Timeless financial wisdom presented through parables set in ancient Babylon, revealing principles of wealth building, saving, and money management that remain relevant today.',
+  rating: 4.6,
+  category: 'Financial Wisdom',
+  pages: 168,
+  published: '1926',
+  isbn: '978-9354990717',
+  summary: 'Through engaging tales of merchants, tradesmen, and citizens of ancient Babylon, George S. Clason distills fundamental principles of personal finance into memorable stories. The book teaches that wealth is built through consistent habits: paying yourself first, living below your means, seeking wise counsel, and making money work for you through prudent investments.',
+  keyTopics: ['Personal Finance', 'Wealth Building', 'Saving Habits', 'Financial Independence', 'Money Management', 'Ancient Wisdom'],
+  notesForHealing: 'Financial stress compounds grief and loss. These ancient principles offer a foundation for rebuilding security: start small by saving even 10% of income, seek guidance from those who\'ve succeeded, avoid get-rich schemes during vulnerable times. Financial stability creates space for emotional healing—one mindful decision at a time restores both material and psychological wellbeing.'
 }
-
   ];
 
   // Available categories for the filter dropdown.
-  const categories = ['all', 'Memoir', 'Self-Help', 'Spiritual', 'Psychology', 'Health', 'Family', 'Pet Loss', 'Resilience'];
+  const categories = ['all', 'Memoir', 'Self-Help', 'Spiritual', 'Psychology', 'Health', 'Family', 'Pet Loss', 'Resilience','Financial Health'];
 
   // -----------------------------
   // 2.3) Persistence effects
