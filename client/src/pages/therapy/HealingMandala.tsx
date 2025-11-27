@@ -1,89 +1,430 @@
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Paintbrush, Eraser, Droplet, Sparkles, Download, Undo2, Redo2, RotateCcw } from 'lucide-react';
 
 interface HealingMandalaProps {
   mood: string;
   onClose: () => void;
-  onComplete?: () => void;
+  onComplete?: (data?: CompletionData) => void;
+  initialTemplate?: TemplateKey;
+  autosaveKey?: string;
 }
 
+interface CompletionData {
+  imageBlob: Blob;
+  sessionDuration: number;
+  colorsUsed: string[];
+  percentComplete: number;
+  journalEntry?: string;
+}
+
+type TemplateKey = 'traditional-floral' | 'dot-mandala' | 'geometric-sacred' | 'organic-lotus' | 'procedural';
 type PaintableEl = SVGPathElement | SVGPolygonElement | SVGRectElement | SVGCircleElement;
 
-export const HealingMandala: React.FC<HealingMandalaProps> = ({ mood, onClose, onComplete }) => {
-  // Core controls
+export const HealingMandala: React.FC<HealingMandalaProps> = ({ 
+  mood, 
+  onClose, 
+  onComplete,
+  initialTemplate = 'traditional-floral',
+  autosaveKey = 'mandala-session'
+}) => {
+  // ── UI state ───────────────────────────────────────────────────────────────────
+  const [template, setTemplate] = React.useState<TemplateKey>(initialTemplate);
   const [petals, setPetals] = React.useState(16);
   const [rings, setRings] = React.useState(6);
   const [stroke, setStroke] = React.useState(2);
-  const [lineColor, setLineColor] = React.useState('#111827');
-
-  // Painting controls
-  const [selectedColor, setSelectedColor] = React.useState('#f472b6'); // initial pink
-  const [mode, setMode] = React.useState<'paint' | 'erase' | 'eyedropper'>('paint');
-
-  // Keep latest values available to the click handler (avoid stale closure)
-  const selectedColorRef = React.useRef(selectedColor);
-  const modeRef = React.useRef(mode);
-  React.useEffect(() => { selectedColorRef.current = selectedColor; }, [selectedColor]);
-  React.useEffect(() => { modeRef.current = mode; }, [mode]);
+  const [symmetryMode, setSymmetryMode] = React.useState<number>(1); // 1, 4, 8, 16
+  
+  // Adjust defaults when template changes
+  React.useEffect(() => {
+    if (template === 'traditional-floral') {
+      setPetals(prev => prev > 24 || prev < 8 ? 12 : prev);
+      setRings(prev => prev > 12 || prev < 4 ? 6 : prev);
+    } else if (template === 'dot-mandala') {
+      setPetals(prev => prev > 16 || prev < 8 ? 12 : prev);
+      setRings(prev => prev > 15 || prev < 5 ? 9 : prev);
+    } else if (template === 'procedural') {
+      setPetals(prev => prev > 40 || prev < 8 ? 16 : prev);
+      setRings(prev => prev > 10 || prev < 3 ? 6 : prev);
+    }
+  }, [template]);
+  
+  const [lineColor, setLineColor] = React.useState('#2D3436');
+  const [selectedColor, setSelectedColor] = React.useState('#FF8E53');
+  const [mode, setMode] = React.useState<'paint' | 'erase' | 'eyedropper' | 'fill'>('paint');
+  const [activePalette, setActivePalette] = React.useState<'warmEarth' | 'coolBlues' | 'natureGreen' | 'sunset' | 'zen'>('sunset');
 
   const [seed, setSeed] = React.useState(1);
+  const [sessionStartTime] = React.useState(Date.now());
+  const [colorsUsed, setColorsUsed] = React.useState<Set<string>>(new Set());
+  
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const svgRef = React.useRef<SVGSVGElement | null>(null);
   const [undoStack, setUndoStack] = React.useState<string[]>([]);
+  const [redoStack, setRedoStack] = React.useState<string[]>([]);
 
-  const palette = [
-    '#ef4444', '#f97316', '#f59e0b', '#22c55e', '#10b981',
-    '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6', '#d946ef',
-    '#ec4899', '#f43f5e', '#eab308', '#84cc16', '#14b8a6',
-    '#0ea5e9', '#4f46e5', '#a855f7', '#f472b6', '#94a3b8'
-  ];
+  // ── Premium Therapeutic Color Palettes ────────────────────────────────────────
+  const palettes = {
+    warmEarth: {
+      name: 'Warm Earth',
+      colors: ['#E8B4A4', '#D4A59A', '#C4948B', '#9B7E7A', '#705D56', '#DEB887', '#CD853F', '#8B4513', '#A0522D', '#D2691E']
+    },
+    coolBlues: {
+      name: 'Cool Blues',
+      colors: ['#A8DADC', '#457B9D', '#1D3557', '#81B2CA', '#5A8FB4', '#6495ED', '#4682B4', '#5F9EA0', '#4A90A4', '#87CEEB']
+    },
+    natureGreen: {
+      name: 'Nature Green',
+      colors: ['#B7CE63', '#8FB339', '#6A994E', '#52734D', '#344E41', '#90EE90', '#3CB371', '#2E8B57', '#228B22', '#006400']
+    },
+    sunset: {
+      name: 'Sunset Glow',
+      colors: ['#FF6B6B', '#FF8E53', '#FFA45B', '#FFB84D', '#F9CA24', '#FF7F50', '#FF6347', '#FFA07A', '#FA8072', '#E9967A']
+    },
+    zen: {
+      name: 'Zen Gray',
+      colors: ['#F5F5F5', '#E0E0E0', '#BDBDBD', '#9E9E9E', '#757575', '#616161', '#424242', '#2D3436', '#1A1A1A', '#000000']
+    }
+  };
 
-  // Simple RNG
+  const palette = palettes[activePalette].colors;
+
+  // ── Simple deterministic RNG for procedural variety ───────────────────────────
   const prng = React.useMemo(() => {
     let x = seed;
     return () => (x = (x * 1664525 + 1013904223) % 4294967296) / 4294967296;
   }, [seed]);
 
-  // Save SVG (for undo)
+  // ── Save current SVG for undo ─────────────────────────────────────────────────
   const snapshot = React.useCallback(() => {
     if (!svgRef.current) return;
     const s = new XMLSerializer().serializeToString(svgRef.current);
-    setUndoStack((st) => [...st.slice(-14), s]);
+    setUndoStack((st) => [...st.slice(-14), s]); // keep last 15
   }, []);
 
   const undo = () => {
     if (!undoStack.length || !svgRef.current) return;
+    const current = new XMLSerializer().serializeToString(svgRef.current);
+    setRedoStack((st) => [...st, current]);
+    
     const last = undoStack[undoStack.length - 1];
     setUndoStack((st) => st.slice(0, -1));
-    const doc = new DOMParser().parseFromString(last, 'image/svg+xml');
-    const newSvg = doc.documentElement as SVGSVGElement;
+    
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(last, 'image/svg+xml');
+    const newSvg = doc.documentElement as unknown as SVGSVGElement;
     svgRef.current.replaceWith(newSvg);
     svgRef.current = newSvg;
     attachPaintHandlers();
   };
 
-  // Build procedural mandala
+  const redo = () => {
+    if (!redoStack.length || !svgRef.current) return;
+    snapshot();
+    
+    const next = redoStack[redoStack.length - 1];
+    setRedoStack((st) => st.slice(0, -1));
+    
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(next, 'image/svg+xml');
+    const newSvg = doc.documentElement as unknown as SVGSVGElement;
+    svgRef.current.replaceWith(newSvg);
+    svgRef.current = newSvg;
+    attachPaintHandlers();
+  };
+
+  // ── Build Traditional Floral Mandala ──────────────────────────────────────────────────
+  const buildTraditionalFloral = () => {
+    const size = 600;
+    const NS = 'http://www.w3.org/2000/svg';
+    
+    const svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('viewBox', '-300 -300 600 600');
+    svg.setAttribute('width', '100%');
+    svg.setAttribute('height', '100%');
+    svg.setAttribute('xmlns', NS);
+    svg.setAttribute('class', 'w-full h-full');
+    svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+    
+    const g = document.createElementNS(NS, 'g');
+    svg.appendChild(g);
+    
+    // DEBUG: Large red circle at center to verify centering
+    const debugDot = document.createElementNS(NS, 'circle');
+    debugDot.setAttribute('cx', '0');
+    debugDot.setAttribute('cy', '0');
+    debugDot.setAttribute('r', '50');
+    debugDot.setAttribute('fill', 'red');
+    debugDot.setAttribute('opacity', '0.5');
+    debugDot.setAttribute('stroke', 'blue');
+    debugDot.setAttribute('stroke-width', '3');
+    g.appendChild(debugDot);
+    
+    // Inner ornate center
+    const centerMedallion = document.createElementNS(NS, 'circle');
+    centerMedallion.setAttribute('r', '20');
+    centerMedallion.setAttribute('fill', '#FCFCFC');
+    centerMedallion.setAttribute('stroke', lineColor);
+    centerMedallion.setAttribute('stroke-width', String(stroke * 1.5));
+    centerMedallion.setAttribute('stroke-linecap', 'round');
+    centerMedallion.setAttribute('stroke-linejoin', 'round');
+    centerMedallion.setAttribute('data-part', 'center-medallion');
+    centerMedallion.style.cursor = 'pointer';
+    centerMedallion.style.transition = 'fill 150ms cubic-bezier(0.4, 0, 0.2, 1)';
+    g.appendChild(centerMedallion);
+    
+    // Scalloped inner ring
+    for (let i = 0; i < 12; i++) {
+      const angle = (i * 360 / 12);
+      const scallop = document.createElementNS(NS, 'circle');
+      const x = 30 * Math.cos((angle * Math.PI) / 180);
+      const y = 30 * Math.sin((angle * Math.PI) / 180);
+      scallop.setAttribute('cx', String(x));
+      scallop.setAttribute('cy', String(y));
+      scallop.setAttribute('r', '8');
+      scallop.setAttribute('fill', '#FCFCFC');
+      scallop.setAttribute('stroke', lineColor);
+      scallop.setAttribute('stroke-width', String(stroke));
+      scallop.setAttribute('stroke-linecap', 'round');
+      scallop.setAttribute('stroke-linejoin', 'round');
+      scallop.setAttribute('data-part', `scallop-${i}`);
+      scallop.style.cursor = 'pointer';
+      scallop.style.transition = 'fill 150ms cubic-bezier(0.4, 0, 0.2, 1)';
+      g.appendChild(scallop);
+    }
+    
+    // Mid-layer: Pointed petals with internal details - dynamic layers based on rings slider
+    const layerCount = rings; // Use rings slider value (4-12 for traditional-floral)
+    const petalLayers = [];
+    
+    for (let i = 0; i < layerCount; i++) {
+      const r1 = 50 + (i * 25);  // Start radius increases with each layer
+      const r2 = r1 + 40;        // End radius is always 40px beyond start
+      const shape = i % 2 === 0 ? 'teardrop' : 'pointed'; // Alternate shapes
+      petalLayers.push({ count: petals, r1, r2, shape });
+    }
+    
+    petalLayers.forEach((layer, layerIdx) => {
+      for (let i = 0; i < layer.count; i++) {
+        const angle = (i * 360 / layer.count) + (layerIdx * 180 / layer.count);
+        const petal = document.createElementNS(NS, 'path');
+        
+        const path = layer.shape === 'teardrop' 
+          ? `M 0 ${-layer.r1} C 20 ${-layer.r1 - 20}, 30 ${-layer.r2}, 0 ${-layer.r2} C -30 ${-layer.r2}, -20 ${-layer.r1 - 20}, 0 ${-layer.r1} Z`
+          : `M 0 ${-layer.r1} L 15 ${-layer.r1 - 30} L 25 ${-layer.r2} L 0 ${-layer.r2 - 10} L -25 ${-layer.r2} L -15 ${-layer.r1 - 30} Z`;
+        
+        petal.setAttribute('d', path);
+        petal.setAttribute('transform', `rotate(${angle})`);
+        petal.setAttribute('fill', '#FCFCFC');
+        petal.setAttribute('stroke', lineColor);
+        petal.setAttribute('stroke-width', String(stroke));
+        petal.setAttribute('stroke-linecap', 'round');
+        petal.setAttribute('stroke-linejoin', 'round');
+        petal.setAttribute('data-part', `petal-layer${layerIdx}-${i}`);
+        petal.setAttribute('data-ring', String(layerIdx));
+        petal.style.cursor = 'pointer';
+        petal.style.transition = 'fill 150ms cubic-bezier(0.4, 0, 0.2, 1)';
+        g.appendChild(petal);
+      }
+    });
+    
+    // Outer decorative leaves
+    for (let i = 0; i < petals; i++) {
+      const angle = (i * 360 / petals);
+      const leaf = document.createElementNS(NS, 'path');
+      const r1 = 170;
+      const r2 = 220;
+      const path = `M 0 ${-r1} C 35 ${-r1 - 25}, 40 ${-r2}, 0 ${-r2 + 10} C -40 ${-r2}, -35 ${-r1 - 25}, 0 ${-r1} Z`;
+      leaf.setAttribute('d', path);
+      leaf.setAttribute('transform', `rotate(${angle})`);
+      leaf.setAttribute('fill', '#FCFCFC');
+      leaf.setAttribute('stroke', lineColor);
+      leaf.setAttribute('stroke-width', String(stroke * 1.2));
+      leaf.setAttribute('stroke-linecap', 'round');
+      leaf.setAttribute('stroke-linejoin', 'round');
+      leaf.setAttribute('data-part', `outer-leaf-${i}`);
+      leaf.style.cursor = 'pointer';
+      leaf.style.transition = 'fill 150ms cubic-bezier(0.4, 0, 0.2, 1)';
+      g.appendChild(leaf);
+      
+      // Internal vein
+      const vein = document.createElementNS(NS, 'line');
+      const vx1 = 0, vy1 = -r1;
+      const vx2 = 0, vy2 = -r2 + 10;
+      vein.setAttribute('x1', String(vx1));
+      vein.setAttribute('y1', String(vy1));
+      vein.setAttribute('x2', String(vx2));
+      vein.setAttribute('y2', String(vy2));
+      vein.setAttribute('transform', `rotate(${angle})`);
+      vein.setAttribute('stroke', lineColor);
+      vein.setAttribute('stroke-width', String(stroke * 0.5));
+      vein.setAttribute('stroke-linecap', 'round');
+      g.appendChild(vein);
+    }
+    
+    return svg;
+  };
+
+  // ── Build Dot Mandala ─────────────────────────────────────────────────────────────────
+  const buildDotMandala = () => {
+    const size = 600;
+    const NS = 'http://www.w3.org/2000/svg';
+    
+    const svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('viewBox', '-300 -300 600 600');
+    svg.setAttribute('width', '100%');
+    svg.setAttribute('height', '100%');
+    svg.setAttribute('xmlns', NS);
+    svg.setAttribute('class', 'w-full h-full');
+    svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+    
+    const g = document.createElementNS(NS, 'g');
+    svg.appendChild(g);
+    
+    // Center white circle
+    const center = document.createElementNS(NS, 'circle');
+    center.setAttribute('r', '30');
+    center.setAttribute('fill', '#FCFCFC');
+    center.setAttribute('stroke', lineColor);
+    center.setAttribute('stroke-width', String(stroke * 2));
+    center.setAttribute('stroke-linecap', 'round');
+    center.setAttribute('data-part', 'center');
+    center.style.cursor = 'pointer';
+    center.style.transition = 'fill 150ms cubic-bezier(0.4, 0, 0.2, 1)';
+    g.appendChild(center);
+    
+    // Radial line pattern in center
+    for (let i = 0; i < 16; i++) {
+      const angle = (i * 360 / 16) * Math.PI / 180;
+      const line = document.createElementNS(NS, 'line');
+      line.setAttribute('x1', String(10 * Math.cos(angle)));
+      line.setAttribute('y1', String(10 * Math.sin(angle)));
+      line.setAttribute('x2', String(20 * Math.cos(angle)));
+      line.setAttribute('y2', String(20 * Math.sin(angle)));
+      line.setAttribute('stroke', lineColor);
+      line.setAttribute('stroke-width', String(stroke * 0.5));
+      line.setAttribute('stroke-linecap', 'round');
+      g.appendChild(line);
+    }
+    
+    // Concentric dot rings - dynamically generated based on rings slider
+    const ringCount = rings; // Use rings slider value (5-15 for dot-mandala)
+    const dotRings: number[] = [];
+    const dotsPerRing: number[] = [];
+    
+    for (let i = 0; i < ringCount; i++) {
+      dotRings.push(40 + (i * 15)); // Evenly spaced rings starting at 40px
+      dotsPerRing.push(8 + (i * 4)); // Incrementally more dots per ring
+    }
+    
+    dotRings.forEach((radius, ringIdx) => {
+      const numDots = dotsPerRing[ringIdx];
+      const dotSize = 6 - (ringIdx * (4 / ringCount)); // Scale dot size based on ring count
+      
+      for (let i = 0; i < numDots; i++) {
+        const angle = (i * 360 / numDots) * Math.PI / 180;
+        const jitter = (prng() - 0.5) * 2; // Slight organic variation
+        const x = (radius + jitter) * Math.cos(angle);
+        const y = (radius + jitter) * Math.sin(angle);
+        
+        const dot = document.createElementNS(NS, 'circle');
+        dot.setAttribute('cx', String(x));
+        dot.setAttribute('cy', String(y));
+        dot.setAttribute('r', String(dotSize));
+        dot.setAttribute('fill', '#FCFCFC');
+        dot.setAttribute('stroke', lineColor);
+        dot.setAttribute('stroke-width', String(stroke * 0.5));
+        dot.setAttribute('data-part', `dot-ring${ringIdx}-${i}`);
+        dot.setAttribute('data-ring', String(ringIdx));
+        dot.style.cursor = 'pointer';
+        dot.style.transition = 'fill 150ms cubic-bezier(0.4, 0, 0.2, 1)';
+        g.appendChild(dot);
+      }
+    });
+    
+    // Outer flame/teardrop petals
+    const flamePetals = petals;
+    for (let i = 0; i < flamePetals; i++) {
+      const angle = (i * 360 / flamePetals);
+      
+      // Create flame shape in 3 segments for gradient coloring
+      const segments = [
+        { path: `M 0 -185 C 15 -195, 20 -210, 0 -225 C -20 -210, -15 -195, 0 -185 Z`, part: 'tip' },
+        { path: `M 0 -185 C 20 -180, 25 -165, 0 -145 C -25 -165, -20 -180, 0 -185 Z`, part: 'middle' },
+        { path: `M 0 -145 C 15 -140, 20 -125, 0 -110 C -20 -125, -15 -140, 0 -145 Z`, part: 'base' }
+      ];
+      
+      segments.forEach((seg, segIdx) => {
+        const segPath = document.createElementNS(NS, 'path');
+        segPath.setAttribute('d', seg.path);
+        segPath.setAttribute('transform', `rotate(${angle})`);
+        segPath.setAttribute('fill', '#FCFCFC');
+        segPath.setAttribute('stroke', lineColor);
+        segPath.setAttribute('stroke-width', String(stroke));
+        segPath.setAttribute('stroke-linecap', 'round');
+        segPath.setAttribute('stroke-linejoin', 'round');
+        segPath.setAttribute('data-part', `flame-${i}-${seg.part}`);
+        segPath.style.cursor = 'pointer';
+        segPath.style.transition = 'fill 150ms cubic-bezier(0.4, 0, 0.2, 1)';
+        g.appendChild(segPath);
+        
+        // Internal dots in petals
+        if (segIdx === 1) {
+          for (let d = 0; d < 3; d++) {
+            const dotAngle = angle * Math.PI / 180;
+            const dotRadius = -155 + (d * 10);
+            const dx = dotRadius * Math.sin(dotAngle);
+            const dy = dotRadius * Math.cos(dotAngle);
+            
+            const petalDot = document.createElementNS(NS, 'circle');
+            petalDot.setAttribute('cx', String(dx));
+            petalDot.setAttribute('cy', String(dy));
+            petalDot.setAttribute('r', '3');
+            petalDot.setAttribute('fill', '#FCFCFC');
+            petalDot.setAttribute('stroke', lineColor);
+            petalDot.setAttribute('stroke-width', String(stroke * 0.3));
+            petalDot.setAttribute('data-part', `flame-${i}-dot${d}`);
+            petalDot.style.cursor = 'pointer';
+            petalDot.style.transition = 'fill 150ms cubic-bezier(0.4, 0, 0.2, 1)';
+            g.appendChild(petalDot);
+          }
+        }
+      });
+    }
+    
+    return svg;
+  };
+
+  // ── Build procedural mandala (paintable segments) ─────────────────────────────
   const buildProcedural = () => {
-    const width = 500, height = 500, cx = width / 2, cy = height / 2;
+    const size = 600;
     const NS = 'http://www.w3.org/2000/svg';
 
+    // Create SVG
     const svg = document.createElementNS(NS, 'svg');
-    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
-    svg.setAttribute('class', 'w-full h-[420px] bg-white');
+    svg.setAttribute('viewBox', '-300 -300 600 600');
+    svg.setAttribute('width', '100%');
+    svg.setAttribute('height', '100%');
     svg.setAttribute('xmlns', NS);
+    svg.setAttribute('class', 'w-full h-full');
+    svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
 
+    // Root group - no transform needed with centered viewBox
     const g = document.createElementNS(NS, 'g');
-    g.setAttribute('transform', `translate(${cx},${cy})`);
     svg.appendChild(g);
 
-    // Concentric ring slices
-    for (let ri = 0; ri < rings; ri++) {
-      const rInner = 16 + ri * 28;
-      const rOuter = rInner + 22;
+    // Concentric rings as paintable donuts - optimized scale
+    const ringCount = rings;
+    for (let ri = 0; ri < ringCount; ri++) {
+      const rInner = 25 + ri * 28; // Start at 25px from center
+      const rOuter = rInner + 22;  // 22px wide rings
       for (let pi = 0; pi < petals; pi++) {
         const a0 = (pi * 2 * Math.PI) / petals;
         const a1 = ((pi + 1) * 2 * Math.PI) / petals;
+        const path = document.createElementNS(NS, 'path');
 
+        // donut slice (two arcs)
         const x0 = rInner * Math.cos(a0), y0 = rInner * Math.sin(a0);
         const x1 = rInner * Math.cos(a1), y1 = rInner * Math.sin(a1);
         const X0 = rOuter * Math.cos(a0), Y0 = rOuter * Math.sin(a0);
@@ -98,89 +439,150 @@ export const HealingMandala: React.FC<HealingMandalaProps> = ({ mood, onClose, o
           'Z'
         ].join(' ');
 
-        const path = document.createElementNS(NS, 'path');
         path.setAttribute('d', d);
-        path.setAttribute('fill', '#ffffff');
+        path.setAttribute('fill', '#FCFCFC');
         path.setAttribute('stroke', lineColor);
         path.setAttribute('stroke-width', String(stroke));
+        path.setAttribute('stroke-linecap', 'round');
+        path.setAttribute('stroke-linejoin', 'round');
         path.setAttribute('data-part', `ring-${ri}-petal-${pi}`);
+        path.setAttribute('data-ring', String(ri));
+        (path as SVGPathElement).style.cursor = 'pointer';
+        (path as SVGPathElement).style.transition = 'fill 150ms cubic-bezier(0.4, 0, 0.2, 1)';
         g.appendChild(path);
       }
     }
 
-    // Decorative leaves
+    // Decorative leaf petals - proper scale
     const leafCount = petals;
     for (let i = 0; i < leafCount; i++) {
       const angle = (i * 360) / leafCount;
       const leaf = document.createElementNS(NS, 'path');
-      const r1 = 40 + prng() * 8;
-      const r2 = 140 + (prng() - 0.5) * 16;
-      const r3 = 220 + (prng() - 0.5) * 16;
-      const pathD = `
+      const r1 = 45 + prng() * 5;   // Start radius
+      const r2 = 140 + riRand();     // Mid radius
+      const r3 = 230 + riRand();     // End radius
+      function riRand() { return (prng() - 0.5) * 12; }
+      const path = `
         M 0 ${-r1}
-        C 30 ${-r1 - 30}, 60 ${-r2}, 0 ${-r3}
-        C -60 ${-r2}, -30 ${-r1 - 30}, 0 ${-r1}
+        C ${30} ${-r1 - 30}, ${60} ${-r2}, 0 ${-r3}
+        C ${-60} ${-r2}, ${-30} ${-r1 - 30}, 0 ${-r1}
         Z
       `;
-      leaf.setAttribute('d', pathD);
+      leaf.setAttribute('d', path);
       leaf.setAttribute('transform', `rotate(${angle})`);
-      leaf.setAttribute('fill', '#ffffff');
+      leaf.setAttribute('fill', '#FCFCFC');
       leaf.setAttribute('stroke', lineColor);
       leaf.setAttribute('stroke-width', String(stroke));
+      leaf.setAttribute('stroke-linecap', 'round');
+      leaf.setAttribute('stroke-linejoin', 'round');
       leaf.setAttribute('data-part', `leaf-${i}`);
+      (leaf as SVGPathElement).style.cursor = 'pointer';
+      (leaf as SVGPathElement).style.transition = 'fill 150ms cubic-bezier(0.4, 0, 0.2, 1)';
       g.appendChild(leaf);
     }
 
     // Center
-    const center = document.createElementNS(NS, 'circle');
+    const center = document.createElementNS(svg.namespaceURI, 'circle');
     center.setAttribute('r', '14');
-    center.setAttribute('fill', '#ffffff');
+    center.setAttribute('fill', '#FCFCFC');
     center.setAttribute('stroke', lineColor);
     center.setAttribute('stroke-width', String(stroke));
+    center.setAttribute('stroke-linecap', 'round');
     center.setAttribute('data-part', 'center');
+    (center as SVGCircleElement).style.cursor = 'pointer';
+    (center as SVGCircleElement).style.transition = 'fill 150ms cubic-bezier(0.4, 0, 0.2, 1)';
     g.appendChild(center);
 
     return svg;
-  };
-
-  // Render mandala
+  };  // ── Render selected template into container ───────────────────────────────────
   const renderTemplate = React.useCallback(() => {
     const c = containerRef.current;
     if (!c) return;
+
     c.innerHTML = '';
-    const svgEl = buildProcedural();
-    c.appendChild(svgEl);
-    svgRef.current = svgEl;
+    let svgEl: SVGSVGElement | null = null;
+
+    switch (template) {
+      case 'traditional-floral':
+        svgEl = buildTraditionalFloral();
+        break;
+      case 'dot-mandala':
+        svgEl = buildDotMandala();
+        break;
+      case 'geometric-sacred':
+      case 'organic-lotus':
+        // Fallback to procedural for now
+        svgEl = buildProcedural();
+        break;
+      case 'procedural':
+      default:
+        svgEl = buildProcedural();
+    }
+
+    c.appendChild(svgEl!);
+    svgRef.current = svgEl!;
     attachPaintHandlers();
     snapshot();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [petals, rings, stroke, lineColor, seed]);
+  }, [template, petals, rings, stroke, lineColor, seed]);
 
-  // Click-to-paint handler (uses refs for freshest values)
+  // ── Attach click handlers to paint segments (event delegation) ────────────────
   const handlePaint = (e: MouseEvent) => {
     const target = e.target as Element;
-    if (
-      !(target instanceof SVGPathElement ||
-        target instanceof SVGPolygonElement ||
-        target instanceof SVGRectElement ||
-        target instanceof SVGCircleElement)
-    ) return;
+    if (!svgRef.current) return;
+    if (!(target instanceof SVGPathElement || target instanceof SVGPolygonElement || target instanceof SVGRectElement || target instanceof SVGCircleElement)) {
+      return;
+    }
+    if (target.tagName.toLowerCase() === 'svg' || target.tagName.toLowerCase() === 'g') return;
 
-    const modeNow = modeRef.current;
-    const colorNow = selectedColorRef.current;
-
-    if (modeNow === 'eyedropper') {
-      const current = (target as PaintableEl).getAttribute('fill') || '#ffffff';
-      setSelectedColor(current);
+    if (mode === 'eyedropper') {
+      const current = target.getAttribute('fill') || '#FCFCFC';
+      if (current !== '#FCFCFC') {
+        setSelectedColor(current);
+      }
       setMode('paint');
       return;
     }
 
-    snapshot(); // before change
-    if (modeNow === 'erase') {
-      (target as PaintableEl).setAttribute('fill', '#ffffff');
+    snapshot();
+    setRedoStack([]); // Clear redo stack on new action
+
+    if (mode === 'erase') {
+      target.setAttribute('fill', '#FCFCFC');
+    } else if (mode === 'fill') {
+      // Ring fill mode - paint all segments in same ring
+      const ringAttr = target.getAttribute('data-ring');
+      if (ringAttr) {
+        const elements = svgRef.current.querySelectorAll(`[data-ring="${ringAttr}"]`);
+        elements.forEach(el => (el as PaintableEl).setAttribute('fill', selectedColor));
+      } else {
+        target.setAttribute('fill', selectedColor);
+      }
     } else {
-      (target as PaintableEl).setAttribute('fill', colorNow);
+      // Regular paint with symmetry
+      const paintTargets: Element[] = [target];
+      
+      if (symmetryMode > 1) {
+        const part = target.getAttribute('data-part');
+        if (part && part.includes('-')) {
+          const basePart = part.substring(0, part.lastIndexOf('-'));
+          const index = parseInt(part.substring(part.lastIndexOf('-') + 1));
+          
+          for (let i = 1; i < symmetryMode; i++) {
+            const newIndex = (index + (petals / symmetryMode) * i) % petals;
+            const symmetricPart = `${basePart}-${newIndex}`;
+            const symmetricEl = svgRef.current.querySelector(`[data-part="${symmetricPart}"]`);
+            if (symmetricEl) paintTargets.push(symmetricEl);
+          }
+        }
+      }
+      
+      paintTargets.forEach(t => (t as PaintableEl).setAttribute('fill', selectedColor));
+    }
+    
+    // Track color usage
+    if (!colorsUsed.has(selectedColor)) {
+      setColorsUsed(new Set([...colorsUsed, selectedColor]));
     }
   };
 
@@ -190,34 +592,40 @@ export const HealingMandala: React.FC<HealingMandalaProps> = ({ mood, onClose, o
 
   React.useEffect(() => {
     renderTemplate();
-    return () => svgRef.current?.removeEventListener('click', handlePaint);
+    return () => {
+      svgRef.current?.removeEventListener('click', handlePaint);
+    };
   }, [renderTemplate]);
 
-  // Update strokes live
+  // If stroke color/width change, update current SVG strokes
   React.useEffect(() => {
     if (!svgRef.current) return;
-    svgRef.current
-      .querySelectorAll<PaintableEl>('path, polygon, rect, circle')
-      .forEach(el => {
-        el.setAttribute('stroke', lineColor);
-        el.setAttribute('stroke-width', String(stroke));
-      });
+    svgRef.current.querySelectorAll<PaintableEl>('path, polygon, rect, circle').forEach(el => {
+      el.setAttribute('stroke', lineColor);
+      el.setAttribute('stroke-width', String(stroke));
+    });
   }, [lineColor, stroke]);
 
-  const randomize = () => setSeed(s => s + 1);
+  const randomize = () => {
+    setSeed(s => s + 1);
+    setPetals(Math.floor(Math.random() * 21) + 12); // 12-32
+    setRings(Math.floor(Math.random() * 6) + 4);    // 4-9
+  };
 
-  // Export helpers
+  // ── Export utilities ──────────────────────────────────────────────────────────
   const exportSVG = () => {
     if (!svgRef.current) return;
     const s = new XMLSerializer().serializeToString(svgRef.current);
     const blob = new Blob([s], { type: 'image/svg+xml;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = 'mandala.svg'; a.click();
+    a.href = url;
+    a.download = `mandala-${template}.svg`;
+    a.click();
     URL.revokeObjectURL(url);
   };
 
-  const exportPNG = () => {
+  const exportPNG = async () => {
     if (!svgRef.current) return;
     const s = new XMLSerializer().serializeToString(svgRef.current);
     const svgBlob = new Blob([s], { type: 'image/svg+xml;charset=utf-8' });
@@ -225,9 +633,10 @@ export const HealingMandala: React.FC<HealingMandalaProps> = ({ mood, onClose, o
     const img = new Image();
     img.decoding = 'async';
     img.onload = () => {
-      const box = svgRef.current!.viewBox.baseVal;
       const canvas = document.createElement('canvas');
-      canvas.width = box.width; canvas.height = box.height;
+      const box = svgRef.current!.viewBox.baseVal;
+      canvas.width = box.width;
+      canvas.height = box.height;
       const ctx = canvas.getContext('2d')!;
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -237,7 +646,9 @@ export const HealingMandala: React.FC<HealingMandalaProps> = ({ mood, onClose, o
         if (!b) return;
         const url = URL.createObjectURL(b);
         const a = document.createElement('a');
-        a.href = url; a.download = 'mandala.png'; a.click();
+        a.href = url;
+        a.download = `mandala-${template}.png`;
+        a.click();
         URL.revokeObjectURL(url);
       }, 'image/png');
     };
@@ -247,76 +658,418 @@ export const HealingMandala: React.FC<HealingMandalaProps> = ({ mood, onClose, o
   const clearColors = () => {
     if (!svgRef.current) return;
     snapshot();
-    svgRef.current
-      .querySelectorAll<PaintableEl>('path, polygon, rect, circle')
-      .forEach(el => el.setAttribute('fill', '#ffffff'));
+    setRedoStack([]);
+    svgRef.current.querySelectorAll<PaintableEl>('path, polygon, rect, circle').forEach(el => {
+      el.setAttribute('fill', '#FCFCFC');
+    });
   };
 
   const canComplete = true;
 
+  // ── UI ────────────────────────────────────────────────────────────────────────
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg w-full max-w-5xl p-6 space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold">Healing Mandala</h2>
-          <Button size="sm" variant="ghost" onClick={onClose}>Close</Button>
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in-0 duration-300">
+      <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 rounded-2xl shadow-2xl w-full max-w-6xl p-8 space-y-6 animate-in zoom-in-95 duration-300">
+        <div className="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-gray-700">
+          <div>
+            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Healing Mandala Therapy</h2>
+            <p className="text-sm text-indigo-600 dark:text-indigo-400 font-medium mt-1">
+              Current mood: {mood}
+            </p>
+          </div>
+          <Button size="sm" variant="ghost" onClick={onClose} className="hover:bg-gray-100 dark:hover:bg-gray-800">
+            Close
+          </Button>
         </div>
 
-        <p className="text-sm text-gray-600 dark:text-gray-300">
-          Paint segments to create your calming pattern. Current mood: <b>{mood}</b>
+        <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed italic">
+          Select a color from the palette below and click on segments to paint your mandala. Let creativity flow as you create your unique healing pattern.
         </p>
 
-        {/* Controls */}
-        <div className="flex flex-wrap items-center gap-3">
-          <label className="text-sm">Petals</label>
-          <input type="range" min={8} max={40} value={petals} onChange={(e) => setPetals(Number(e.target.value))} />
-          <label className="text-sm">Rings</label>
-          <input type="range" min={3} max={10} value={rings} onChange={(e) => setRings(Number(e.target.value))} />
-          <label className="text-sm">Stroke</label>
-          <input type="range" min={1} max={6} value={stroke} onChange={(e) => setStroke(Number(e.target.value))} />
-          <div className="flex items-center gap-2">
-            <span className="text-sm">Line</span>
-            <input type="color" value={lineColor} onChange={(e) => setLineColor(e.target.value)} className="h-8 w-8 rounded" />
+        {/* Primary Tools & Controls */}
+        <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6">
+          
+          {/* Left Panel: Controls */}
+          <div className="space-y-6">
+            
+            {/* Template Selection */}
+            <section className="space-y-3">
+              <h3 className="text-xs font-medium uppercase tracking-wide text-gray-500">Mandala Design</h3>
+              <div className="flex flex-col gap-2">
+                {(['traditional-floral', 'dot-mandala', 'procedural'] as const).map((t) => (
+                  <Button 
+                    key={t} 
+                    size="sm" 
+                    variant={template === t ? 'default' : 'outline'}
+                    onClick={() => setTemplate(t)}
+                    className="justify-start transition-all duration-200"
+                  >
+                    {t === 'traditional-floral' ? '🌸 Traditional Floral' : t === 'dot-mandala' ? '⚪ Dot Mandala' : '⚙️ Procedural Custom'}
+                  </Button>
+                ))}
+              </div>
+            </section>
+
+            {/* Geometry Controls - All Templates */}
+            <section className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-4">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                {template === 'traditional-floral' ? 'Petal Design' : template === 'dot-mandala' ? 'Dot Pattern' : 'Customize Geometry'}
+              </h3>
+                
+                <div className="space-y-3">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                        {template === 'traditional-floral' ? 'Main Petals' : template === 'dot-mandala' ? 'Outer Petals' : 'Petals'}
+                      </label>
+                      <span className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">{petals}</span>
+                    </div>
+                    <input 
+                      type="range" 
+                      min={template === 'traditional-floral' ? 8 : template === 'dot-mandala' ? 8 : 8} 
+                      max={template === 'traditional-floral' ? 24 : template === 'dot-mandala' ? 16 : 40} 
+                      value={petals} 
+                      onChange={(e) => setPetals(Number(e.target.value))} 
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                    />
+                    <div className="flex justify-between text-xs text-gray-500 mt-1">
+                      <span>{template === 'traditional-floral' ? '8' : template === 'dot-mandala' ? '8' : '8'}</span>
+                      <span>{template === 'traditional-floral' ? '24' : template === 'dot-mandala' ? '16' : '40'}</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                        {template === 'traditional-floral' ? 'Petal Layers' : template === 'dot-mandala' ? 'Dot Rings' : 'Rings'}
+                      </label>
+                      <span className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">{rings}</span>
+                    </div>
+                    <input 
+                      type="range" 
+                      min={template === 'traditional-floral' ? 4 : template === 'dot-mandala' ? 5 : 3} 
+                      max={template === 'traditional-floral' ? 12 : template === 'dot-mandala' ? 15 : 10} 
+                      value={rings} 
+                      onChange={(e) => setRings(Number(e.target.value))} 
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                    />
+                    <div className="flex justify-between text-xs text-gray-500 mt-1">
+                      <span>{template === 'traditional-floral' ? '4' : template === 'dot-mandala' ? '5' : '3'}</span>
+                      <span>{template === 'traditional-floral' ? '12' : template === 'dot-mandala' ? '15' : '10'}</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Stroke Width</label>
+                      <span className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">{stroke}px</span>
+                    </div>
+                    <input 
+                      type="range" 
+                      min={1} 
+                      max={6} 
+                      value={stroke} 
+                      onChange={(e) => setStroke(Number(e.target.value))} 
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                    />
+                    <div className="flex justify-between text-xs text-gray-500 mt-1">
+                      <span>1</span>
+                      <span>6</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick Presets */}
+                <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
+                  <p className="text-xs font-medium text-gray-500 mb-2">Quick Presets</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {template === 'traditional-floral' ? (
+                      <>
+                        <Button size="sm" variant="outline" onClick={() => { setPetals(8); setRings(4); }} className="text-xs">Simple Lotus</Button>
+                        <Button size="sm" variant="outline" onClick={() => { setPetals(12); setRings(6); }} className="text-xs">Classic</Button>
+                        <Button size="sm" variant="outline" onClick={() => { setPetals(16); setRings(8); }} className="text-xs">Intricate</Button>
+                        <Button size="sm" variant="outline" onClick={() => { setPetals(20); setRings(10); }} className="text-xs">Detailed</Button>
+                      </>
+                    ) : template === 'dot-mandala' ? (
+                      <>
+                        <Button size="sm" variant="outline" onClick={() => { setPetals(8); setRings(6); }} className="text-xs">Minimal</Button>
+                        <Button size="sm" variant="outline" onClick={() => { setPetals(12); setRings(9); }} className="text-xs">Balanced</Button>
+                        <Button size="sm" variant="outline" onClick={() => { setPetals(14); setRings(12); }} className="text-xs">Dense</Button>
+                        <Button size="sm" variant="outline" onClick={() => { setPetals(16); setRings(15); }} className="text-xs">Complex</Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button size="sm" variant="outline" onClick={() => { setPetals(12); setRings(4); }} className="text-xs">Beginner</Button>
+                        <Button size="sm" variant="outline" onClick={() => { setPetals(16); setRings(6); }} className="text-xs">Standard</Button>
+                        <Button size="sm" variant="outline" onClick={() => { setPetals(24); setRings(8); }} className="text-xs">Detailed</Button>
+                        <Button size="sm" variant="outline" onClick={() => { setPetals(32); setRings(10); }} className="text-xs">Expert</Button>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={randomize}
+                  className="w-full"
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Randomize Design
+                </Button>
+            </section>
+
+            {/* Style Controls for Pre-designed Templates */}
+            {template !== 'procedural' && (
+              <section className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-3">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Style Settings</h3>
+                
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Stroke Width</label>
+                    <span className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">{stroke}px</span>
+                  </div>
+                  <input 
+                    type="range" 
+                    min={1} 
+                    max={6} 
+                    value={stroke} 
+                    onChange={(e) => setStroke(Number(e.target.value))} 
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Line Color</label>
+                  <input 
+                    type="color" 
+                    value={lineColor} 
+                    onChange={(e) => setLineColor(e.target.value)} 
+                    className="h-8 w-12 rounded cursor-pointer"
+                  />
+                </div>
+
+                <p className="text-xs text-gray-500 italic pt-2 border-t border-gray-200 dark:border-gray-700">
+                  This is a pre-designed template. Geometry cannot be modified.
+                </p>
+              </section>
+            )}
+            
+            {/* Paint Tools */}
+            <section className="space-y-3">
+              <h3 className="text-xs font-medium uppercase tracking-wide text-gray-500">Paint Tools</h3>
+              <div className="flex flex-col gap-2">
+                <Button 
+                  size="sm" 
+                  variant={mode === 'paint' ? 'default' : 'outline'}
+                  onClick={() => setMode('paint')}
+                  className="justify-start transition-all duration-200"
+                >
+                  <Paintbrush className="w-4 h-4 mr-2" />
+                  Paint
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant={mode === 'fill' ? 'default' : 'outline'}
+                  onClick={() => setMode('fill')}
+                  className="justify-start transition-all duration-200"
+                  title="Fill all segments in the same ring"
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Ring Fill
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant={mode === 'erase' ? 'default' : 'outline'}
+                  onClick={() => setMode('erase')}
+                  className="justify-start transition-all duration-200"
+                >
+                  <Eraser className="w-4 h-4 mr-2" />
+                  Erase
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant={mode === 'eyedropper' ? 'default' : 'outline'}
+                  onClick={() => setMode('eyedropper')}
+                  className="justify-start transition-all duration-200"
+                  title="Pick color from mandala (I)"
+                >
+                  <Droplet className="w-4 h-4 mr-2" />
+                  Pick Color
+                </Button>
+              </div>
+            </section>
+
+            {/* Actions */}
+            <section className="pt-4 border-t border-gray-200 dark:border-gray-700">
+              <h3 className="text-xs font-medium uppercase tracking-wide text-gray-500 mb-3">Actions</h3>
+              <div className="flex flex-col gap-2">
+                <Button size="sm" variant="outline" onClick={undo} disabled={!undoStack.length} className="justify-start">
+                  <Undo2 className="w-4 h-4 mr-2" />
+                  Undo
+                </Button>
+                <Button size="sm" variant="outline" onClick={redo} disabled={!redoStack.length} className="justify-start">
+                  <Redo2 className="w-4 h-4 mr-2" />
+                  Redo
+                </Button>
+                <Button size="sm" variant="outline" onClick={clearColors} className="justify-start">
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Clear All
+                </Button>
+              </div>
+            </section>
           </div>
 
-          <Button size="sm" variant="outline" onClick={randomize}>Randomize</Button>
-
-          <div className="ml-auto flex items-center gap-2">
-            <Button size="sm" variant="outline" onClick={undo} disabled={!undoStack.length}>Undo</Button>
-            <Button size="sm" variant="outline" onClick={clearColors}>Clear</Button>
-            <Button size="sm" variant="outline" onClick={exportSVG}>Save SVG</Button>
-            <Button size="sm" onClick={exportPNG}>Save PNG</Button>
-            {onComplete && <Button size="sm" onClick={onComplete} disabled={!canComplete}>Mark as Completed</Button>}
-          </div>
-        </div>
-
-        {/* Paint modes + palette */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1">
-            <Button size="sm" variant={mode === 'paint' ? 'default' : 'outline'} onClick={() => setMode('paint')}>Paint</Button>
-            <Button size="sm" variant={mode === 'erase' ? 'default' : 'outline'} onClick={() => setMode('erase')}>Erase</Button>
-            <Button size="sm" variant={mode === 'eyedropper' ? 'default' : 'outline'} onClick={() => setMode('eyedropper')}>Eyedropper</Button>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm">Fill</span>
-            <input type="color" value={selectedColor} onChange={(e) => setSelectedColor(e.target.value)} className="h-8 w-8 rounded" />
-          </div>
-          <div className="flex gap-1 flex-wrap">
-            {palette.map((c) => (
-              <button
-                key={c}
-                onClick={() => setSelectedColor(c)}
-                className="h-7 w-7 rounded border border-gray-300"
-                style={{ background: c }}
-                title={c}
+          {/* Right Panel: Canvas & Color Palette */}
+          <div className="space-y-6">
+            {/* Canvas */}
+            <div className="relative w-full max-w-[600px] mx-auto aspect-square">
+              <div 
+                ref={containerRef} 
+                className="w-full h-full rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.02)] overflow-hidden"
+                style={{ 
+                  backgroundColor: '#FEFEFE',
+                  backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'20\' height=\'20\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' /%3E%3CfeColorMatrix type=\'saturate\' values=\'0\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\' opacity=\'0.02\'/%3E%3C/svg%3E")',
+                  display: 'block'
+                }}
               />
-            ))}
-          </div>
-        </div>
+            </div>
 
-        {/* Canvas */}
-        <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden bg-white">
-          <div ref={containerRef} className="w-full h-[420px]" />
+            {/* Color Palette */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-medium uppercase tracking-wide text-gray-500">Color Palette</h3>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500">Active:</span>
+                  <div 
+                    className="w-8 h-8 rounded-lg border-2 border-gray-300 shadow-sm"
+                    style={{ backgroundColor: selectedColor }}
+                  />
+                  <input 
+                    type="color" 
+                    value={selectedColor} 
+                    onChange={(e) => setSelectedColor(e.target.value)} 
+                    className="w-8 h-8 rounded cursor-pointer"
+                    title="Custom color picker"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-10 gap-2">
+                {palette.map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => setSelectedColor(c)}
+                    className={`w-10 h-10 rounded-lg border-2 transition-all duration-150 hover:scale-110 ${
+                      selectedColor === c ? 'border-indigo-500 scale-110 shadow-md' : 'border-gray-300'
+                    }`}
+                    style={{ backgroundColor: c }}
+                    title={c}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Palette Selection */}
+            <div className="flex flex-wrap gap-2">
+              {(Object.keys(palettes) as Array<keyof typeof palettes>).map((key) => (
+                <Button 
+                  key={key} 
+                  size="sm" 
+                  variant={activePalette === key ? 'default' : 'outline'}
+                  onClick={() => setActivePalette(key)}
+                  className="transition-all duration-200"
+                >
+                  {palettes[key].name}
+                </Button>
+              ))}
+            </div>
+
+            {/* Symmetry & Advanced */}
+            <details className="group pt-4 border-t border-gray-200 dark:border-gray-700">
+              <summary className="cursor-pointer text-xs font-medium uppercase tracking-wide text-gray-500 hover:text-gray-700 py-2 flex items-center gap-2">
+                <span className="group-open:rotate-90 transition-transform">▶</span>
+                Advanced Settings
+              </summary>
+              <div className="pt-4 space-y-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium">Symmetry:</span>
+                  {[1, 4, 8].map((sym) => (
+                    <Button
+                      key={sym}
+                      size="sm"
+                      variant={symmetryMode === sym ? 'default' : 'outline'}
+                      onClick={() => setSymmetryMode(sym)}
+                    >
+                      {sym}x
+                    </Button>
+                  ))}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Line Color</label>
+                  <input 
+                    type="color" 
+                    value={lineColor} 
+                    onChange={(e) => setLineColor(e.target.value)} 
+                    className="h-8 w-12 rounded cursor-pointer"
+                  />
+                  <span className="text-xs text-gray-500">{lineColor}</span>
+                </div>
+              </div>
+            </details>
+
+            {/* Export & Complete */}
+            <div className="flex items-center justify-between pt-4 border-t">
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={exportSVG}>
+                  <Download className="w-4 h-4 mr-2" />
+                  SVG
+                </Button>
+                <Button size="sm" variant="outline" onClick={exportPNG}>
+                  <Download className="w-4 h-4 mr-2" />
+                  PNG
+                </Button>
+              </div>
+              {onComplete && (
+                <Button 
+                  size="default"
+                  onClick={() => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 500;
+                    canvas.height = 500;
+                    const ctx = canvas.getContext('2d');
+                    if (ctx && svgRef.current) {
+                      const svgData = new XMLSerializer().serializeToString(svgRef.current);
+                      const img = new Image();
+                      img.onload = () => {
+                        ctx.drawImage(img, 0, 0);
+                        canvas.toBlob((blob) => {
+                          if (blob) {
+                            const sessionDuration = Math.floor((Date.now() - sessionStartTime) / 1000);
+                            const totalSegments = svgRef.current?.querySelectorAll('[data-part]').length || 0;
+                            const paintedSegments = Array.from(svgRef.current?.querySelectorAll('[data-part]') || [])
+                              .filter(el => el.getAttribute('fill') !== '#FCFCFC').length;
+                            
+                            onComplete({
+                              imageBlob: blob,
+                              sessionDuration,
+                              colorsUsed: Array.from(colorsUsed),
+                              percentComplete: totalSegments > 0 ? (paintedSegments / totalSegments) * 100 : 0
+                            });
+                          }
+                        });
+                      };
+                      img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
+                    }
+                  }} 
+                  disabled={!canComplete}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                >
+                  Complete Session
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
