@@ -2,6 +2,10 @@ import * as React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/contexts/AuthContext';
+import { LoginForm } from './auth/LoginForm';
+import { SignupForm } from './auth/SignupForm';
+import { isSupabaseConfigured } from '@/lib/supabase';
 import { 
   Smartphone, 
   Cloud, 
@@ -12,7 +16,8 @@ import {
   HardDrive,
   Check,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  AlertCircle
 } from 'lucide-react';
 import type { StorageType } from '@/services/JournalStorageService';
 
@@ -23,6 +28,9 @@ interface StorageSelectorProps {
 
 export function StorageSelector({ onSelect, currentSelection }: StorageSelectorProps) {
   const [expandedOption, setExpandedOption] = React.useState<StorageType | null>(null);
+  const [showAuth, setShowAuth] = React.useState(false);
+  const [authMode, setAuthMode] = React.useState<'login' | 'signup'>('signup');
+  const { user } = useAuth();
 
   const storageOptions = [
     {
@@ -78,6 +86,58 @@ export function StorageSelector({ onSelect, currentSelection }: StorageSelectorP
     }
   ];
 
+  const handleSelect = (type: StorageType) => {
+    // Check if Supabase is configured for cloud/hybrid options
+    if ((type === 'cloud' || type === 'hybrid') && !isSupabaseConfigured) {
+      alert(
+        '⚠️  Supabase not configured!\n\n' +
+        'To use cloud storage, you need to:\n' +
+        '1. Create a Supabase account (free)\n' +
+        '2. Add credentials to .env.local\n\n' +
+        'See SUPABASE_SETUP.md for instructions.\n\n' +
+        'For now, please use "Private & Offline" storage.'
+      );
+      return;
+    }
+
+    if ((type === 'cloud' || type === 'hybrid') && !user) {
+      setShowAuth(true);
+      return;
+    }
+    onSelect(type);
+  };
+
+  const handleAuthSuccess = () => {
+    setShowAuth(false);
+    // After login, allow selecting cloud/hybrid
+  };
+
+  if (showAuth) {
+    return (
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="mb-6">
+          <Button
+            variant="outline"
+            onClick={() => setShowAuth(false)}
+          >
+            ← Back to Storage Options
+          </Button>
+        </div>
+        {authMode === 'login' ? (
+          <LoginForm
+            onSuccess={handleAuthSuccess}
+            onSwitchToSignup={() => setAuthMode('signup')}
+          />
+        ) : (
+          <SignupForm
+            onSuccess={handleAuthSuccess}
+            onSwitchToLogin={() => setAuthMode('login')}
+          />
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="text-center mb-10">
@@ -88,6 +148,22 @@ export function StorageSelector({ onSelect, currentSelection }: StorageSelectorP
           Choose how your entries are stored. You can change this anytime, and we'll help you migrate your entries.
         </p>
       </div>
+
+      {!isSupabaseConfigured && (
+        <div className="mb-6 p-4 bg-amber-50 border-l-4 border-amber-400 rounded-md">
+          <div className="flex">
+            <AlertCircle className="h-5 w-5 text-amber-400 mt-0.5" />
+            <div className="ml-3">
+              <h3 className="text-sm font-semibold text-amber-800">Cloud Storage Not Available</h3>
+              <p className="mt-1 text-sm text-amber-700">
+                Supabase is not configured. Cloud and Hybrid storage options require setup. 
+                See <code className="px-1 py-0.5 bg-amber-100 rounded">SUPABASE_SETUP.md</code> for instructions.
+                You can still use Local storage without any configuration.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid md:grid-cols-3 gap-6 mb-8">
         {storageOptions.map((option) => {
@@ -193,10 +269,17 @@ export function StorageSelector({ onSelect, currentSelection }: StorageSelectorP
                     className="w-full mt-4"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onSelect(option.type);
+                      handleSelect(option.type);
                     }}
+                    disabled={(option.type === 'cloud' || option.type === 'hybrid') && !isSupabaseConfigured}
                   >
-                    Choose {option.title}
+                    {(option.type === 'cloud' || option.type === 'hybrid') && !isSupabaseConfigured ? (
+                      'Setup Required'
+                    ) : (option.type === 'cloud' || option.type === 'hybrid') && !user ? (
+                      'Sign Up to Choose'
+                    ) : (
+                      `Choose ${option.title}`
+                    )}
                   </Button>
                 )}
               </CardContent>

@@ -1,27 +1,38 @@
 /**
  * Journal Storage Service
- * Implements dual storage architecture: Local (IndexedDB) + Cloud (API)
+ * Implements dual storage architecture: Local (IndexedDB) + Cloud (Supabase)
+ * Offline-first with background sync and encryption
  */
+
+import { supabase } from '../lib/supabase';
+import { EncryptionService } from './EncryptionService';
+import { SyncService } from './SyncService';
 
 export type StorageType = 'local' | 'cloud' | 'hybrid';
 
 export interface JournalEntry {
   id: string;
-  date: string;
-  timestamp: number;
   content: string;
+  title?: string;
+  createdAt: string;
+  updatedAt?: string;
+  mood?: string;
+  tags?: string[];
+  version?: number;
+  syncStatus?: 'synced' | 'pending' | 'conflict' | 'local-only';
+  
+  // Legacy fields for backward compatibility
+  date?: string;
+  timestamp?: number;
   prompt?: string;
   promptCategory?: string;
-  mood?: 'positive' | 'neutral' | 'difficult';
-  tags?: string[];
-  wordCount: number;
-  charCount: number;
+  wordCount?: number;
+  charCount?: number;
   isLocked?: boolean;
   isFavorite?: boolean;
   photos?: string[];
   audioUrl?: string;
-  lastModified: number;
-  syncStatus?: 'synced' | 'pending' | 'conflict' | 'local-only';
+  lastModified?: number;
 }
 
 export interface StorageSettings {
@@ -29,6 +40,8 @@ export interface StorageSettings {
   encryptionEnabled: boolean;
   autoBackup: boolean;
   backupFrequency: 'daily' | 'weekly' | 'monthly';
+  encryptionPassword?: string; // Stored in memory only during session
+  userId?: string;
 }
 
 class JournalStorageService {
@@ -40,6 +53,7 @@ class JournalStorageService {
   constructor() {
     this.storageSettings = this.loadSettings();
     this.initDB();
+    SyncService.init().catch(console.error);
   }
 
   private loadSettings(): StorageSettings {
@@ -84,7 +98,19 @@ class JournalStorageService {
   async saveEntry(entry: JournalEntry): Promise<void> {
     if (!this.db) await this.initDB();
 
+    // Ensure required fields
+    if (!entry.id) entry.id = crypto.randomUUID();
+    if (!entry.createdAt) entry.createdAt = new Date().toISOString();
+    entry.updatedAt = new Date().toISOString();
+    entry.version = (entry.version || 0) + 1;
+    
+    // Legacy fields for backward compatibility
     entry.lastModified = Date.now();
+    entry.timestamp = Date.now();
+    entry.date = new Date().toISOString().split('T')[0];
+    entry.wordCount = entry.content.split(/\s+/).filter(w => w.length > 0).length;
+    entry.charCount = entry.content.length;
+    
     entry.syncStatus = this.storageSettings.storageType === 'local' ? 'local-only' : 'pending';
 
     return new Promise((resolve, reject) => {
@@ -92,9 +118,9 @@ class JournalStorageService {
       const store = transaction.objectStore('entries');
       const request = store.put(entry);
 
-      request.onsuccess = () => {
+      request.onsuccess = async () => {
         if (this.storageSettings.storageType !== 'local') {
-          this.syncToCloud(entry);
+          await this.syncToCloud(entry);
         }
         resolve();
       };
@@ -246,29 +272,214 @@ class JournalStorageService {
     this.saveSettings(this.storageSettings);
 
     if (newType === 'cloud' || newType === 'hybrid') {
+      console.log(`Migrating ${entries.length} entries to cloud...`);
       for (const entry of entries) {
         await this.syncToCloud(entry);
       }
+      console.log('Migration complete');
     }
   }
 
-  private async syncToCloud(entry: JournalEntry): Promise<void> {
-    // Placeholder for cloud sync implementation
-    // In production, this would call your API
-    console.log('Syncing to cloud:', entry.id);
+  /**
+   * Download entries from cloud and merge with local
+   */
+  async syncFromCloud(): Promise<number> {
+    if (!this.storageSettings.userId || !this.storageSettings.encryptionPassword) {
+      console.warn('Cannot sync from cloud: missing user ID or encryption password');
+      return 0;
+    }
+
+    try {
+      const lastSyncAt = this.getLastSyncTime();
+      const cloudEntries = await SyncService.downloadFromCloud(
+        this.storageSettings.userId,
+        this.storageSettings.encryptionPassword,
+        lastSyncAt
+      );
+
+      let mergedCount = 0;
+      for (const cloudEntry of cloudEntries) {
+        const localEntry = await this.getEntry(cloudEntry.id);
+
+        if (!localEntry) {
+          // New entry from cloud - save to local
+          await this.saveEntry({ ...cloudEntry, syncStatus: 'synced' });
+          mergedCount++;
+        } else if (localEntry.version! < cloudEntry.version!) {
+          // Cloud version is newer - update local
+          await this.saveEntry({ ...cloudEntry, syncStatus: 'synced' });
+          mergedCount++;
+        } else if (localEntry.version! > cloudEntry.version!) {
+          // Local version is newer - sync to cloud
+          await this.syncToCloud(localEntry);
+        }
+      }
+
+      this.setLastSyncTime(new Date());
+      return mergedCount;
+    } catch (error) {
+      console.error('Sync from cloud failed:', error);
+      return 0;
+    }
+  }
+
+  /**
+   * Set user context for cloud sync
+   */
+  setUserContext(userId: string, encryptionPassword: string): void {
+    this.storageSettings.userId = userId;
+    this.storageSettings.encryptionPassword = encryptionPassword;
     
-    // Simulate API call
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        entry.syncStatus = 'synced';
-        resolve();
-      }, 1000);
-    });
+    // Store in sessionStorage (cleared on browser close)
+    sessionStorage.setItem('grief-platform-user-id', userId);
+    sessionStorage.setItem('grief-platform-encryption-password', encryptionPassword);
+  }
+
+  /**
+   * Clear user context (on logout)
+   */
+  clearUserContext(): void {
+    this.storageSettings.userId = undefined;
+    this.storageSettings.encryptionPassword = undefined;
+    
+    sessionStorage.removeItem('grief-platform-user-id');
+    sessionStorage.removeItem('grief-platform-encryption-password');
+  }
+
+  /**
+   * Get last sync time
+   */
+  private getLastSyncTime(): Date | null {
+    const lastSync = localStorage.getItem('journal-last-sync');
+    return lastSync ? new Date(lastSync) : null;
+  }
+
+  /**
+   * Set last sync time
+   */
+  private setLastSyncTime(date: Date): void {
+    localStorage.setItem('journal-last-sync', date.toISOString());
+  }
+
+  /**
+   * Get sync status
+   */
+  async getSyncStatus() {
+    return await SyncService.getSyncStatus();
+  }
+
+  /**
+   * Force immediate sync
+   */
+  async forceSync(): Promise<void> {
+    if (!this.storageSettings.userId || !this.storageSettings.encryptionPassword) {
+      throw new Error('Cannot force sync: missing user credentials');
+    }
+
+    await SyncService.forceSync(
+      this.storageSettings.userId,
+      this.storageSettings.encryptionPassword
+    );
+  }
+
+  private async syncToCloud(entry: JournalEntry): Promise<void> {
+    try {
+      const userId = this.storageSettings.userId;
+      const encryptionPassword = this.storageSettings.encryptionPassword;
+
+      if (!userId) {
+        console.warn('No user ID - skipping cloud sync');
+        return;
+      }
+
+      // Add to sync queue for background processing
+      await SyncService.addToQueue(entry.id, 'update', entry);
+
+      // If online and encryption password available, try immediate sync
+      if (navigator.onLine && encryptionPassword) {
+        const deviceId = EncryptionService.generateDeviceId();
+        const encryptedContent = await EncryptionService.encrypt(entry.content, encryptionPassword);
+        const encryptedTitle = entry.title
+          ? await EncryptionService.encrypt(entry.title, encryptionPassword)
+          : null;
+
+        const cloudData = {
+          id: entry.id,
+          user_id: userId,
+          encrypted_content: encryptedContent.ciphertext,
+          encrypted_title: encryptedTitle?.ciphertext || null,
+          encryption_iv: encryptedContent.iv,
+          encryption_salt: encryptedContent.salt,
+          mood: entry.mood || null,
+          tags: entry.tags || [],
+          created_at: entry.createdAt,
+          updated_at: entry.updatedAt || new Date().toISOString(),
+          version: entry.version || 1,
+          device_id: deviceId,
+          sync_status: 'synced' as const,
+        };
+
+        const { error } = await supabase.from('journal_entries').upsert(cloudData);
+
+        if (error) {
+          console.error('Sync error:', error);
+          entry.syncStatus = 'pending';
+        } else {
+          entry.syncStatus = 'synced';
+          // Update local entry with synced status
+          await this.updateEntryStatus(entry.id, 'synced');
+        }
+      }
+    } catch (error) {
+      console.error('Cloud sync failed:', error);
+      entry.syncStatus = 'pending';
+    }
   }
 
   private async deleteFromCloud(id: string): Promise<void> {
-    // Placeholder for cloud deletion
-    console.log('Deleting from cloud:', id);
+    try {
+      const userId = this.storageSettings.userId;
+
+      if (!userId) {
+        console.warn('No user ID - skipping cloud delete');
+        return;
+      }
+
+      // Add to sync queue
+      const dummyEntry: JournalEntry = { id, content: '', createdAt: new Date().toISOString() };
+      await SyncService.addToQueue(id, 'delete', dummyEntry);
+
+      // If online, try immediate delete
+      if (navigator.onLine) {
+        const { error } = await supabase
+          .from('journal_entries')
+          .update({ deleted_at: new Date().toISOString() })
+          .eq('id', id)
+          .eq('user_id', userId);
+
+        if (error) {
+          console.error('Cloud delete error:', error);
+        }
+      }
+    } catch (error) {
+      console.error('Delete from cloud failed:', error);
+    }
+  }
+
+  private async updateEntryStatus(id: string, status: JournalEntry['syncStatus']): Promise<void> {
+    if (!this.db) return;
+
+    const entry = await this.getEntry(id);
+    if (entry) {
+      entry.syncStatus = status;
+      await new Promise<void>((resolve, reject) => {
+        const transaction = this.db!.transaction(['entries'], 'readwrite');
+        const store = transaction.objectStore('entries');
+        const request = store.put(entry);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+      });
+    }
   }
 
   getSettings(): StorageSettings {
