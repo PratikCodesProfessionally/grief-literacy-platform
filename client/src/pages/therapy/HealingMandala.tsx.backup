@@ -147,7 +147,7 @@ export const HealingMandala: React.FC<HealingMandalaProps> = ({
   
   // ── Scroll performance optimization ───────────────────────────────────────────
   const [scrollY, setScrollY] = React.useState(0);
-  const scrollTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const scrollTimeoutRef = React.useRef<NodeJS.Timeout>();
   
   React.useEffect(() => {
     const handleScroll = () => {
@@ -1061,535 +1061,389 @@ export const HealingMandala: React.FC<HealingMandalaProps> = ({
                 : 'space-y-6'
               }
             `}>
-              
-              {/* Controls Panel */}
-              <div className={`
-                space-y-4
-                ${isMobile ? 'space-y-3' : 'space-y-6'}
-              `}>
-                
-                {/* Template Selection - Collapsible on Mobile */}
-                {isMobile ? (
-                  <details className="group bg-gray-50 dark:bg-gray-800 rounded-lg">
-                    <summary className="cursor-pointer p-4 flex items-center justify-between">
-                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Mandala Design</h3>
-                      <ChevronDown className="w-4 h-4 group-open:rotate-180 transition-transform" />
-                    </summary>
-                    <div className="px-4 pb-4 space-y-3">
-                      <div className="flex flex-col gap-2">
-                        {(['traditional-floral', 'dot-mandala', 'procedural'] as const).map((t) => (
-                          <Button 
-                            key={t} 
-                            size="sm" 
-                            variant={template === t ? 'default' : 'outline'}
-                            onClick={() => setTemplate(t)}
-                            className="justify-start transition-all duration-200 text-xs"
-                          >
-                            {t === 'traditional-floral' ? '🌸 Traditional Floral' : t === 'dot-mandala' ? '⚪ Dot Mandala' : '⚙️ Procedural Custom'}
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-                  </details>
-                ) : (
-                  <section className="space-y-3">
-                    <h3 className="text-xs font-medium uppercase tracking-wide text-gray-500">Mandala Design</h3>
-                    <div className="flex flex-col gap-2">
-                      {(['traditional-floral', 'dot-mandala', 'procedural'] as const).map((t) => (
-                        <Button 
-                          key={t} 
-                          size="sm" 
-                          variant={template === t ? 'default' : 'outline'}
-                          onClick={() => setTemplate(t)}
-                          className="justify-start transition-all duration-200"
-                        >
-                          {t === 'traditional-floral' ? '🌸 Traditional Floral' : t === 'dot-mandala' ? '⚪ Dot Mandala' : '⚙️ Procedural Custom'}
-                        </Button>
-                      ))}
-                    </div>
-                  </section>
-                )}
-
-                {/* Geometry Controls - Always visible on desktop/tablet, collapsible on mobile */}
-                {isMobile ? (
-                  <details className="group bg-gray-50 dark:bg-gray-800 rounded-lg">
-                    <summary className="cursor-pointer p-4 flex items-center justify-between">
-                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Geometry Controls</h3>
-                      <ChevronDown className="w-4 h-4 group-open:rotate-180 transition-transform" />
-                    </summary>
-                    <div className="px-4 pb-4">
-                      <GeometryControls />
-                    </div>
-                  </details>
-                ) : (
-                  <section className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                    <GeometryControls />
-                  </section>
-                )}
-
-                {/* Style Controls - Only for pre-designed templates */}
-                {template !== 'procedural' && (
-                  isMobile ? (
-                    <details className="group bg-gray-50 dark:bg-gray-800 rounded-lg">
-                      <summary className="cursor-pointer p-4 flex items-center justify-between">
-                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Style Settings</h3>
-                        <ChevronDown className="w-4 h-4 group-open:rotate-180 transition-transform" />
-                      </summary>
-                      <div className="px-4 pb-4 space-y-3">
-                        <StyleControls />
-                      </div>
-                    </details>
-                  ) : (
-                    <section className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-3">
-                      <StyleControls />
-                    </section>
-                  )
-                )}
-                
-                {/* Paint Tools - Always expanded on mobile */}
-                <section className="space-y-3">
-                  <h3 className="text-xs font-medium uppercase tracking-wide text-gray-500">Paint Tools</h3>
-                  <div className="flex flex-col gap-2">
-                    <Button 
-                      size="sm" 
-                      variant={mode === 'paint' ? 'default' : 'outline'}
-                      onClick={() => setMode('paint')}
-                      className="justify-start transition-all duration-200"
-                    >
-                      <Paintbrush className="w-4 h-4 mr-2" />
-                      Paint
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      variant={mode === 'fill' ? 'default' : 'outline'}
-                      onClick={() => setMode('fill')}
-                      className="justify-start transition-all duration-200"
-                      title="Fill all segments in the same ring"
-                    >
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      Ring Fill
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      variant={mode === 'erase' ? 'default' : 'outline'}
-                      onClick={() => setMode('erase')}
-                      className="justify-start transition-all duration-200"
-                    >
-                      <Eraser className="w-4 h-4 mr-2" />
-                      Erase
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      variant={mode === 'eyedropper' ? 'default' : 'outline'}
-                      onClick={() => setMode('eyedropper')}
-                      className="justify-start transition-all duration-200"
-                      title="Pick color from mandala"
-                    >
-                      <Droplet className="w-4 h-4 mr-2" />
-                      Pick Color
-                    </Button>
-                  </div>
-                </section>
-
-                {/* Actions */}
-                <section className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <h3 className="text-xs font-medium uppercase tracking-wide text-gray-500 mb-3">Actions</h3>
-                  <div className="flex flex-col gap-2">
-                    <Button size="sm" variant="outline" onClick={undo} disabled={!undoStack.length} className="justify-start">
-                      <Undo2 className="w-4 h-4 mr-2" />
-                      Undo
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={redo} disabled={!redoStack.length} className="justify-start">
-                      <Redo2 className="w-4 h-4 mr-2" />
-                      Redo
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={clearColors} className="justify-start">
-                      <RotateCcw className="w-4 h-4 mr-2" />
-                      Clear All
-                    </Button>
-                  </div>
-                </section>
-              </div>
-
-              {/* Canvas & Color Palette Panel */}
-              <div className="space-y-6">
-                {/* Canvas Container */}
-                <div className="relative w-full flex justify-center">
-                  <div 
-                    className="relative aspect-square rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.02)] overflow-hidden"
-                    style={{ 
-                      width: canvasSize,
-                      maxWidth: '100%',
-                      backgroundColor: '#FEFEFE',
-                      backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'20\' height=\'20\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' /%3E%3CfeColorMatrix type=\'saturate\' values=\'0\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\' opacity=\'0.02\'/%3E%3C/svg%3E")',
-                      transform: `scale(${zoomLevel})`,
-                      transformOrigin: 'center',
-                      transition: scrollY > 0 ? 'none' : 'transform 0.2s ease-out',
-                    }}
+          
+          {/* Left Panel: Controls */}
+          <div className="space-y-6">
+            
+            {/* Template Selection */}
+            <section className="space-y-3">
+              <h3 className="text-xs font-medium uppercase tracking-wide text-gray-500">Mandala Design</h3>
+              <div className="flex flex-col gap-2">
+                {(['traditional-floral', 'dot-mandala', 'procedural'] as const).map((t) => (
+                  <Button 
+                    key={t} 
+                    size="sm" 
+                    variant={template === t ? 'default' : 'outline'}
+                    onClick={() => setTemplate(t)}
+                    className="justify-start transition-all duration-200"
                   >
-                    <div 
-                      ref={containerRef} 
-                      className="w-full h-full"
-                      style={{ display: 'block' }}
+                    {t === 'traditional-floral' ? '🌸 Traditional Floral' : t === 'dot-mandala' ? '⚪ Dot Mandala' : '⚙️ Procedural Custom'}
+                  </Button>
+                ))}
+              </div>
+            </section>
+
+            {/* Geometry Controls - All Templates */}
+            <section className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-4">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                {template === 'traditional-floral' ? 'Petal Design' : template === 'dot-mandala' ? 'Dot Pattern' : 'Customize Geometry'}
+              </h3>
+                
+                <div className="space-y-3">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                        {template === 'traditional-floral' ? 'Main Petals' : template === 'dot-mandala' ? 'Outer Petals' : 'Petals'}
+                      </label>
+                      <span className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">{petals}</span>
+                    </div>
+                    <input 
+                      type="range" 
+                      min={template === 'traditional-floral' ? 8 : template === 'dot-mandala' ? 8 : 8} 
+                      max={template === 'traditional-floral' ? 24 : template === 'dot-mandala' ? 16 : 40} 
+                      value={petals} 
+                      onChange={(e) => setPetals(Number(e.target.value))} 
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
                     />
-                    
-                    {/* Zoom Controls - Only show when zoomed */}
-                    {zoomLevel !== 1 && (
-                      <div className="absolute top-2 right-2 flex gap-1">
-                        <Button size="sm" variant="secondary" onClick={() => setZoomLevel(prev => Math.max(prev - 0.25, 0.5))} className="h-8 w-8 p-0">
-                          <ZoomOut className="w-4 h-4" />
-                        </Button>
-                        <Button size="sm" variant="secondary" onClick={() => setZoomLevel(1)} className="h-8 px-2 text-xs">
-                          {Math.round(zoomLevel * 100)}%
-                        </Button>
-                        <Button size="sm" variant="secondary" onClick={() => setZoomLevel(prev => Math.min(prev + 0.25, 2))} className="h-8 w-8 p-0">
-                          <ZoomIn className="w-4 h-4" />
-                        </Button>
-                      </div>
+                    <div className="flex justify-between text-xs text-gray-500 mt-1">
+                      <span>{template === 'traditional-floral' ? '8' : template === 'dot-mandala' ? '8' : '8'}</span>
+                      <span>{template === 'traditional-floral' ? '24' : template === 'dot-mandala' ? '16' : '40'}</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                        {template === 'traditional-floral' ? 'Petal Layers' : template === 'dot-mandala' ? 'Dot Rings' : 'Rings'}
+                      </label>
+                      <span className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">{rings}</span>
+                    </div>
+                    <input 
+                      type="range" 
+                      min={template === 'traditional-floral' ? 4 : template === 'dot-mandala' ? 5 : 3} 
+                      max={template === 'traditional-floral' ? 12 : template === 'dot-mandala' ? 15 : 10} 
+                      value={rings} 
+                      onChange={(e) => setRings(Number(e.target.value))} 
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                    />
+                    <div className="flex justify-between text-xs text-gray-500 mt-1">
+                      <span>{template === 'traditional-floral' ? '4' : template === 'dot-mandala' ? '5' : '3'}</span>
+                      <span>{template === 'traditional-floral' ? '12' : template === 'dot-mandala' ? '15' : '10'}</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Stroke Width</label>
+                      <span className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">{stroke}px</span>
+                    </div>
+                    <input 
+                      type="range" 
+                      min={1} 
+                      max={6} 
+                      value={stroke} 
+                      onChange={(e) => setStroke(Number(e.target.value))} 
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                    />
+                    <div className="flex justify-between text-xs text-gray-500 mt-1">
+                      <span>1</span>
+                      <span>6</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick Presets */}
+                <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
+                  <p className="text-xs font-medium text-gray-500 mb-2">Quick Presets</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {template === 'traditional-floral' ? (
+                      <>
+                        <Button size="sm" variant="outline" onClick={() => { setPetals(8); setRings(4); }} className="text-xs">Simple Lotus</Button>
+                        <Button size="sm" variant="outline" onClick={() => { setPetals(12); setRings(6); }} className="text-xs">Classic</Button>
+                        <Button size="sm" variant="outline" onClick={() => { setPetals(16); setRings(8); }} className="text-xs">Intricate</Button>
+                        <Button size="sm" variant="outline" onClick={() => { setPetals(20); setRings(10); }} className="text-xs">Detailed</Button>
+                      </>
+                    ) : template === 'dot-mandala' ? (
+                      <>
+                        <Button size="sm" variant="outline" onClick={() => { setPetals(8); setRings(6); }} className="text-xs">Minimal</Button>
+                        <Button size="sm" variant="outline" onClick={() => { setPetals(12); setRings(9); }} className="text-xs">Balanced</Button>
+                        <Button size="sm" variant="outline" onClick={() => { setPetals(14); setRings(12); }} className="text-xs">Dense</Button>
+                        <Button size="sm" variant="outline" onClick={() => { setPetals(16); setRings(15); }} className="text-xs">Complex</Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button size="sm" variant="outline" onClick={() => { setPetals(12); setRings(4); }} className="text-xs">Beginner</Button>
+                        <Button size="sm" variant="outline" onClick={() => { setPetals(16); setRings(6); }} className="text-xs">Standard</Button>
+                        <Button size="sm" variant="outline" onClick={() => { setPetals(24); setRings(8); }} className="text-xs">Detailed</Button>
+                        <Button size="sm" variant="outline" onClick={() => { setPetals(32); setRings(10); }} className="text-xs">Expert</Button>
+                      </>
                     )}
                   </div>
                 </div>
 
-                {/* Color Palette - Desktop/Tablet Only */}
-                {!isMobile && (
-                  <>
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-xs font-medium uppercase tracking-wide text-gray-500">Color Palette</h3>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-gray-500">Active:</span>
-                          <div 
-                            className="w-8 h-8 rounded-lg border-2 border-gray-300 shadow-sm"
-                            style={{ backgroundColor: selectedColor }}
-                          />
-                          <input 
-                            type="color" 
-                            value={selectedColor} 
-                            onChange={(e) => setSelectedColor(e.target.value)} 
-                            className="w-8 h-8 rounded cursor-pointer"
-                            title="Custom color picker"
-                          />
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-10 gap-2">
-                        {palette.map((c) => (
-                          <button
-                            key={c}
-                            onClick={() => setSelectedColor(c)}
-                            className={`w-10 h-10 rounded-lg border-2 transition-all duration-150 hover:scale-110 ${
-                              selectedColor === c ? 'border-indigo-500 scale-110 shadow-md' : 'border-gray-300'
-                            }`}
-                            style={{ backgroundColor: c }}
-                            title={c}
-                          />
-                        ))}
-                      </div>
-                    </div>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={randomize}
+                  className="w-full"
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Randomize Design
+                </Button>
+            </section>
 
-                    {/* Palette Selection */}
-                    <div className="flex flex-wrap gap-2">
-                      {(Object.keys(palettes) as Array<keyof typeof palettes>).map((key) => (
-                        <Button 
-                          key={key} 
-                          size="sm" 
-                          variant={activePalette === key ? 'default' : 'outline'}
-                          onClick={() => setActivePalette(key)}
-                          className="transition-all duration-200"
-                        >
-                          {palettes[key].name}
-                        </Button>
-                      ))}
-                    </div>
+            {/* Style Controls for Pre-designed Templates */}
+            {template !== 'procedural' && (
+              <section className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-3">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Style Settings</h3>
+                
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Stroke Width</label>
+                    <span className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">{stroke}px</span>
+                  </div>
+                  <input 
+                    type="range" 
+                    min={1} 
+                    max={6} 
+                    value={stroke} 
+                    onChange={(e) => setStroke(Number(e.target.value))} 
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                  />
+                </div>
 
-                    {/* Advanced Settings */}
-                    <details className="group pt-4 border-t border-gray-200 dark:border-gray-700">
-                      <summary className="cursor-pointer text-xs font-medium uppercase tracking-wide text-gray-500 hover:text-gray-700 py-2 flex items-center gap-2">
-                        <ChevronDown className="w-4 h-4 group-open:rotate-90 transition-transform" />
-                        Advanced Settings
-                      </summary>
-                      <div className="pt-4 space-y-4">
-                        <div className="flex items-center gap-3">
-                          <span className="text-sm font-medium">Symmetry:</span>
-                          {[1, 4, 8].map((sym) => (
-                            <Button
-                              key={sym}
-                              size="sm"
-                              variant={symmetryMode === sym ? 'default' : 'outline'}
-                              onClick={() => setSymmetryMode(sym)}
-                            >
-                              {sym}x
-                            </Button>
-                          ))}
-                        </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Line Color</label>
+                  <input 
+                    type="color" 
+                    value={lineColor} 
+                    onChange={(e) => setLineColor(e.target.value)} 
+                    className="h-8 w-12 rounded cursor-pointer"
+                  />
+                </div>
 
-                        <div className="flex items-center gap-2">
-                          <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Line Color</label>
-                          <input 
-                            type="color" 
-                            value={lineColor} 
-                            onChange={(e) => setLineColor(e.target.value)} 
-                            className="h-8 w-12 rounded cursor-pointer"
-                          />
-                          <span className="text-xs text-gray-500">{lineColor}</span>
-                        </div>
-                      </div>
-                    </details>
-
-                    {/* Export & Complete */}
-                    <div className="flex items-center justify-between pt-4 border-t">
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline" onClick={exportSVG}>
-                          <Download className="w-4 h-4 mr-2" />
-                          SVG
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={exportPNG}>
-                          <Download className="w-4 h-4 mr-2" />
-                          PNG
-                        </Button>
-                      </div>
-                      {onComplete && (
-                        <Button 
-                          size="default"
-                          onClick={() => {
-                            const canvas = document.createElement('canvas');
-                            canvas.width = 500;
-                            canvas.height = 500;
-                            const ctx = canvas.getContext('2d');
-                            if (ctx && svgRef.current) {
-                              const svgData = new XMLSerializer().serializeToString(svgRef.current);
-                              const img = new Image();
-                              img.onload = () => {
-                                ctx.drawImage(img, 0, 0);
-                                canvas.toBlob((blob) => {
-                                  if (blob) {
-                                    const sessionDuration = Math.floor((Date.now() - sessionStartTime) / 1000);
-                                    const totalSegments = svgRef.current?.querySelectorAll('[data-part]').length || 0;
-                                    const paintedSegments = Array.from(svgRef.current?.querySelectorAll('[data-part]') || [])
-                                      .filter(el => el.getAttribute('fill') !== '#FCFCFC').length;
-                                    
-                                    onComplete({
-                                      imageBlob: blob,
-                                      sessionDuration,
-                                      colorsUsed: Array.from(colorsUsed),
-                                      percentComplete: totalSegments > 0 ? (paintedSegments / totalSegments) * 100 : 0
-                                    });
-                                  }
-                                });
-                              };
-                              img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
-                            }
-                          }} 
-                          disabled={!canComplete}
-                          className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                        >
-                          Complete Session
-                        </Button>
-                      )}
-                    </div>
-                  </>
-                )}
+                <p className="text-xs text-gray-500 italic pt-2 border-t border-gray-200 dark:border-gray-700">
+                  This is a pre-designed template. Geometry cannot be modified.
+                </p>
+              </section>
+            )}
+            
+            {/* Paint Tools */}
+            <section className="space-y-3">
+              <h3 className="text-xs font-medium uppercase tracking-wide text-gray-500">Paint Tools</h3>
+              <div className="flex flex-col gap-2">
+                <Button 
+                  size="sm" 
+                  variant={mode === 'paint' ? 'default' : 'outline'}
+                  onClick={() => setMode('paint')}
+                  className="justify-start transition-all duration-200"
+                >
+                  <Paintbrush className="w-4 h-4 mr-2" />
+                  Paint
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant={mode === 'fill' ? 'default' : 'outline'}
+                  onClick={() => setMode('fill')}
+                  className="justify-start transition-all duration-200"
+                  title="Fill all segments in the same ring"
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Ring Fill
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant={mode === 'erase' ? 'default' : 'outline'}
+                  onClick={() => setMode('erase')}
+                  className="justify-start transition-all duration-200"
+                >
+                  <Eraser className="w-4 h-4 mr-2" />
+                  Erase
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant={mode === 'eyedropper' ? 'default' : 'outline'}
+                  onClick={() => setMode('eyedropper')}
+                  className="justify-start transition-all duration-200"
+                  title="Pick color from mandala (I)"
+                >
+                  <Droplet className="w-4 h-4 mr-2" />
+                  Pick Color
+                </Button>
               </div>
+            </section>
+
+            {/* Actions */}
+            <section className="pt-4 border-t border-gray-200 dark:border-gray-700">
+              <h3 className="text-xs font-medium uppercase tracking-wide text-gray-500 mb-3">Actions</h3>
+              <div className="flex flex-col gap-2">
+                <Button size="sm" variant="outline" onClick={undo} disabled={!undoStack.length} className="justify-start">
+                  <Undo2 className="w-4 h-4 mr-2" />
+                  Undo
+                </Button>
+                <Button size="sm" variant="outline" onClick={redo} disabled={!redoStack.length} className="justify-start">
+                  <Redo2 className="w-4 h-4 mr-2" />
+                  Redo
+                </Button>
+                <Button size="sm" variant="outline" onClick={clearColors} className="justify-start">
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Clear All
+                </Button>
+              </div>
+            </section>
+          </div>
+
+          {/* Right Panel: Canvas & Color Palette */}
+          <div className="space-y-6">
+            {/* Canvas */}
+            <div className="relative w-full max-w-[600px] mx-auto aspect-square">
+              <div 
+                ref={containerRef} 
+                className="w-full h-full rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.02)] overflow-hidden"
+                style={{ 
+                  backgroundColor: '#FEFEFE',
+                  backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'20\' height=\'20\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' /%3E%3CfeColorMatrix type=\'saturate\' values=\'0\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\' opacity=\'0.02\'/%3E%3C/svg%3E")',
+                  display: 'block'
+                }}
+              />
+            </div>
+
+            {/* Color Palette */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-medium uppercase tracking-wide text-gray-500">Color Palette</h3>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500">Active:</span>
+                  <div 
+                    className="w-8 h-8 rounded-lg border-2 border-gray-300 shadow-sm"
+                    style={{ backgroundColor: selectedColor }}
+                  />
+                  <input 
+                    type="color" 
+                    value={selectedColor} 
+                    onChange={(e) => setSelectedColor(e.target.value)} 
+                    className="w-8 h-8 rounded cursor-pointer"
+                    title="Custom color picker"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-10 gap-2">
+                {palette.map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => setSelectedColor(c)}
+                    className={`w-10 h-10 rounded-lg border-2 transition-all duration-150 hover:scale-110 ${
+                      selectedColor === c ? 'border-indigo-500 scale-110 shadow-md' : 'border-gray-300'
+                    }`}
+                    style={{ backgroundColor: c }}
+                    title={c}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Palette Selection */}
+            <div className="flex flex-wrap gap-2">
+              {(Object.keys(palettes) as Array<keyof typeof palettes>).map((key) => (
+                <Button 
+                  key={key} 
+                  size="sm" 
+                  variant={activePalette === key ? 'default' : 'outline'}
+                  onClick={() => setActivePalette(key)}
+                  className="transition-all duration-200"
+                >
+                  {palettes[key].name}
+                </Button>
+              ))}
+            </div>
+
+            {/* Symmetry & Advanced */}
+            <details className="group pt-4 border-t border-gray-200 dark:border-gray-700">
+              <summary className="cursor-pointer text-xs font-medium uppercase tracking-wide text-gray-500 hover:text-gray-700 py-2 flex items-center gap-2">
+                <span className="group-open:rotate-90 transition-transform">▶</span>
+                Advanced Settings
+              </summary>
+              <div className="pt-4 space-y-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium">Symmetry:</span>
+                  {[1, 4, 8].map((sym) => (
+                    <Button
+                      key={sym}
+                      size="sm"
+                      variant={symmetryMode === sym ? 'default' : 'outline'}
+                      onClick={() => setSymmetryMode(sym)}
+                    >
+                      {sym}x
+                    </Button>
+                  ))}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Line Color</label>
+                  <input 
+                    type="color" 
+                    value={lineColor} 
+                    onChange={(e) => setLineColor(e.target.value)} 
+                    className="h-8 w-12 rounded cursor-pointer"
+                  />
+                  <span className="text-xs text-gray-500">{lineColor}</span>
+                </div>
+              </div>
+            </details>
+
+            {/* Export & Complete */}
+            <div className="flex items-center justify-between pt-4 border-t">
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={exportSVG}>
+                  <Download className="w-4 h-4 mr-2" />
+                  SVG
+                </Button>
+                <Button size="sm" variant="outline" onClick={exportPNG}>
+                  <Download className="w-4 h-4 mr-2" />
+                  PNG
+                </Button>
+              </div>
+              {onComplete && (
+                <Button 
+                  size="default"
+                  onClick={() => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 500;
+                    canvas.height = 500;
+                    const ctx = canvas.getContext('2d');
+                    if (ctx && svgRef.current) {
+                      const svgData = new XMLSerializer().serializeToString(svgRef.current);
+                      const img = new Image();
+                      img.onload = () => {
+                        ctx.drawImage(img, 0, 0);
+                        canvas.toBlob((blob) => {
+                          if (blob) {
+                            const sessionDuration = Math.floor((Date.now() - sessionStartTime) / 1000);
+                            const totalSegments = svgRef.current?.querySelectorAll('[data-part]').length || 0;
+                            const paintedSegments = Array.from(svgRef.current?.querySelectorAll('[data-part]') || [])
+                              .filter(el => el.getAttribute('fill') !== '#FCFCFC').length;
+                            
+                            onComplete({
+                              imageBlob: blob,
+                              sessionDuration,
+                              colorsUsed: Array.from(colorsUsed),
+                              percentComplete: totalSegments > 0 ? (paintedSegments / totalSegments) * 100 : 0
+                            });
+                          }
+                        });
+                      };
+                      img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
+                    }
+                  }} 
+                  disabled={!canComplete}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                >
+                  Complete Session
+                </Button>
+              )}
             </div>
           </div>
         </div>
-
-        {/* Mobile Bottom Sheet Color Palette */}
-        {isMobile && (
-          <div 
-            className={`
-              fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700
-              transition-transform duration-300 ease-out z-30
-              ${isBottomSheetExpanded ? 'translate-y-0' : 'translate-y-[calc(100%-120px)]'}
-            `}
-            style={{
-              paddingBottom: 'env(safe-area-inset-bottom, 0)',
-            }}
-          >
-            {/* Drag Handle */}
-            <div className="flex justify-center py-2">
-              <div className="w-12 h-1.5 bg-gray-300 rounded-full cursor-pointer" 
-                   onClick={() => setIsBottomSheetExpanded(!isBottomSheetExpanded)} />
-            </div>
-
-            {/* Collapsed State - Active Color & Quick Palette */}
-            {!isBottomSheetExpanded && (
-              <div className="px-4 pb-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Palette className="w-4 h-4 text-gray-500" />
-                    <span className="text-sm font-medium">Colors</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div 
-                      className="w-8 h-8 rounded-lg border-2 border-gray-300 shadow-sm"
-                      style={{ backgroundColor: selectedColor }}
-                    />
-                    <input 
-                      type="color" 
-                      value={selectedColor} 
-                      onChange={(e) => setSelectedColor(e.target.value)} 
-                      className="w-8 h-8 rounded cursor-pointer"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-5 gap-2">
-                  {palette.slice(0, 5).map((c) => (
-                    <button
-                      key={c}
-                      onClick={() => setSelectedColor(c)}
-                      className={`aspect-square rounded-lg border-2 transition-all duration-150 ${
-                        selectedColor === c ? 'border-indigo-500 scale-110 shadow-md' : 'border-gray-300'
-                      }`}
-                      style={{ backgroundColor: c }}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Expanded State - Full Palette */}
-            {isBottomSheetExpanded && (
-              <div className="px-4 pb-4 max-h-[60vh] overflow-y-auto">
-                <div className="space-y-4">
-                  {/* Active Color Display */}
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Active Color</span>
-                    <div className="flex items-center gap-2">
-                      <div 
-                        className="w-10 h-10 rounded-lg border-2 border-gray-300 shadow-sm"
-                        style={{ backgroundColor: selectedColor }}
-                      />
-                      <input 
-                        type="color" 
-                        value={selectedColor} 
-                        onChange={(e) => setLineColor(e.target.value)} 
-                        className="w-10 h-10 rounded cursor-pointer"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Full Color Grid */}
-                  <div>
-                    <h4 className="text-sm font-medium mb-2">{palettes[activePalette].name}</h4>
-                    <div className="grid grid-cols-5 gap-2">
-                      {palette.map((c) => (
-                        <button
-                          key={c}
-                          onClick={() => setSelectedColor(c)}
-                          className={`aspect-square rounded-lg border-2 transition-all duration-150 hover:scale-105 ${
-                            selectedColor === c ? 'border-indigo-500 scale-110 shadow-md' : 'border-gray-300'
-                          }`}
-                          style={{ backgroundColor: c }}
-                          title={c}
-                        />
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Palette Selection */}
-                  <div>
-                    <h4 className="text-sm font-medium mb-2">Color Themes</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {(Object.keys(palettes) as Array<keyof typeof palettes>).map((key) => (
-                        <Button 
-                          key={key} 
-                          size="sm" 
-                          variant={activePalette === key ? 'default' : 'outline'}
-                          onClick={() => setActivePalette(key)}
-                          className="text-xs"
-                        >
-                          {palettes[key].name}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Advanced Settings */}
-                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-4">
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-medium">Symmetry:</span>
-                      {[1, 4, 8].map((sym) => (
-                        <Button
-                          key={sym}
-                          size="sm"
-                          variant={symmetryMode === sym ? 'default' : 'outline'}
-                          onClick={() => setSymmetryMode(sym)}
-                        >
-                          {sym}x
-                        </Button>
-                      ))}
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Line Color</label>
-                      <input 
-                        type="color" 
-                        value={lineColor} 
-                        onChange={(e) => setLineColor(e.target.value)} 
-                        className="h-8 w-12 rounded cursor-pointer"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <Button size="sm" variant="outline" onClick={exportSVG} className="flex-1">
-                      <Download className="w-4 h-4 mr-2" />
-                      SVG
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={exportPNG} className="flex-1">
-                      <Download className="w-4 h-4 mr-2" />
-                      PNG
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Mobile FAB for Complete */}
-        {isMobile && onComplete && (
-          <Button 
-            size="lg"
-            onClick={() => {
-              const canvas = document.createElement('canvas');
-              canvas.width = 500;
-              canvas.height = 500;
-              const ctx = canvas.getContext('2d');
-              if (ctx && svgRef.current) {
-                const svgData = new XMLSerializer().serializeToString(svgRef.current);
-                const img = new Image();
-                img.onload = () => {
-                  ctx.drawImage(img, 0, 0);
-                  canvas.toBlob((blob) => {
-                    if (blob) {
-                      const sessionDuration = Math.floor((Date.now() - sessionStartTime) / 1000);
-                      const totalSegments = svgRef.current?.querySelectorAll('[data-part]').length || 0;
-                      const paintedSegments = Array.from(svgRef.current?.querySelectorAll('[data-part]') || [])
-                        .filter(el => el.getAttribute('fill') !== '#FCFCFC').length;
-                      
-                      onComplete({
-                        imageBlob: blob,
-                        sessionDuration,
-                        colorsUsed: Array.from(colorsUsed),
-                        percentComplete: totalSegments > 0 ? (paintedSegments / totalSegments) * 100 : 0
-                      });
-                    }
-                  });
-                };
-                img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
-              }
-            }} 
-            disabled={!canComplete}
-            className="fixed bottom-4 right-4 z-40 rounded-full w-14 h-14 shadow-lg bg-indigo-600 hover:bg-indigo-700 text-white"
-            style={{
-              bottom: 'calc(1rem + env(safe-area-inset-bottom, 0))',
-            }}
-          >
-            ✓
-          </Button>
-        )}
       </div>
     </div>
   );
