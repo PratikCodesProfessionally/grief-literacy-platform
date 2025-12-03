@@ -64,6 +64,21 @@ export function PhaserGame() {
     // Initial resize
     setTimeout(handleResize, 100);
     
+    // Ensure canvas gets focus for keyboard input
+    const focusCanvas = () => {
+      const canvas = containerRef.current?.querySelector('canvas');
+      if (canvas) {
+        canvas.setAttribute('tabindex', '1');
+        canvas.focus();
+      }
+    };
+    
+    // Focus on click anywhere in container
+    containerRef.current.addEventListener('click', focusCanvas);
+    
+    // Initial focus after game loads
+    setTimeout(focusCanvas, 500);
+    
     // Wait for scene to be ready
     const checkScene = setInterval(() => {
       const scene = gameRef.current?.scene.getScene('HealingWorldScene') as HealingWorldScene;
@@ -135,13 +150,15 @@ export function PhaserGame() {
         id="phaser-game-container" 
         ref={containerRef}
         className="w-full h-full"
+        tabIndex={0}
         style={{
           position: 'absolute',
           top: 0,
           left: 0,
           width: '100%',
           height: '100%',
-          touchAction: 'none'
+          touchAction: 'none',
+          outline: 'none'
         }}
       />
       

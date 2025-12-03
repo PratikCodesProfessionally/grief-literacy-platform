@@ -81,6 +81,7 @@ export class Player extends Phaser.GameObjects.Container {
   
   private setupInput(scene: Phaser.Scene): void {
     if (scene.input.keyboard) {
+      console.log('[PLAYER] Setting up keyboard input');
       // Arrow keys
       this.cursors = scene.input.keyboard.createCursorKeys();
       
@@ -93,6 +94,10 @@ export class Player extends Phaser.GameObjects.Container {
         space: Phaser.Input.Keyboard.KeyCodes.SPACE,
         enter: Phaser.Input.Keyboard.KeyCodes.ENTER
       });
+      
+      console.log('[PLAYER] Keyboard input ready:', !!this.cursors, !!this.wasdKeys);
+    } else {
+      console.warn('[PLAYER] No keyboard input available!');
     }
   }
   

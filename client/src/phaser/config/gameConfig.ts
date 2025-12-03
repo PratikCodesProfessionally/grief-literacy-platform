@@ -35,6 +35,7 @@ export const createGameConfig = (parent: string): Phaser.Types.Core.GameConfig =
     createContainer: true
   },
   input: {
+    keyboard: true,
     touch: {
       capture: true,
       target: parent

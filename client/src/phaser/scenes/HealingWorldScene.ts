@@ -9,13 +9,22 @@ import { FallenLeaves } from '../entities/FallenLeaves';
 import { SnowLayer } from '../entities/SnowLayer';
 import { Fountain } from '../entities/InteractiveObjects';
 import { ParallaxBackground } from '../systems/ParallaxBackground';
+import { CameraController } from '../systems/CameraController';
+import { AmbientSoundManager } from '../systems/AmbientSoundManager';
+import { DayNightCycle } from '../systems/DayNightCycle';
 import { MobileControls } from '../ui/MobileControls';
+import { Minimap } from '../ui/Minimap';
+import { ZonePreviewCard } from '../ui/ZonePreviewCard';
+import { ProgressTracker } from '../ui/ProgressTracker';
+import { GuidedTutorial } from '../ui/GuidedTutorial';
 import { SeasonManager, Season } from '../systems/SeasonManager';
 import { GAME_CONSTANTS, STATION_POSITIONS, NPC_CONFIGS, BENCH_QUOTES } from '../config/constants';
 
 export class HealingWorldScene extends Phaser.Scene {
   private player!: Player;
   private parallaxBg!: ParallaxBackground;
+  private cameraController?: CameraController;
+  private ambientSoundManager?: AmbientSoundManager;
   private interactionZones: InteractionZone[] = [];
   private npcs: NPC[] = [];
   private butterflies: Butterfly[] = [];
@@ -25,6 +34,11 @@ export class HealingWorldScene extends Phaser.Scene {
   private fallenLeaves?: FallenLeaves;
   private snowLayer?: SnowLayer;
   private mobileControls?: MobileControls;
+  private minimap?: Minimap;
+  private zonePreviewCard?: ZonePreviewCard;
+  private progressTracker?: ProgressTracker;
+  private guidedTutorial?: GuidedTutorial;
+  private dayNightCycle?: DayNightCycle;
   private currentPrompt?: Phaser.GameObjects.Container;
   private currentNPCDialogue?: Phaser.GameObjects.Container;
   private currentTreeQuote?: Phaser.GameObjects.Container;
@@ -305,12 +319,25 @@ export class HealingWorldScene extends Phaser.Scene {
         signIsValidTap = false;
         signBoard.setScale(1);
         signBoard.setFillStyle(Phaser.Display.Color.GetColor(254, 243, 199));
+        
+        // Hide preview card on desktop
+        if (!this.isMobile && this.zonePreviewCard) {
+          this.zonePreviewCard.hide();
+        }
       });
       
       signBoard.on('pointercancel', () => {
         signIsValidTap = false;
         signBoard.setScale(1);
         signBoard.setFillStyle(Phaser.Display.Color.GetColor(254, 243, 199));
+      });
+      
+      // Desktop hover preview (only for non-touch devices)
+      signBoard.on('pointerover', () => {
+        if (!this.isMobile && this.zonePreviewCard) {
+          // Show preview card above the sign
+          this.zonePreviewCard.show(station, signX, signY - 50);
+        }
       });
       
       // Create interaction zone around sign
@@ -395,6 +422,14 @@ export class HealingWorldScene extends Phaser.Scene {
       GAME_CONSTANTS.CAMERA_DEADZONE_WIDTH,
       GAME_CONSTANTS.CAMERA_DEADZONE_HEIGHT
     );
+    
+    // Initialize camera controller with enhanced controls
+    this.cameraController = new CameraController(this, {
+      minZoom: 0.6,
+      maxZoom: 1.4,
+      smoothFollow: 0.1
+    });
+    this.cameraController.setFollowTarget(this.player);
   }
   
   private createUI(): void {
@@ -435,6 +470,52 @@ export class HealingWorldScene extends Phaser.Scene {
     this.helpText.setAlpha(0.9);
     this.helpText.setScrollFactor(0);
     this.helpText.setDepth(99);
+    
+    // Create minimap
+    this.createMinimap();
+  }
+  
+  private createMinimap(): void {
+    // Adjust size based on device
+    const minimapConfig = this.isMobile 
+      ? { width: 120, height: 70, margin: 10 }
+      : { width: 180, height: 100, margin: 16 };
+    
+    this.minimap = new Minimap(this, minimapConfig);
+    
+    // Set initial zone statuses (could be loaded from localStorage)
+    STATION_POSITIONS.forEach((station, index) => {
+      // For demo: first station recommended, rest new
+      if (index === 0) {
+        this.minimap?.setZoneStatus(station.id, 'recommended');
+      } else {
+        this.minimap?.setZoneStatus(station.id, 'new');
+      }
+    });
+    
+    // Create zone preview card (for hover previews)
+    this.zonePreviewCard = new ZonePreviewCard(this);
+    
+    // Create ambient sound manager for immersive audio
+    this.ambientSoundManager = new AmbientSoundManager(this);
+    
+    // Create progress tracker for journey visualization
+    this.progressTracker = new ProgressTracker(this);
+    
+    // Create guided tutorial for new users
+    this.guidedTutorial = new GuidedTutorial(this, () => {
+      console.log('[TUTORIAL] Tutorial completed!');
+    });
+    
+    // Create day/night cycle (syncs with real time)
+    this.dayNightCycle = new DayNightCycle(this, true);
+    
+    // Auto-start tutorial for new users (after short delay)
+    if (this.guidedTutorial.shouldShowTutorial()) {
+      this.time.delayedCall(1500, () => {
+        this.guidedTutorial?.start();
+      });
+    }
   }
   
   private createMobileControls(): void {
@@ -459,6 +540,10 @@ export class HealingWorldScene extends Phaser.Scene {
           if (navigator.vibrate) {
             navigator.vibrate(50);
           }
+          
+          // Track station visit for progress
+          const stationId = zone.displayName.toLowerCase().replace(/\s+/g, '-');
+          this.progressTracker?.visitStation(stationId);
           
           // Trigger interaction
           zone.interact();
@@ -617,6 +702,26 @@ export class HealingWorldScene extends Phaser.Scene {
     // Update parallax
     this.parallaxBg.update(this.cameras.main);
     
+    // Update camera controller
+    if (this.cameraController) {
+      this.cameraController.update(delta);
+    }
+    
+    // Update minimap
+    if (this.minimap) {
+      this.minimap.update(this.player.x, this.player.y);
+    }
+    
+    // Update ambient sound based on player position
+    if (this.ambientSoundManager) {
+      this.ambientSoundManager.update(this.player.x, this.player.y);
+    }
+    
+    // Update day/night cycle
+    if (this.dayNightCycle) {
+      this.dayNightCycle.update(delta);
+    }
+    
     // Update mobile controls FIRST (handles direct interactions)
     if (this.mobileControls) {
       this.mobileControls.update(this.player);
@@ -687,6 +792,11 @@ export class HealingWorldScene extends Phaser.Scene {
       console.log('[SCENE] 🚀🚀🚀 TRIGGERING INTERACTION FOR:', nearStation.displayName);
       console.log('[SCENE] Zone position:', nearStation.x, nearStation.y);
       console.log('[SCENE] Player position:', this.player.x, this.player.y);
+      
+      // Track station visit for progress
+      const stationId = nearStation.displayName.toLowerCase().replace(/\s+/g, '-');
+      this.progressTracker?.visitStation(stationId);
+      
       nearStation.interact();
       return true; // Consumed
     }
