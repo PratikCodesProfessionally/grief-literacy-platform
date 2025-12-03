@@ -12,9 +12,11 @@ export class MobileControls {
   private interactButton: Phaser.GameObjects.Container;
   private interactButtonPressed: boolean = false;
   private isVisible: boolean = false;
+  private onInteractCallback?: () => void; // Callback for direct interaction
   
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: Phaser.Scene, onInteract?: () => void) {
     this.scene = scene;
+    this.onInteractCallback = onInteract;
     
     this.joystick = this.createJoystick();
     this.interactButton = this.createInteractButton();
@@ -24,10 +26,11 @@ export class MobileControls {
   }
   
   private createJoystick(): any {
-    // Position based on screen size - much higher on screen
+    // Position based on screen size - optimized for tablets and phones
     const isSmallScreen = this.scene.scale.width < 768;
-    const baseX = isSmallScreen ? 80 : 120;
-    const baseY = this.scene.scale.height - (isSmallScreen ? 150 : 180);
+    const isTablet = this.scene.scale.width >= 768 && this.scene.scale.width <= 1024;
+    const baseX = isSmallScreen ? 80 : isTablet ? 100 : 120;
+    const baseY = this.scene.scale.height - (isSmallScreen ? 150 : isTablet ? 170 : 180);
     
     // Joystick base
     const base = this.scene.add.circle(
@@ -113,11 +116,12 @@ export class MobileControls {
   }
   
   private createInteractButton(): Phaser.GameObjects.Container {
-    // Position based on screen size - much higher on screen
+    // Position based on screen size - optimized for tablets and phones
     const isSmallScreen = this.scene.scale.width < 768;
-    const btnX = this.scene.scale.width - (isSmallScreen ? 80 : 120);
-    const btnY = this.scene.scale.height - (isSmallScreen ? 150 : 180);
-    const buttonSize = isSmallScreen ? GAME_CONSTANTS.BUTTON_SIZE : GAME_CONSTANTS.BUTTON_SIZE * 1.1;
+    const isTablet = this.scene.scale.width >= 768 && this.scene.scale.width <= 1024;
+    const btnX = this.scene.scale.width - (isSmallScreen ? 80 : isTablet ? 100 : 120);
+    const btnY = this.scene.scale.height - (isSmallScreen ? 150 : isTablet ? 170 : 180);
+    const buttonSize = isSmallScreen ? GAME_CONSTANTS.BUTTON_SIZE : isTablet ? GAME_CONSTANTS.BUTTON_SIZE * 1.2 : GAME_CONSTANTS.BUTTON_SIZE * 1.1;
     
     const container = this.scene.add.container(btnX, btnY);
     container.setScrollFactor(0);
@@ -132,7 +136,6 @@ export class MobileControls {
       0.95 // Increased opacity
     );
     bg.setStrokeStyle(4, 0xffffff, 0.9); // Thicker border for visibility
-    bg.setInteractive({ useHandCursor: true });
     
     // Button text
     const text = this.scene.add.text(0, 0, '↑', {
@@ -156,56 +159,59 @@ export class MobileControls {
     
     container.add([bg, text, instructionText]);
     
-    // Improved touch handling for mobile
-    let touchActive = false;
-    
-    const handleTouchStart = (pointer: any) => {
-      touchActive = true;
-      this.interactButtonPressed = true;
+    // Simplified touch handling - trigger immediately on pointerdown for instant response
+    const handleTouchStart = (pointer: Phaser.Input.Pointer) => {
+      // Immediate visual feedback
       bg.setScale(0.85);
       bg.setFillStyle(0x7c3aed);
       
-      // Visual feedback - pulse effect
-      this.scene.tweens.add({
-        targets: bg,
-        scale: 0.95,
-        duration: 100,
-        yoyo: true,
-        ease: 'Power2'
-      });
+      // Haptic feedback if available
+      if (navigator.vibrate) {
+        navigator.vibrate(10);
+      }
       
-      console.log('Button pressed!'); // Debug
+      // TRIGGER IMMEDIATELY on touch start for instant response
+      console.log('[MOBILE] 🎯 Touch on interact button - TRIGGERING IMMEDIATELY');
+      this.interactButtonPressed = true;
+      
+      // Prevent default to avoid any browser interference
+      if (pointer.event) {
+        pointer.event.preventDefault();
+        pointer.event.stopPropagation();
+      }
+      
+      // Reset visual state after short delay
+      this.scene.time.delayedCall(100, () => {
+        bg.setScale(1);
+        bg.setFillStyle(0x8b5cf6);
+      });
     };
     
-    const handleTouchEnd = () => {
-      touchActive = false;
-      bg.setScale(1);
-      bg.setFillStyle(0x8b5cf6);
-    };
-    
-    // Make the entire container interactive, not just bg
-    container.setSize(buttonSize, buttonSize);
-    container.setInteractive();
-    
-    // Use container events for better touch detection
-    container.on('pointerdown', (pointer: any) => {
-      handleTouchStart(pointer);
+    // Make the entire container interactive with proper touch handling
+    container.setSize(buttonSize * 1.5, buttonSize * 1.5); // Larger hit area
+    container.setInteractive({
+      useHandCursor: true,
+      hitArea: new Phaser.Geom.Circle(0, 0, buttonSize * 0.75), // Larger hit area
+      hitAreaCallback: Phaser.Geom.Circle.Contains
     });
     
-    container.on('pointerup', () => {
-      handleTouchEnd();
-    });
+    // Add comprehensive touch event listeners - only pointerdown needed now
+    container.on('pointerdown', handleTouchStart);
     
-    container.on('pointerout', () => {
-      if (touchActive) {
-        handleTouchEnd();
+    // Prevent default browser behaviors that interfere
+    this.scene.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      // Check if pointer is over our button
+      const distance = Phaser.Math.Distance.Between(
+        pointer.x, pointer.y,
+        container.x, container.y
+      );
+      
+      if (distance <= buttonSize / 2) {
+        // Prevent canvas pan/zoom when touching button
+        pointer.event.preventDefault();
+        pointer.event.stopPropagation();
       }
     });
-    
-    // Also keep bg interactive as backup
-    bg.setInteractive();
-    bg.on('pointerdown', handleTouchStart);
-    bg.on('pointerup', handleTouchEnd);
     
     return container;
   }
@@ -229,10 +235,19 @@ export class MobileControls {
       player.clearJoystickInput();
     }
     
-    // Update interact button - simplified for reliability
+    // Update interact button - use callback for direct interaction
     if (this.interactButtonPressed) {
-      console.log('[MOBILE] ========== BUTTON PRESSED - SETTING INTERACT ==========');
+      console.log('[MOBILE] ========== BUTTON PRESSED - TRIGGERING INTERACTION ==========');
+      
+      // Use callback if available for immediate station entry
+      if (this.onInteractCallback) {
+        console.log('[MOBILE] Using direct callback for interaction');
+        this.onInteractCallback();
+      }
+      
+      // Always set the player flag so shared interaction logic (NPCs, trees, fallback) still works
       player.setMobileInteract(true);
+      
       this.interactButtonPressed = false;
     }
   }

@@ -18,7 +18,7 @@ export const GAME_CONSTANTS = {
   CAMERA_DEADZONE_HEIGHT: 100,
   
   // Interaction
-  INTERACTION_RANGE: 180,
+  INTERACTION_RANGE: 250, // Increased for better mobile usability
   PROMPT_Y_OFFSET: -140,
   
   // Parallax speeds (0 = fixed, 1 = moves with camera)

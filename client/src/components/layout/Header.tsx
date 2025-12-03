@@ -111,7 +111,7 @@ export function Header() {
       {/* Mobile Menu Overlay - Rendered via Portal */}
       {mobileMenuOpen && createPortal(
         <div 
-          className="fixed inset-0 z-50 md:hidden"
+          className="fixed inset-0 z-[10000] md:hidden"
           role="dialog"
           aria-modal="true"
           aria-labelledby="mobile-menu-title"
@@ -201,8 +201,8 @@ export function Header() {
         }
         
         /* Ensure menu appears above all content */
-        .fixed.z-50 {
-          z-index: 9999 !important;
+        .fixed.z-\[10000\] {
+          z-index: 10000 !important;
         }
         
         /* Prevent horizontal scroll on small screens */
