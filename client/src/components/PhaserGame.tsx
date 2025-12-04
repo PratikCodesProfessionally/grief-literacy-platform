@@ -161,31 +161,6 @@ export function PhaserGame() {
           outline: 'none'
         }}
       />
-      
-      {/* Instructions overlay (hidden on mobile) */}
-      <div className="absolute bottom-4 right-4 z-40 
-                    hidden md:block
-                    bg-white/90 backdrop-blur-sm
-                    rounded-2xl p-4 shadow-lg
-                    max-w-sm">
-        <h3 className="text-lg font-bold text-gray-900 mb-2">
-          Welcome to Your Healing Journey
-        </h3>
-        <p className="text-sm text-gray-600 mb-3">
-          Explore this peaceful world and discover different healing stations.
-        </p>
-        <div className="space-y-1 text-sm text-gray-700">
-          <div className="flex items-center gap-2">
-            <kbd className="px-2 py-1 bg-gray-200 rounded text-xs font-mono">←</kbd>
-            <kbd className="px-2 py-1 bg-gray-200 rounded text-xs font-mono">→</kbd>
-            <span>Move left/right</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <kbd className="px-2 py-1 bg-gray-200 rounded text-xs font-mono">SPACE</kbd>
-            <span>Enter station</span>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

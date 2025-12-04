@@ -186,6 +186,8 @@ export class GuidedTutorial {
     text.setOrigin(0.5);
     this.skipButton.add(text);
     
+    let skipPressed = false;
+    
     bg.setInteractive({ useHandCursor: true });
     bg.on('pointerover', () => {
       bg.setFillStyle(0x718096, 0.9);
@@ -194,8 +196,17 @@ export class GuidedTutorial {
     bg.on('pointerout', () => {
       bg.setFillStyle(0x4A5568, 0.8);
       text.setColor('#A0AEC0');
+      skipPressed = false;
     });
-    bg.on('pointerdown', () => this.skip());
+    bg.on('pointerdown', () => {
+      skipPressed = true;
+    });
+    bg.on('pointerup', () => {
+      if (skipPressed) {
+        skipPressed = false;
+        this.skip();
+      }
+    });
     
     this.container.add(this.skipButton);
   }
@@ -475,6 +486,9 @@ export class GuidedTutorial {
     label.setOrigin(0.5);
     btn.add(label);
     
+    // Track if button was pressed (for proper click detection)
+    let isPressed = false;
+    
     bg.setInteractive({ useHandCursor: true });
     bg.on('pointerover', () => {
       bg.setScale(1.05);
@@ -483,8 +497,22 @@ export class GuidedTutorial {
     bg.on('pointerout', () => {
       bg.setScale(1);
       bg.setFillStyle(isSecondary ? 0x4A5568 : 0x48BB78, isSecondary ? 0.8 : 1);
+      isPressed = false;
     });
-    bg.on('pointerdown', onClick);
+    bg.on('pointerdown', () => {
+      isPressed = true;
+      bg.setScale(0.95);
+    });
+    bg.on('pointerup', () => {
+      if (isPressed) {
+        isPressed = false;
+        bg.setScale(1.05);
+        // Small delay to prevent double-clicks and allow visual feedback
+        this.scene.time.delayedCall(50, () => {
+          onClick();
+        });
+      }
+    });
     
     return btn;
   }

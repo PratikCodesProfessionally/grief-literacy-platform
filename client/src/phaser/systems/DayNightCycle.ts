@@ -113,10 +113,10 @@ export class DayNightCycle {
       this.targetTime = this.currentTime;
     }
     
-    // Create visual elements - NO sky gradient (ParallaxBackground handles sky)
+    // Create visual elements - NO sky gradient (ParallaxBackground handles sky and sun)
     this.skyGradient = this.createSkyGradient(); // Keep but don't draw
     this.stars = this.createStars();
-    this.celestialBody = this.createCelestialBody();
+    this.celestialBody = this.createMoon(); // Only moon - ParallaxBackground has the sun
     this.overlay = this.createAmbientOverlay();
     
     // Create time indicator UI
@@ -157,29 +157,30 @@ export class DayNightCycle {
     return stars;
   }
   
-  private createCelestialBody(): Phaser.GameObjects.Container {
+  private createMoon(): Phaser.GameObjects.Container {
     const body = this.scene.add.container(0, 0);
     
-    // Glow effect (outer)
-    const glow = this.scene.add.circle(0, 0, 50, 0xFFFF88, 0.3);
+    // Moon glow effect (outer) - silver/blue tint
+    const glow = this.scene.add.circle(0, 0, 45, 0x9999CC, 0.25);
     glow.setData('type', 'glow');
     body.add(glow);
     
-    // Main body
-    const main = this.scene.add.circle(0, 0, 30, 0xFFEE88, 1);
+    // Main moon body - pale yellow/white
+    const main = this.scene.add.circle(0, 0, 28, 0xEEEEFF, 1);
     main.setData('type', 'main');
     body.add(main);
     
-    // Moon craters (hidden during day)
-    const crater1 = this.scene.add.circle(-8, -5, 6, 0xCCCCDD, 0.5);
+    // Moon craters
+    const crater1 = this.scene.add.circle(-8, -5, 6, 0xCCCCDD, 0.4);
     crater1.setData('type', 'crater');
-    crater1.setVisible(false);
     body.add(crater1);
     
-    const crater2 = this.scene.add.circle(10, 8, 4, 0xCCCCDD, 0.5);
+    const crater2 = this.scene.add.circle(10, 8, 4, 0xCCCCDD, 0.4);
     crater2.setData('type', 'crater');
-    crater2.setVisible(false);
     body.add(crater2);
+    
+    // Start hidden - will show at night
+    body.setVisible(false);
     
     this.container.add(body);
     return body;
@@ -345,32 +346,31 @@ export class DayNightCycle {
       });
     }
     
-    // Update celestial body position
-    const angle = ((this.currentTime - 6) / 24) * Math.PI * 2 - Math.PI / 2;
-    const orbitWidth = width * 0.8;
-    const orbitHeight = height * 0.4;
-    const centerX = width / 2;
-    const centerY = height * 0.5;
-    
-    const x = centerX + Math.cos(angle) * orbitWidth / 2;
-    const y = centerY - Math.sin(angle) * orbitHeight;
-    
-    this.celestialBody.setPosition(x, y);
-    
-    // Update sun/moon appearance
+    // Update celestial body (moon) position - only visible at night
     const isNight = this.currentTime >= 19 || this.currentTime < 6;
-    this.celestialBody.getAll().forEach((part) => {
-      const type = part.getData('type');
-      if (part instanceof Phaser.GameObjects.Arc) {
-        if (type === 'main') {
-          part.setFillStyle(colors.sunMoon);
-        } else if (type === 'glow') {
-          part.setFillStyle(colors.sunMoonGlow, 0.3);
-        } else if (type === 'crater') {
-          part.setVisible(isNight);
-        }
+    this.celestialBody.setVisible(isNight);
+    
+    if (isNight) {
+      // Moon arc across the night sky
+      // Moon rises at 19:00 and sets at 6:00 (11 hour arc)
+      let moonProgress: number;
+      if (this.currentTime >= 19) {
+        moonProgress = (this.currentTime - 19) / 11; // 19:00 to midnight = 5 hours
+      } else {
+        moonProgress = (this.currentTime + 5) / 11; // midnight to 6:00 = 6 hours
       }
-    });
+      
+      const angle = moonProgress * Math.PI; // 0 to PI (left to right arc)
+      const orbitWidth = width * 0.7;
+      const orbitHeight = height * 0.35;
+      const centerX = width / 2;
+      const centerY = height * 0.6;
+      
+      const x = centerX - Math.cos(angle) * orbitWidth / 2;
+      const y = centerY - Math.sin(angle) * orbitHeight;
+      
+      this.celestialBody.setPosition(x, y);
+    }
     
     // Update ambient overlay
     this.overlay.setFillStyle(colors.ambient, colors.lightIntensity);
