@@ -31,6 +31,7 @@ export class GuidedTutorial {
   private dialogBox?: Phaser.GameObjects.Container;
   private skipButton?: Phaser.GameObjects.Container;
   private progressDots?: Phaser.GameObjects.Container;
+  private debugText?: Phaser.GameObjects.Text;
   
   private steps: TutorialStep[] = [];
   private currentStep: number = 0;
@@ -59,65 +60,37 @@ export class GuidedTutorial {
     this.steps = [
       {
         id: 'welcome',
-        title: 'Welcome 💜',
-        message: 'This is your safe space for grief work.\nHere you will find tools and support\nfor your healing journey.',
+        title: 'Hello',
+        message: 'This is a quiet space, created for you.\nThere\'s no rush here. No expectations.\nJust gentle tools when you\'re ready.',
         action: 'none',
         delay: 500
       },
       {
         id: 'movement',
-        title: 'Movement',
-        message: 'Use the arrow keys (←→) or\ntap on the sides of the screen\nto move around.',
+        title: 'Moving Around',
+        message: 'Use the joystick on the left\nto walk through this world.\nGo at your own pace.',
         targetType: 'player',
         action: 'move'
       },
       {
-        id: 'explore',
-        title: 'Explore',
-        message: 'You are in a peaceful landscape.\nMove to the right to discover\nthe various therapy stations.',
-        action: 'move'
-      },
-      {
         id: 'stations',
-        title: 'Therapy Stations',
-        message: 'Each station offers different\ntools for your healing journey:\nArt, Community, Meditation and more.',
+        title: 'Places to Visit',
+        message: 'You\'ll find different spaces here \nfor reflection, creativity, connection.\nEach one is here when you need it.',
         target: { x: firstStation.x, y: firstStation.y },
         targetType: 'station',
         action: 'none'
       },
       {
         id: 'interact',
-        title: 'Interact',
-        message: 'Press SPACE or tap the green\nbutton when you are near\na station.',
+        title: 'Entering a Space',
+        message: 'When you\'re near a place,\nthe purple button appears.\nTap it to go inside.',
         targetType: 'station',
         action: 'interact'
       },
       {
-        id: 'minimap',
-        title: 'Map',
-        message: 'The map in the top right shows\nall stations. Click on it\nto navigate quickly.',
-        targetType: 'minimap',
-        action: 'click',
-        highlightArea: { x: 0, y: 0, width: 200, height: 120 } // Will be positioned dynamically
-      },
-      {
-        id: 'zoom',
-        title: 'Zoom & Camera',
-        message: 'Use the +/- keys or mouse wheel\nto zoom in or out.\nClick ◎ to center.',
-        targetType: 'controls',
-        action: 'zoom',
-        highlightArea: { x: 0, y: 0, width: 50, height: 150 } // Will be positioned dynamically
-      },
-      {
-        id: 'progress',
-        title: 'Your Progress',
-        message: 'In the top left you can see your\nprogress on the healing journey.\nEvery visit counts! 💪',
-        action: 'none'
-      },
-      {
         id: 'ready',
-        title: 'Ready! 🌟',
-        message: 'You are now ready for your journey.\nTake all the time you need.\nEvery step is valuable.',
+        title: 'That\'s All',
+        message: 'Take your time exploring.\nThere\'s no right way to do this.\nWe\'re glad you\'re here.',
         action: 'none',
         delay: 300
       }
@@ -134,14 +107,33 @@ export class GuidedTutorial {
     this.isActive = true;
     this.currentStep = 0;
     
-    // Create overlay
-    this.createOverlay();
-    this.createSkipButton();
-    this.createProgressDots();
+    // Create minimal overlay for debug only (UI handled by React)
+    this.createDebugOverlay();
     
-    // Show first step after delay
+    // FALLBACK: Add keyboard support for buttons
+    this.setupKeyboardFallback();
+    
+    // Show first step after delay (UI handled by React overlay)
     this.scene.time.delayedCall(this.steps[0].delay || 300, () => {
       this.showStep(0);
+    });
+  }
+  
+  private setupKeyboardFallback(): void {
+    // Use arrow keys or spacebar to navigate tutorial
+    this.scene.input.keyboard?.on('keydown-RIGHT', () => {
+      console.log('[KEYBOARD] Right arrow pressed');
+      this.showStep(this.currentStep + 1);
+    });
+    
+    this.scene.input.keyboard?.on('keydown-SPACE', () => {
+      console.log('[KEYBOARD] Space pressed');
+      this.showStep(this.currentStep + 1);
+    });
+    
+    this.scene.input.keyboard?.on('keydown-ESC', () => {
+      console.log('[KEYBOARD] Escape pressed - skipping');
+      this.skip();
     });
   }
   
@@ -163,6 +155,10 @@ export class GuidedTutorial {
     this.overlay.setScrollFactor(0);
     this.container.add(this.overlay);
     
+    // CRITICAL MOBILE FIX: Make overlay non-interactive to prevent event blocking
+    // This ensures touch events reach the buttons instead of being consumed by overlay
+    // this.overlay.setInteractive(); // REMOVED - was blocking button interactions
+    
     // Spotlight graphics for highlighting areas
     this.spotlight = this.scene.add.graphics();
     this.spotlight.setScrollFactor(0);
@@ -172,41 +168,82 @@ export class GuidedTutorial {
   private createSkipButton(): void {
     const { width } = this.scene.cameras.main;
     
-    this.skipButton = this.scene.add.container(width - 60, 30);
+    this.skipButton = this.scene.add.container(width - 70, 30);
     
-    const bg = this.scene.add.rectangle(0, 0, 100, 32, 0x4A5568, 0.8);
-    bg.setStrokeStyle(1, 0x718096);
+    // MOBILE OPTIMIZATION: Much larger touch target
+    const isMobile = this.scene.sys.game.device.os.android || 
+                     this.scene.sys.game.device.os.iOS ||
+                     this.scene.sys.game.device.os.iPad ||
+                     this.scene.sys.game.device.os.iPhone ||
+                     ('ontouchstart' in window);
+    
+    const btnWidth = isMobile ? 120 : 100;
+    const btnHeight = isMobile ? 48 : 36;
+    
+    const bg = this.scene.add.rectangle(0, 0, btnWidth, btnHeight, 0x4A5568, 0.8);
+    bg.setStrokeStyle(2, 0x718096);
     this.skipButton.add(bg);
     
     const text = this.scene.add.text(0, 0, 'Skip', {
-      fontSize: '11px',
+      fontSize: isMobile ? '14px' : '12px',
       fontFamily: 'Inter, sans-serif',
       color: '#A0AEC0'
     });
     text.setOrigin(0.5);
     this.skipButton.add(text);
     
-    let skipPressed = false;
-    
-    bg.setInteractive({ useHandCursor: true });
-    bg.on('pointerover', () => {
-      bg.setFillStyle(0x718096, 0.9);
-      text.setColor('#FFFFFF');
+    // MOBILE OPTIMIZATION: Enhanced interactivity
+    bg.setInteractive({
+      useHandCursor: true,
+      hitArea: new Phaser.Geom.Rectangle(-btnWidth/2, -btnHeight/2, btnWidth, btnHeight),
+      hitAreaCallback: Phaser.Geom.Rectangle.Contains
     });
+    
+    bg.on('pointerover', () => {
+      if (!isMobile) {
+        bg.setFillStyle(0x718096, 0.9);
+        text.setColor('#FFFFFF');
+      }
+    });
+    
     bg.on('pointerout', () => {
       bg.setFillStyle(0x4A5568, 0.8);
       text.setColor('#A0AEC0');
-      skipPressed = false;
     });
-    bg.on('pointerdown', () => {
-      skipPressed = true;
-    });
-    bg.on('pointerup', () => {
-      if (skipPressed) {
-        skipPressed = false;
-        this.skip();
+    
+    // MOBILE OPTIMIZATION: Comprehensive touch handling for skip button
+    bg.on('pointerup', (pointer: Phaser.Input.Pointer) => {
+      console.log('[TUTORIAL SKIP] Clicked');
+      this.updateDebugText('✓ SKIP CLICKED');
+      
+      // Visual feedback
+      bg.setScale(0.95);
+      bg.setFillStyle(0x2D3748);
+      
+      // Haptic feedback
+      if (isMobile && navigator.vibrate) {
+        navigator.vibrate(20);
       }
+      
+      // Stop event propagation immediately
+      pointer.event?.preventDefault();
+      pointer.event?.stopPropagation();
+      
+      // Execute skip after brief delay for visual feedback
+      this.scene.time.delayedCall(100, () => {
+        console.log('[TUTORIAL SKIP] Executing skip');
+        this.skip();
+      });
+      
+      // Reset visual state
+      this.scene.time.delayedCall(300, () => {
+        bg.setScale(1);
+        bg.setFillStyle(0x4A5568, 0.8);
+      });
     });
+    
+    // MOBILE OPTIMIZATION: Ensure skip button is at high z-index
+    this.skipButton.setDepth(2500);
     
     this.container.add(this.skipButton);
   }
@@ -232,6 +269,16 @@ export class GuidedTutorial {
     });
     
     this.container.add(this.progressDots);
+  }
+  
+  private createDebugOverlay(): void {
+    // Debug overlay removed - Tutorial UI now handled by React
+    // No longer needed since mobile buttons work via HTML overlay
+  }
+  
+  private updateDebugText(message: string): void {
+    // Debug text removed - no longer needed
+    console.log('[TUTORIAL]', message);
   }
   
   private updateProgressDots(): void {
@@ -268,19 +315,18 @@ export class GuidedTutorial {
     const step = this.steps[stepIndex];
     this.currentStep = stepIndex;
     
-    // Clear previous dialog
-    if (this.dialogBox) {
-      this.dialogBox.destroy();
-    }
+    // Update debug text
+    this.updateDebugText(`Tutorial: Step ${stepIndex + 1}/${this.steps.length} - ${step.title}`);
     
-    // Update progress dots
-    this.updateProgressDots();
+    // Emit event for React overlay (UI handled by React component)
+    this.scene.events.emit('tutorial-step-changed', {
+      step: stepIndex,
+      title: step.title,
+      message: step.message,
+      isLastStep: stepIndex === this.steps.length - 1
+    });
     
-    // Update spotlight
-    this.updateSpotlight(step);
-    
-    // Create dialog box
-    this.createDialogBox(step);
+    console.log('[TUTORIAL] Step changed:', stepIndex, step.title);
   }
   
   private updateSpotlight(step: TutorialStep): void {
@@ -371,6 +417,9 @@ export class GuidedTutorial {
     this.dialogBox = this.scene.add.container(dialogX, dialogY);
     this.dialogBox.setAlpha(0);
     
+    // MOBILE OPTIMIZATION: Ensure dialog box is at high z-index but below buttons
+    this.dialogBox.setDepth(2000);
+    
     // Background with gradient-like effect
     const boxWidth = 340;
     const boxHeight = 180;
@@ -423,20 +472,22 @@ export class GuidedTutorial {
     // Buttons container
     const buttonsY = boxHeight/2 - 35;
     
-    // Back button (if not first step)
+    // Back button (if not first step) - ADD DIRECTLY TO SCENE
     if (this.currentStep > 0) {
-      const backBtn = this.createButton('← Back', -60, buttonsY, () => {
+      const backBtn = this.createButton('← Back', (width/2 - 60), (height/2 + dialogY - buttonsY), () => {
         this.showStep(this.currentStep - 1);
       }, true);
-      this.dialogBox.add(backBtn);
+      // Add to scene, not to dialog box
+      this.scene.add.existing(backBtn);
+      backBtn.setScrollFactor(0);
     }
     
-    // Next/Done button
+    // Next/Done button - ADD DIRECTLY TO SCENE
     const isLastStep = this.currentStep === this.steps.length - 1;
     const nextBtn = this.createButton(
       isLastStep ? 'Start! 🚀' : 'Next →',
-      this.currentStep > 0 ? 60 : 0,
-      buttonsY,
+      (width/2 + (this.currentStep > 0 ? 60 : 0)),
+      (height/2 + dialogY - buttonsY),
       () => {
         if (isLastStep) {
           this.complete();
@@ -446,7 +497,9 @@ export class GuidedTutorial {
       },
       false
     );
-    this.dialogBox.add(nextBtn);
+    // Add to scene, not to dialog box
+    this.scene.add.existing(nextBtn);
+    nextBtn.setScrollFactor(0);
     
     this.container.add(this.dialogBox);
     
@@ -469,76 +522,122 @@ export class GuidedTutorial {
   ): Phaser.GameObjects.Container {
     const btn = this.scene.add.container(x, y);
     
+    // MOBILE OPTIMIZATION: Much larger touch targets for mobile devices
+    const isMobile = this.scene.sys.game.device.os.android || 
+                     this.scene.sys.game.device.os.iOS ||
+                     this.scene.sys.game.device.os.iPad ||
+                     this.scene.sys.game.device.os.iPhone ||
+                     ('ontouchstart' in window);
+    
+    const btnWidth = isMobile ? 200 : 110;  // MUCH wider for testing
+    const btnHeight = isMobile ? 80 : 38;   // MUCH taller for testing
+    
     const bg = this.scene.add.rectangle(
-      0, 0, 100, 32,
+      0, 0, btnWidth, btnHeight,
       isSecondary ? 0x4A5568 : 0x48BB78,
       isSecondary ? 0.8 : 1
     );
-    bg.setStrokeStyle(1, isSecondary ? 0x718096 : 0x68D391);
+    bg.setStrokeStyle(3, isSecondary ? 0xFF0000 : 0xFF0000); // RED stroke for visibility
     btn.add(bg);
     
     const label = this.scene.add.text(0, 0, text, {
-      fontSize: '12px',
+      fontSize: isMobile ? '20px' : '13px',  // LARGER for testing
       fontFamily: 'Inter, sans-serif',
       fontStyle: 'bold',
-      color: isSecondary ? '#E2E8F0' : '#1A202C'
+      color: '#FFFFFF'
     });
     label.setOrigin(0.5);
     btn.add(label);
     
-    // Track if button was pressed (for proper click detection)
-    let isPressed = false;
+    // ULTRA SIMPLE: Make button interactive with absolute minimum config
+    bg.setInteractive();
     
-    bg.setInteractive({ useHandCursor: true });
-    bg.on('pointerover', () => {
-      bg.setScale(1.05);
-      bg.setFillStyle(isSecondary ? 0x718096 : 0x68D391);
+    // Log when button is created
+    console.log('[BUTTON CREATED]', text, {
+      position: { x, y },
+      size: { width: btnWidth, height: btnHeight },
+      depth: btn.depth,
+      visible: bg.visible
     });
-    bg.on('pointerout', () => {
-      bg.setScale(1);
-      bg.setFillStyle(isSecondary ? 0x4A5568 : 0x48BB78, isSecondary ? 0.8 : 1);
-      isPressed = false;
-    });
-    bg.on('pointerdown', () => {
-      isPressed = true;
-      bg.setScale(0.95);
-    });
-    bg.on('pointerup', () => {
-      if (isPressed) {
-        isPressed = false;
-        bg.setScale(1.05);
-        // Small delay to prevent double-clicks and allow visual feedback
-        this.scene.time.delayedCall(50, () => {
-          onClick();
-        });
+    
+    // Debug: Add visual debug square behind button
+    const debugSquare = this.scene.add.rectangle(0, 0, btnWidth + 10, btnHeight + 10, 0xFFFF00, 0.2);
+    btn.add(debugSquare);
+    
+    // CRITICAL EVENT: pointerup
+    bg.on('pointerup', (pointer: Phaser.Input.Pointer) => {
+      console.log('[BUTTON HIT] pointerup event fired!', text);
+      this.updateDebugText(`HIT: ${text}`);
+      
+      // VISUAL FEEDBACK
+      bg.setFillStyle(0xFF0000);
+      
+      // HAPTIC
+      if (isMobile && navigator.vibrate) {
+        navigator.vibrate(50);
       }
+      
+      // STOP PROPAGATION
+      if (pointer.event) {
+        pointer.event.preventDefault();
+        pointer.event.stopPropagation();
+      }
+      
+      // EXECUTE
+      this.scene.time.delayedCall(100, () => {
+        console.log('[BUTTON EXECUTE]', text);
+        onClick();
+      });
+      
+      // RESET
+      this.scene.time.delayedCall(300, () => {
+        bg.setFillStyle(isSecondary ? 0x4A5568 : 0x48BB78);
+      });
     });
+    
+    // ALSO TRY pointerdown
+    bg.on('pointerdown', () => {
+      console.log('[BUTTON HIT] pointerdown event!', text);
+    });
+    
+    btn.setDepth(3000);
     
     return btn;
   }
   
   private skip(): void {
+    console.log('[TUTORIAL] skip() called');
     this.complete();
   }
   
   private complete(): void {
+    console.log('[TUTORIAL] complete() called');
     this.isActive = false;
     this.isComplete = true;
+    
+    // Emit completion event for React overlay
+    this.scene.events.emit('tutorial-completed');
+    
+    // Remove debug text
+    if (this.debugText) {
+      this.debugText.destroy();
+      this.debugText = undefined;
+    }
+    
+    // Remove keyboard listeners to prevent interference
+    this.scene.input.keyboard?.off('keydown-RIGHT');
+    this.scene.input.keyboard?.off('keydown-SPACE');
+    this.scene.input.keyboard?.off('keydown-ESC');
     
     // Save completion status
     localStorage.setItem(this.STORAGE_KEY, 'true');
     
-    // Animate out
-    this.scene.tweens.add({
-      targets: this.container,
-      alpha: 0,
-      duration: 400,
-      ease: 'Quad.easeOut',
-      onComplete: () => {
-        this.destroy();
-        this.onComplete?.();
-      }
-    });
+    // Destroy container immediately (no animation) to avoid blocking touch
+    this.container.destroy();
+    
+    console.log('[TUTORIAL] Tutorial cleanup complete - touch events should work now');
+    
+    this.onComplete?.();
   }
   
   public destroy(): void {

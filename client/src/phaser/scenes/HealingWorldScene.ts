@@ -75,6 +75,21 @@ export class HealingWorldScene extends Phaser.Scene {
                     ('ontouchstart' in window) ||
                     this.isTablet; // Include tablets as mobile for controls
     
+    console.log('[INIT] Device detection:', {
+      userAgent: userAgent.substring(0, 50) + '...',
+      isTablet: this.isTablet,
+      isMobile: this.isMobile,
+      width: window.innerWidth,
+      height: window.innerHeight,
+      hasTouch: 'ontouchstart' in window,
+      deviceOS: {
+        android: this.sys.game.device.os.android,
+        iOS: this.sys.game.device.os.iOS,
+        iPad: this.sys.game.device.os.iPad,
+        iPhone: this.sys.game.device.os.iPhone
+      }
+    });
+    
     // Set world bounds with scaled dimensions
     const worldWidth = GAME_CONSTANTS.WORLD_WIDTH;
     const worldHeight = this.scale.height;
@@ -98,7 +113,7 @@ export class HealingWorldScene extends Phaser.Scene {
       console.log('[INIT] Device detected as mobile, creating mobile controls');
       this.createMobileControls();
     } else {
-      console.log('[INIT] Device not detected as mobile, skipping mobile controls');
+      console.log('[INIT] Device detected as desktop, skipping mobile controls');
     }
     
     // Create season UI
@@ -510,12 +525,8 @@ export class HealingWorldScene extends Phaser.Scene {
     // Create day/night cycle (syncs with real time)
     this.dayNightCycle = new DayNightCycle(this, true);
     
-    // Auto-start tutorial for new users (after short delay)
-    if (this.guidedTutorial.shouldShowTutorial()) {
-      this.time.delayedCall(1500, () => {
-        this.guidedTutorial?.start();
-      });
-    }
+    // Tutorial is now started via React prompt, not auto-started here
+    // The React component will show a prompt asking if user wants tutorial
   }
   
   private createMobileControls(): void {

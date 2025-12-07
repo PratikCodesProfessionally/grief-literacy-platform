@@ -8,6 +8,7 @@ export class MobileControls {
     base: Phaser.GameObjects.Arc;
     thumb: Phaser.GameObjects.Arc;
     isDragging: boolean;
+    draggingPointerId: number | null;
   };
   private interactButton: Phaser.GameObjects.Container;
   private interactButtonPressed: boolean = false;
@@ -59,7 +60,8 @@ export class MobileControls {
     const joystick = {
       base,
       thumb,
-      isDragging: false
+      isDragging: false,
+      draggingPointerId: null
     };
     
     // Make base interactive
@@ -76,11 +78,12 @@ export class MobileControls {
       
       if (distance < GAME_CONSTANTS.JOYSTICK_RADIUS * 1.8) {
         joystick.isDragging = true;
+        joystick.draggingPointerId = pointer.id;
       }
     });
     
     this.scene.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
-      if (!joystick.isDragging) return;
+      if (!joystick.isDragging || joystick.draggingPointerId !== pointer.id) return;
       
       const angle = Phaser.Math.Angle.Between(
         base.x,
@@ -105,11 +108,12 @@ export class MobileControls {
       );
     });
     
-    this.scene.input.on('pointerup', () => {
-      if (!joystick.isDragging) return;
-      
-      joystick.isDragging = false;
-      thumb.setPosition(base.x, base.y);
+    this.scene.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
+      if (joystick.draggingPointerId === pointer.id) {
+        joystick.isDragging = false;
+        joystick.draggingPointerId = null;
+        thumb.setPosition(base.x, base.y);
+      }
     });
     
     return joystick;
@@ -227,6 +231,7 @@ export class MobileControls {
       
       if (distance > 5) {
         const normalizedX = dx / (GAME_CONSTANTS.JOYSTICK_RADIUS * 0.8);
+        console.log('[MOBILE] Joystick input:', { normalizedX, distance });
         player.setJoystickInput(normalizedX, 0);
       } else {
         player.clearJoystickInput();
