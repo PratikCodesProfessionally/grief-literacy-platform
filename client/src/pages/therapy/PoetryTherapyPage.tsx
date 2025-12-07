@@ -12,6 +12,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { Wifi, WifiOff, Cloud, HardDrive, RefreshCw } from 'lucide-react';
 import { storageProvider } from '@/services/StorageProvider';
+import auth from 'server/middleware/auth';
 
 interface VoiceRecording {
   id: number;
@@ -759,6 +760,32 @@ A presence through Absence
 A poem not written`,
   category: "A non-Existence",
   readTime: "2 min"
+},
+{
+  id: 14,
+  title: "After the love's blaze",
+  author: "Unknown",
+  content: `After the love's blaze
+Allow yourself to be hurt
+For when has a horseman
+Not fallen a hundred times?
+When has a swordsman
+Not been cut a thousand times?
+
+We have learned
+It's not the bullet that kills
+It's the hope
+
+And this wisdom?
+They'll print it on T-shirts
+Red letters on white cotton
+Worn by people who've never bled
+Who mistake slogans for scars
+
+"The girl you love unconditionally
+Will teach you never to love unconditionally again`,
+  category: "Resilience",
+  readTime: "1 min"
 }
   ];
 
