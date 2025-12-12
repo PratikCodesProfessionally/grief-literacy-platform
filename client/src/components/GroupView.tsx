@@ -1,10 +1,11 @@
 import * as React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Users, Send, Video, VideoOff } from 'lucide-react';
+import { ArrowLeft, Users, Send, Video, Wifi, WifiOff, Copy } from 'lucide-react';
 import { supportGroupsService } from '@/services/SupportGroupsService';
+import { groupPresenceService } from '@/services/GroupPresenceService';
+import { groupMessageService } from '@/services/GroupMessageService';
 import { SupportGroup, User, GroupPost } from '@/types/supportGroups';
 
 interface GroupViewProps {
@@ -17,11 +18,72 @@ export function GroupView({ group: initialGroup, user, onBack }: GroupViewProps)
   const [group, setGroup] = React.useState<SupportGroup>(initialGroup);
   const [newPost, setNewPost] = React.useState('');
   const [isPosting, setIsPosting] = React.useState(false);
-  const [showVideoInfo, setShowVideoInfo] = React.useState(false);
-  const [isVideoCallActive, setIsVideoCallActive] = React.useState(false);
-  const [jitsiLoaded, setJitsiLoaded] = React.useState(false);
-  const jitsiContainerRef = React.useRef<HTMLDivElement>(null);
-  const jitsiApiRef = React.useRef<any>(null);
+  
+  // Real-time presence state
+  const [realtimeMemberCount, setRealtimeMemberCount] = React.useState<number | null>(null);
+  const [realtimeMembers, setRealtimeMembers] = React.useState<string[]>([]);
+  const [isPresenceConnected, setIsPresenceConnected] = React.useState(false);
+  
+  // Real-time messages state
+  const [realtimePosts, setRealtimePosts] = React.useState<GroupPost[]>(initialGroup.posts);
+
+  // Generate consistent channel ID based on topic
+  const getChannelId = React.useCallback(() => {
+    return group.topic.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+  }, [group.topic]);
+
+  // Join presence channel when component mounts - use topic for consistent channel across devices
+  React.useEffect(() => {
+    if (groupPresenceService.isAvailable()) {
+      const channelId = getChannelId();
+      console.log('[GroupView] Joining presence channel:', channelId);
+      
+      groupPresenceService.joinGroup(channelId, user.username, {
+        onMemberCountChange: (count, members) => {
+          console.log(`[GroupView] Realtime member count: ${count}`, members);
+          setRealtimeMemberCount(count);
+          setRealtimeMembers(members);
+          setIsPresenceConnected(true);
+        },
+        onError: (error) => {
+          console.error('[GroupView] Presence error:', error);
+          setIsPresenceConnected(false);
+        },
+      });
+    }
+
+    return () => {
+      // Leave presence channel when component unmounts
+      groupPresenceService.leaveGroup(getChannelId());
+    };
+  }, [getChannelId, user.username]);
+
+  // Subscribe to realtime messages - use topic instead of group.id for cross-device sync
+  React.useEffect(() => {
+    if (groupMessageService.isAvailable()) {
+      const channelId = getChannelId();
+      console.log('[GroupView] Subscribing to message channel:', channelId);
+      
+      groupMessageService.subscribeToMessages(channelId, {
+        onNewMessage: (newMessage) => {
+          console.log('[GroupView] Received realtime message:', newMessage);
+          // Add the new message if it doesn't already exist
+          setRealtimePosts((prevPosts) => {
+            const exists = prevPosts.some((p) => p.id === newMessage.id);
+            if (exists) return prevPosts;
+            return [...prevPosts, newMessage];
+          });
+        },
+        onError: (error) => {
+          console.error('[GroupView] Message subscription error:', error);
+        },
+      });
+    }
+
+    return () => {
+      groupMessageService.unsubscribeFromMessages(getChannelId());
+    };
+  }, [getChannelId]);
 
   // Refresh group data periodically (in a real app, this would be real-time)
   React.useEffect(() => {
@@ -35,38 +97,6 @@ export function GroupView({ group: initialGroup, user, onBack }: GroupViewProps)
     return () => clearInterval(interval);
   }, [group.id]);
 
-  // Load Jitsi script
-  React.useEffect(() => {
-    // Check if script is already loaded
-    if (document.getElementById('jitsi-script')) {
-      // Check if API is available
-      if (typeof (window as any).JitsiMeetExternalAPI !== 'undefined') {
-        setJitsiLoaded(true);
-      }
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.id = 'jitsi-script';
-    script.src = 'https://meet.jit.si/external_api.js';
-    script.async = true;
-    script.onload = () => {
-      console.log('Jitsi script loaded successfully');
-      setJitsiLoaded(true);
-    };
-    script.onerror = () => {
-      console.error('Failed to load Jitsi script');
-    };
-    document.body.appendChild(script);
-
-    return () => {
-      // Cleanup on unmount
-      if (jitsiApiRef.current) {
-        jitsiApiRef.current.dispose();
-      }
-    };
-  }, []);
-
   const handlePostMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -75,8 +105,17 @@ export function GroupView({ group: initialGroup, user, onBack }: GroupViewProps)
 
     setIsPosting(true);
     try {
-      supportGroupsService.postToGroup(group.id, user.id, user.username, content);
+      // Post to local storage
+      const newMessage = supportGroupsService.postToGroup(group.id, user.id, user.username, content);
       setNewPost('');
+      
+      // Add to realtime posts immediately (optimistic update)
+      setRealtimePosts((prevPosts) => [...prevPosts, newMessage]);
+      
+      // Broadcast to other devices via Supabase - use topic-based channel
+      if (groupMessageService.isAvailable()) {
+        await groupMessageService.broadcastMessage(getChannelId(), newMessage);
+      }
       
       // Refresh group data
       const updatedGroup = supportGroupsService.getGroup(group.id);
@@ -104,97 +143,29 @@ export function GroupView({ group: initialGroup, user, onBack }: GroupViewProps)
   };
 
   const handleStartVideoCall = () => {
-    if (isVideoCallActive) {
-      // End the call
-      if (jitsiApiRef.current) {
-        jitsiApiRef.current.dispose();
-        jitsiApiRef.current = null;
-      }
-      setIsVideoCallActive(false);
-      return;
-    }
+    // Create a unique room name based on group ID
+    const roomName = `GriefPlatformSacredCircle${group.id.replace(/[^a-zA-Z0-9]/g, '')}`;
+    
+    // Open Jitsi in a new tab - this works without authentication
+    const jitsiUrl = `https://meet.jit.si/${roomName}#userInfo.displayName="${encodeURIComponent(user.username)}"`;
+    
+    console.log('Opening Jitsi call:', jitsiUrl);
+    window.open(jitsiUrl, '_blank');
+  };
 
-    // Check if Jitsi API is loaded
-    if (!jitsiLoaded || typeof (window as any).JitsiMeetExternalAPI === 'undefined') {
-      alert('Video conferencing is still loading... Please wait a moment and try again.');
-      return;
-    }
+  // Generate the video call link for sharing
+  const getVideoCallLink = () => {
+    const roomName = `GriefPlatformSacredCircle${group.id.replace(/[^a-zA-Z0-9]/g, '')}`;
+    return `https://meet.jit.si/${roomName}`;
+  };
 
-    // Start the call
-    setIsVideoCallActive(true);
-    setShowVideoInfo(false);
-
-    // Small delay to ensure container is rendered
-    setTimeout(() => {
-      if (!jitsiContainerRef.current) {
-        console.error('Jitsi container not found');
-        setIsVideoCallActive(false);
-        return;
-      }
-
-      // Create a unique room name based on group ID
-      const roomName = `SacredCircle-${group.id}`;
-      
-      console.log('Starting Jitsi call with room:', roomName);
-      
-      try {
-        // Initialize Jitsi Meet with public server
-        const domain = 'meet.jit.si';
-        const options = {
-          roomName: roomName,
-          width: '100%',
-          height: 600,
-          parentNode: jitsiContainerRef.current,
-          userInfo: {
-            displayName: user.username,
-          },
-          configOverwrite: {
-            startWithAudioMuted: false,
-            startWithVideoMuted: false,
-            prejoinPageEnabled: true,
-            enableWelcomePage: false,
-          },
-          interfaceConfigOverwrite: {
-            SHOW_JITSI_WATERMARK: false,
-            SHOW_WATERMARK_FOR_GUESTS: false,
-            TOOLBAR_BUTTONS: [
-              'microphone', 'camera', 'closedcaptions', 'desktop', 
-              'fullscreen', 'fodeviceselection', 'hangup', 'chat',
-              'raisehand', 'videoquality', 'filmstrip', 'stats',
-              'shortcuts', 'tileview', 'videobackgroundblur', 'help'
-            ],
-          },
-        };
-
-        const api = new (window as any).JitsiMeetExternalAPI(domain, options);
-        jitsiApiRef.current = api;
-
-        console.log('Jitsi API initialized');
-
-        // Event listeners
-        api.addEventListener('videoConferenceJoined', () => {
-          console.log('Joined video conference');
-        });
-
-        api.addEventListener('videoConferenceLeft', () => {
-          console.log('Left video conference');
-          setIsVideoCallActive(false);
-          if (api) api.dispose();
-          jitsiApiRef.current = null;
-        });
-
-        api.addEventListener('readyToClose', () => {
-          console.log('Ready to close');
-          setIsVideoCallActive(false);
-          if (api) api.dispose();
-          jitsiApiRef.current = null;
-        });
-      } catch (error) {
-        console.error('Error starting Jitsi call:', error);
-        setIsVideoCallActive(false);
-        alert('Failed to start video call. Please try again.');
-      }
-    }, 100);
+  const handleCopyVideoLink = () => {
+    const link = getVideoCallLink();
+    navigator.clipboard.writeText(link).then(() => {
+      alert('Video-Link kopiert! Teilen Sie diesen Link mit anderen Gruppenmitgliedern.');
+    }).catch(() => {
+      prompt('Kopieren Sie diesen Link:', link);
+    });
   };
 
   const formatDate = (date: Date) => {
@@ -230,22 +201,21 @@ export function GroupView({ group: initialGroup, user, onBack }: GroupViewProps)
           </Button>
           <div className="flex gap-2">
             <Button 
-              variant={isVideoCallActive ? "destructive" : "default"}
+              variant="default"
               size="sm" 
               onClick={handleStartVideoCall}
-              className={isVideoCallActive ? "" : "bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"}
+              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
             >
-              {isVideoCallActive ? (
-                <>
-                  <VideoOff className="h-4 w-4 mr-2" />
-                  End Call
-                </>
-              ) : (
-                <>
-                  <Video className="h-4 w-4 mr-2" />
-                  Start Video Call
-                </>
-              )}
+              <Video className="h-4 w-4 mr-2" />
+              Video Call starten
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleCopyVideoLink}
+              className="text-purple-200/70 border-purple-200/20 hover:text-purple-200 hover:bg-purple-200/10"
+            >
+              Link kopieren
             </Button>
             <Button 
               variant="outline" 
@@ -282,8 +252,35 @@ export function GroupView({ group: initialGroup, user, onBack }: GroupViewProps)
                     className="bg-purple-500/20 text-purple-200 border-purple-400/30 px-4 py-2"
                   >
                     <Users className="h-4 w-4 mr-2" />
-                    {group.members.length}/{group.maxCapacity} Members
+                    {/* Use realtime count if available, otherwise fallback to localStorage count */}
+                    {isPresenceConnected && realtimeMemberCount !== null 
+                      ? `${realtimeMemberCount} Online`
+                      : `${group.members.length}/${group.maxCapacity} Members`
+                    }
                   </Badge>
+                  {/* Show connection status indicator */}
+                  {groupPresenceService.isAvailable() && (
+                    <Badge 
+                      variant="outline" 
+                      className={`px-3 py-1 ${
+                        isPresenceConnected 
+                          ? 'bg-green-500/20 text-green-300 border-green-400/30' 
+                          : 'bg-yellow-500/20 text-yellow-300 border-yellow-400/30'
+                      }`}
+                    >
+                      {isPresenceConnected ? (
+                        <>
+                          <Wifi className="h-3 w-3 mr-1" />
+                          Live
+                        </>
+                      ) : (
+                        <>
+                          <WifiOff className="h-3 w-3 mr-1" />
+                          Connecting...
+                        </>
+                      )}
+                    </Badge>
+                  )}
                   <span className="text-purple-300/50 italic text-sm">
                     A sacred space for healing
                   </span>
@@ -293,100 +290,14 @@ export function GroupView({ group: initialGroup, user, onBack }: GroupViewProps)
           </div>
         </div>
 
-      {/* Video Call Container */}
-      {isVideoCallActive && (
-        <div className="relative group">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 blur-2xl rounded-full" />
-          <div className="relative bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-sm rounded-3xl p-8 border border-blue-400/30 shadow-2xl">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <Video className="h-6 w-6 text-blue-400" />
-                  <h2 className="text-2xl font-serif text-blue-200">Video Conference</h2>
-                </div>
-                <Badge className="bg-green-500/20 text-green-300 border-green-400/30 px-4 py-2">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                    <span>Live</span>
-                  </div>
-                </Badge>
-              </div>
-              
-              <div 
-                ref={jitsiContainerRef} 
-                className="w-full rounded-2xl overflow-hidden bg-slate-950 shadow-inner"
-                style={{ minHeight: '600px' }}
-              />
-              
-              <div className="bg-blue-900/20 border border-blue-400/20 rounded-2xl p-4">
-                <p className="text-sm text-blue-200/80 text-center">
-                  🔒 This video call is private and encrypted. Only members of this sacred circle can join.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Video Call Info */}
-      {showVideoInfo && !isVideoCallActive && (
-        <Card className="border-blue-500 bg-blue-50 dark:bg-blue-900/20">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Video className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                <CardTitle className="text-lg">Video Conferencing</CardTitle>
-              </div>
-              <Button variant="ghost" size="sm" onClick={() => setShowVideoInfo(false)}>
-                ✕
-              </Button>
-            </div>
-            <CardDescription>
-              Connect face-to-face with your circle members (max 7 participants)
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 space-y-3">
-              <h4 className="font-semibold text-sm">Powered by Jitsi Meet</h4>
-              <div className="space-y-2 text-sm">
-                <div className="flex items-start space-x-2">
-                  <div className="mt-1">✅</div>
-                  <div>
-                    <strong>Free & Secure:</strong> End-to-end encrypted video calls
-                  </div>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <div className="mt-1">✅</div>
-                  <div>
-                    <strong>No Installation:</strong> Works directly in your browser
-                  </div>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <div className="mt-1">✅</div>
-                  <div>
-                    <strong>Private Rooms:</strong> Each circle has its own unique room
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <Button className="w-full" onClick={handleStartVideoCall}>
-              <Video className="h-4 w-4 mr-2" />
-              Start Video Call Now
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Post Form */}
-      {!isVideoCallActive && (
-        <div className="relative group">
-          <div className="absolute inset-0 bg-gradient-to-r from-rose-500/10 to-amber-500/10 blur-2xl rounded-full" />
-          <div className="relative bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-sm rounded-3xl p-8 border border-amber-200/20 shadow-xl">
-            <h2 className="text-xl font-serif text-amber-100 mb-4">Share with Your Circle</h2>
-            <p className="text-purple-200/60 text-sm mb-6">
-              Your message will be visible to all {group.members.length} members of this sacred space
-            </p>
+      <div className="relative group">
+        <div className="absolute inset-0 bg-gradient-to-r from-rose-500/10 to-amber-500/10 blur-2xl rounded-full" />
+        <div className="relative bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-sm rounded-3xl p-8 border border-amber-200/20 shadow-xl">
+          <h2 className="text-xl font-serif text-amber-100 mb-4">Share with Your Circle</h2>
+          <p className="text-purple-200/60 text-sm mb-6">
+            Your message will be visible to all {group.members.length} members of this sacred space
+          </p>
             
             <form onSubmit={handlePostMessage} className="space-y-4">
               <Textarea
@@ -409,16 +320,14 @@ export function GroupView({ group: initialGroup, user, onBack }: GroupViewProps)
             </form>
           </div>
         </div>
-      )}
 
       {/* Posts Feed */}
-      {!isVideoCallActive && (
-        <div className="space-y-6">
-          <h2 className="text-2xl font-serif text-amber-100/90 tracking-wide text-center">
-            Circle Messages ({group.posts.length})
-          </h2>
+      <div className="space-y-6">
+        <h2 className="text-2xl font-serif text-amber-100/90 tracking-wide text-center">
+          Circle Messages ({realtimePosts.length})
+        </h2>
         
-          {group.posts.length === 0 ? (
+          {realtimePosts.length === 0 ? (
             <div className="relative group">
               <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-blue-500/10 blur-2xl rounded-full" />
               <div className="relative bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-3xl p-12 border border-purple-300/20 text-center">
@@ -430,7 +339,7 @@ export function GroupView({ group: initialGroup, user, onBack }: GroupViewProps)
             </div>
           ) : (
             <div className="space-y-4">
-              {[...group.posts].reverse().map((post, index) => (
+              {[...realtimePosts].reverse().map((post, index) => (
                 <div 
                   key={post.id} 
                   className="relative group"
@@ -476,7 +385,6 @@ export function GroupView({ group: initialGroup, user, onBack }: GroupViewProps)
             </div>
           )}
         </div>
-      )}
       
       {/* CSS Animation */}
       <style dangerouslySetInnerHTML={{__html: `

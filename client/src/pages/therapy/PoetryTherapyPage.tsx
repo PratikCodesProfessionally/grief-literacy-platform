@@ -782,8 +782,8 @@ Red letters on white cotton
 Worn by people who've never bled
 Who mistake slogans for scars
 
-"The girl you love unconditionally
-Will teach you never to love unconditionally again`,
+"The girl/boy you love unconditionally
+Will teach you never to love unconditionally again" `,
   category: "Resilience",
   readTime: "1 min"
 }

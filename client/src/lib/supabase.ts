@@ -9,6 +9,14 @@ const DUMMY_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIs
 
 const isConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
+// Debug logging
+console.log('[Supabase] Configuration check:', {
+  hasUrl: Boolean(supabaseUrl),
+  hasKey: Boolean(supabaseAnonKey),
+  isConfigured,
+  url: supabaseUrl ? supabaseUrl.substring(0, 30) + '...' : 'NOT SET',
+});
+
 if (!isConfigured) {
   console.warn('⚠️  Supabase not configured. Cloud storage features disabled.');
   console.info('ℹ️  To enable cloud storage:');
@@ -16,6 +24,8 @@ if (!isConfigured) {
   console.info('   2. Copy .env.example to .env.local');
   console.info('   3. Add your VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY');
   console.info('   4. See SUPABASE_SETUP.md for detailed instructions');
+} else {
+  console.log('✅ Supabase configured successfully!');
 }
 
 export const supabase = createClient(
