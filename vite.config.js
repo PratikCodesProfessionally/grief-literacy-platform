@@ -81,7 +81,7 @@ export default defineConfig(({ mode }) => {
           ]
         },
         devOptions: {
-          enabled: true,
+          enabled: false, // Deaktiviert in Dev wegen GitHub Codespaces Tunnel-Problemen
           type: 'module'
         }
       }),
@@ -143,11 +143,16 @@ export default defineConfig(({ mode }) => {
     server: {
       hmr: {
         overlay: false,
+        // Für GitHub Codespaces: WebSocket über HTTPS
+        protocol: 'wss',
+        clientPort: 443,
       },
       host: true,
       port: vitePort,
       allowedHosts: true,
       cors: true, // Enable CORS in the dev server
+      // Wichtig für Codespaces
+      strictPort: true,
       proxy: {
         '/api': {
           target: 'http://localhost:3001',

@@ -1,34 +1,62 @@
 # Deployment Guide - Grief Literacy Platform
 
-## Fly.io Deployment
+## Render Deployment (Empfohlen)
 
-### 1. Voraussetzungen
+### 1. Render Dashboard Setup
 
-```bash
-# Fly CLI installieren
-curl -L https://fly.io/install.sh | sh
+1. Gehe zu [render.com](https://render.com) und erstelle einen neuen **Web Service**
+2. Verbinde dein GitHub Repository
+3. Wähle den Branch `main` (oder deinen Deployment-Branch)
 
-# Einloggen
-fly auth login
+### 2. Build & Start Konfiguration
+
+| Einstellung | Wert |
+|-------------|------|
+| **Build Command** | `npm install && npm run build` |
+| **Start Command** | `node dist/server/index.mjs` |
+| **Environment** | Node |
+
+### 3. Environment Variables (WICHTIG!)
+
+Vite benötigt die ENV-Variablen zur **Build-Zeit**. Setze sie im Render Dashboard unter **Environment**:
+
+| Name | Value |
+|------|-------|
+| `VITE_SUPABASE_URL` | `https://pxncjptyivohunzlzfxo.supabase.co` |
+| `VITE_SUPABASE_ANON_KEY` | `dein-anon-key-hier` |
+| `VITE_APP_URL` | `https://deine-app.onrender.com` |
+| `NODE_ENV` | `production` |
+| `PORT` | `8080` (oder Render's Standard-Port) |
+
+> ⚠️ **Wichtig:** Render macht ENV-Variablen automatisch zur Build-Zeit verfügbar - anders als Fly.io!
+
+### 4. Render.yaml (Optional)
+
+Erstelle eine `render.yaml` Datei für Infrastructure-as-Code:
+
+```yaml
+services:
+  - type: web
+    name: grief-literacy-platform
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: node dist/server/index.mjs
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false
+      - key: VITE_APP_URL
+        sync: false
 ```
 
-### 2. Secrets setzen (WICHTIG!)
+---
 
-Vite benötigt die ENV-Variablen zur **Build-Zeit**. Setze sie als Build-Secrets:
+## Fly.io Deployment (Alternative)
 
-```bash
-# Supabase Credentials (PFLICHT für Realtime-Features)
-fly secrets set VITE_SUPABASE_URL="https://pxncjptyivohunzlzfxo.supabase.co"
-fly secrets set VITE_SUPABASE_ANON_KEY="dein-anon-key-hier"
-
-# App URL für Produktion
-fly secrets set VITE_APP_URL="https://grief-literacy-platform.fly.dev"
-
-# Optional: AI-Services
-fly secrets set VITE_HUGGINGFACE_API_KEY="hf_..."
-```
-
-### 3. Build-Args beim Deploy übergeben
+### Build-Args beim Deploy übergeben
 
 Da Vite die ENV-Variablen zur Build-Zeit braucht, müssen sie als Build-Args übergeben werden:
 
@@ -37,16 +65,6 @@ fly deploy \
   --build-arg VITE_SUPABASE_URL="https://pxncjptyivohunzlzfxo.supabase.co" \
   --build-arg VITE_SUPABASE_ANON_KEY="dein-anon-key-hier" \
   --build-arg VITE_APP_URL="https://grief-literacy-platform.fly.dev"
-```
-
-### 4. Alternativ: .env.production Datei
-
-Erstelle eine `.env.production` Datei im `client/` Verzeichnis (NICHT committen!):
-
-```env
-VITE_SUPABASE_URL=https://pxncjptyivohunzlzfxo.supabase.co
-VITE_SUPABASE_ANON_KEY=dein-anon-key-hier
-VITE_APP_URL=https://grief-literacy-platform.fly.dev
 ```
 
 ---
@@ -100,6 +118,35 @@ CREATE POLICY "Allow public insert" ON support_groups
 
 - Fly.io erwartet Port 8080 (in `fly.toml`)
 - Der Server liest `PORT` aus ENV oder verwendet 8080 als Default
+
+---
+
+## GitHub Codespaces Entwicklung
+
+### Bekannte Einschränkungen
+
+GitHub Codespaces verwendet einen Tunnel für Port-Forwarding, der CORS-Probleme verursachen kann:
+
+```
+Access to script blocked by CORS policy: No 'Access-Control-Allow-Origin' header
+```
+
+**Lösung:** Die Vite-Konfiguration wurde angepasst:
+- PWA ist im Dev-Modus deaktiviert (verursacht Tunnel-Auth-Probleme)
+- HMR verwendet WSS über Port 443
+
+### Port öffentlich machen
+
+1. Öffne das **Ports**-Panel in VS Code
+2. Rechtsklick auf Port 5173 → **Port Visibility** → **Public**
+3. Nutze die generierte URL (z.B. `https://...app.github.dev`)
+
+### Bekannte CORS-Fehler (ignorierbar)
+
+Diese Fehler sind Codespaces-spezifisch und beeinträchtigen die Produktion nicht:
+- `@vite/client` CORS-Fehler
+- `@react-refresh` CORS-Fehler
+- `site.webmanifest` 404 (PWA-Manifest im Dev-Modus)
 
 ---
 
