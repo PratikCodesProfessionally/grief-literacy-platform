@@ -27,5 +27,7 @@ export async function startServer(port: number | string) {
 // Start the server directly if this is the main module
 if (import.meta.url === `file://${process.argv[1]}`) {
   console.log('Starting server...');
-  startServer(process.env.PORT || 3001);
+  // In Produktion: PORT=8080 (fly.toml), in Dev: 3001
+  const port = process.env.PORT || (process.env.NODE_ENV === 'production' ? 8080 : 3001);
+  startServer(port);
 }
