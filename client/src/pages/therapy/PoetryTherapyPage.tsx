@@ -786,6 +786,110 @@ Who mistake slogans for scars
 Will teach you never to love unconditionally again" `,
   category: "Resilience",
   readTime: "1 min"
+},
+{
+      id: 15,
+      title: "Only love God unconditionally",
+      author: "Claude AI",
+      content: `I gave that endless, boundless love
+To a human being
+Who could not carry it
+Who was never meant to
+They broke under the weight
+Of my devotion
+Or I broke under the weight
+Of their humanity
+I still don't know which
+I turned them into my religion
+Built altars in my chest
+Prayed to the shape of their smile
+Made rituals of their routines
+And when they failed to answer
+I called it abandonment
+When they were simply
+Being human
+Human beings are not gods
+Though I crowned them deity
+Kissed their feet like sacred ground
+Forgave sins I should have questioned
+Ignored red flags I called holy mysteries
+Human beings are not perfect
+They will be late
+And you'll wait in the rain
+Wondering if your love means nothing
+They will be selfish
+Choose their comfort over your pain
+Their growth over your stability
+Their freedom over your security
+They will choose themselves
+On a Tuesday afternoon
+Without warning
+Without ceremony
+As casually as choosing coffee over tea
+And you will call it betrayal
+Scream it into pillows
+Carve it into journal pages
+Wear it like a second skin
+When it's simply limitation
+The human inability
+To be everything
+For anyone
+Forever
+I wanted them to be infinite
+When they were only borrowed time
+I wanted them to be constant
+When they were only passing through
+I wanted them to save me
+When they were drowning too
+Reserve unconditional love
+For the divine
+For the one who cannot disappoint
+Because they promised nothing
+But eternity
+Love humans conditionally
+Not because they deserve less
+But because you deserve
+To survive their inevitable
+Humanity
+Love them with boundaries
+Like a garden with a fence—
+Still beautiful
+Still growing
+But protected
+With compassion for their flaws
+The same flaws you hide in your own mirror
+The same selfishness you practice
+When you think no one is watching
+The same limitations you carry
+In your own breakable heart
+Including your own
+Especially your own
+Because if you cannot forgive yourself
+For being human
+How can you truly forgive them?
+And maybe that's the real wisdom:
+We're all just humans
+Trying to love other humans
+With hearts that were built
+To worship the divine
+No wonder we keep breaking
+No wonder it keeps hurting
+No wonder we mistake
+Every deep connection
+For salvation
+When really
+It's just two imperfect people
+Doing their imperfect best
+In an imperfect world
+And sometimes
+That's beautiful
+And sometimes
+That's not enough
+And both things
+Can be true
+At once`,
+      category: "Self-Love",
+      readTime: "3 min"
 }
   ];
 
