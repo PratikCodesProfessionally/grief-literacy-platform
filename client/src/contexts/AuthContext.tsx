@@ -6,6 +6,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  isAuthenticated: boolean;
   signUp: (email: string, password: string, displayName?: string) => Promise<{ error: AuthError | null }>;
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signInWithMagicLink: (email: string) => Promise<{ error: AuthError | null }>;
@@ -160,6 +161,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user,
     session,
     loading,
+    isAuthenticated: !!user && !!session,
     signUp,
     signIn,
     signInWithMagicLink,
