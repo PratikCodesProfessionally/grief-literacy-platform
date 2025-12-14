@@ -37,7 +37,7 @@ export function StorageSelector({ onSelect, currentSelection }: StorageSelectorP
       type: 'local' as StorageType,
       icon: Smartphone,
       color: 'from-amber-500 to-orange-600',
-      bgColor: 'bg-gradient-to-br from-amber-50 to-orange-100 dark:from-amber-900/20 dark:to-orange-900/30',
+      bgColor: 'bg-gradient-to-br from-amber-50 to-orange-100 dark:from-amber-950/40 dark:to-orange-950/40',
       title: 'Private & Offline',
       subtitle: 'Entries stay only on this device',
       features: [
@@ -54,7 +54,7 @@ export function StorageSelector({ onSelect, currentSelection }: StorageSelectorP
       type: 'cloud' as StorageType,
       icon: Cloud,
       color: 'from-blue-500 to-indigo-600',
-      bgColor: 'bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-900/30',
+      bgColor: 'bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-950/40 dark:to-indigo-950/40',
       title: 'Secure & Accessible',
       subtitle: 'Access from any device with encryption',
       features: [
@@ -71,7 +71,7 @@ export function StorageSelector({ onSelect, currentSelection }: StorageSelectorP
       type: 'hybrid' as StorageType,
       icon: HardDrive,
       color: 'from-purple-500 to-pink-600',
-      bgColor: 'bg-gradient-to-br from-purple-50 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/30',
+      bgColor: 'bg-gradient-to-br from-purple-50 to-pink-100 dark:from-purple-950/40 dark:to-pink-950/40',
       title: 'Best of Both',
       subtitle: 'Auto-backup with local priority',
       features: [
@@ -150,14 +150,14 @@ export function StorageSelector({ onSelect, currentSelection }: StorageSelectorP
       </div>
 
       {!isSupabaseConfigured && (
-        <div className="mb-6 p-4 bg-amber-50 border-l-4 border-amber-400 rounded-md">
+        <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-950/40 border-l-4 border-amber-400 dark:border-amber-600 rounded-md">
           <div className="flex">
-            <AlertCircle className="h-5 w-5 text-amber-400 mt-0.5" />
+            <AlertCircle className="h-5 w-5 text-amber-500 dark:text-amber-400 mt-0.5 flex-shrink-0" />
             <div className="ml-3">
-              <h3 className="text-sm font-semibold text-amber-800">Cloud Storage Not Available</h3>
-              <p className="mt-1 text-sm text-amber-700">
+              <h3 className="text-sm font-semibold text-amber-800 dark:text-amber-100">Cloud Storage Not Available</h3>
+              <p className="mt-1 text-sm text-amber-700 dark:text-amber-200 leading-relaxed">
                 Supabase is not configured. Cloud and Hybrid storage options require setup. 
-                See <code className="px-1 py-0.5 bg-amber-100 rounded">SUPABASE_SETUP.md</code> for instructions.
+                See <code className="px-1 py-0.5 bg-amber-100 dark:bg-amber-800/50 rounded text-amber-800 dark:text-amber-200">SUPABASE_SETUP.md</code> for instructions.
                 You can still use Local storage without any configuration.
               </p>
             </div>
@@ -202,8 +202,8 @@ export function StorageSelector({ onSelect, currentSelection }: StorageSelectorP
                     const FeatureIcon = feature.icon;
                     return (
                       <div key={idx} className="flex items-start gap-2 text-sm">
-                        <FeatureIcon className="h-4 w-4 mt-0.5 text-gray-600 dark:text-gray-400 flex-shrink-0" />
-                        <span className="text-gray-700 dark:text-gray-300">{feature.text}</span>
+                        <FeatureIcon className="h-4 w-4 mt-0.5 text-gray-600 dark:text-gray-300 flex-shrink-0" />
+                        <span className="text-gray-700 dark:text-gray-200">{feature.text}</span>
                       </div>
                     );
                   })}
@@ -234,24 +234,24 @@ export function StorageSelector({ onSelect, currentSelection }: StorageSelectorP
 
                 {/* Expanded Details */}
                 {isExpanded && (
-                  <div className="space-y-3 pt-3 border-t">
+                  <div className="space-y-3 pt-3 border-t border-gray-200 dark:border-gray-600">
                     <div>
-                      <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Pros:</p>
-                      <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                      <p className="text-xs font-semibold text-gray-700 dark:text-gray-100 mb-2">Pros:</p>
+                      <ul className="text-xs text-gray-600 dark:text-gray-200 space-y-1">
                         {option.pros.map((pro, idx) => (
                           <li key={idx} className="flex items-start gap-1">
-                            <span className="text-green-600">✓</span>
+                            <span className="text-green-600 dark:text-green-400">✓</span>
                             <span>{pro}</span>
                           </li>
                         ))}
                       </ul>
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Considerations:</p>
-                      <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                      <p className="text-xs font-semibold text-gray-700 dark:text-gray-100 mb-2">Considerations:</p>
+                      <ul className="text-xs text-gray-600 dark:text-gray-200 space-y-1">
                         {option.cons.map((con, idx) => (
                           <li key={idx} className="flex items-start gap-1">
-                            <span className="text-gray-400">•</span>
+                            <span className="text-gray-400 dark:text-gray-400">•</span>
                             <span>{con}</span>
                           </li>
                         ))}
@@ -297,14 +297,14 @@ export function StorageSelector({ onSelect, currentSelection }: StorageSelectorP
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b">
-                  <th className="text-left py-3 px-4">Feature</th>
-                  <th className="text-center py-3 px-4">Private & Offline</th>
-                  <th className="text-center py-3 px-4">Secure & Accessible</th>
-                  <th className="text-center py-3 px-4">Best of Both</th>
+                <tr className="border-b border-gray-200 dark:border-gray-700">
+                  <th className="text-left py-3 px-4 text-gray-900 dark:text-gray-100">Feature</th>
+                  <th className="text-center py-3 px-4 text-gray-900 dark:text-gray-100">Private & Offline</th>
+                  <th className="text-center py-3 px-4 text-gray-900 dark:text-gray-100">Secure & Accessible</th>
+                  <th className="text-center py-3 px-4 text-gray-900 dark:text-gray-100">Best of Both</th>
                 </tr>
               </thead>
-              <tbody className="text-gray-600 dark:text-gray-400">
+              <tbody className="text-gray-600 dark:text-gray-200">
                 <tr className="border-b">
                   <td className="py-3 px-4">Privacy Level</td>
                   <td className="text-center">★★★★★</td>
@@ -343,9 +343,9 @@ export function StorageSelector({ onSelect, currentSelection }: StorageSelectorP
 
       {/* Privacy Notice */}
       <div className="mt-8 text-center">
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-full">
-          <Shield className="h-4 w-4 text-blue-600" />
-          <span className="text-sm text-blue-900 dark:text-blue-200">
+        <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-950/40 rounded-full border border-blue-200 dark:border-blue-700">
+          <Shield className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+          <span className="text-sm text-blue-900 dark:text-blue-100">
             <strong>Your data is always encrypted.</strong> We never read your entries or share with third parties.
           </span>
         </div>
