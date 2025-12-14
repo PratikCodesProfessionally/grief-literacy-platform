@@ -5,6 +5,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Card } from '../ui/card';
+import { CheckCircle, AlertCircle } from 'lucide-react';
 
 interface SignupFormProps {
   onSuccess?: () => void;
@@ -13,15 +14,16 @@ interface SignupFormProps {
 
 export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onSwitchToLogin }) => {
   const { signUp } = useAuth();
+  const [step, setStep] = useState<'account' | 'encryption'>('account');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [encryptionPassword, setEncryptionPassword] = useState('');
   const [confirmEncryptionPassword, setConfirmEncryptionPassword] = useState('');
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [step, setStep] = useState<'account' | 'encryption'>('account');
+  const [loading, setLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
 
   const validateAccountStep = () => {
     if (!email || !password || !confirmPassword) {
@@ -80,11 +82,19 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onSwitchToLog
 
     setLoading(true);
 
-    const { error } = await signUp(email, password, displayName);
+    const { error, user, needsEmailConfirmation } = await signUp(email, password, displayName);
 
     if (error) {
       setError(error.message);
       setLoading(false);
+      return;
+    }
+
+    // Handle email confirmation requirement
+    if (needsEmailConfirmation) {
+      setEmailSent(true);
+      setLoading(false);
+      // Don't call onSuccess yet - user needs to confirm email first
       return;
     }
 
@@ -95,6 +105,35 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onSwitchToLog
     onSuccess?.();
     setLoading(false);
   };
+
+  if (emailSent) {
+    return (
+      <Card className="p-6 max-w-md mx-auto">
+        <div className="text-center space-y-4">
+          <CheckCircle className="w-16 h-16 text-green-500 mx-auto" />
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Check Your Email</h2>
+            <p className="text-gray-600 mt-2">
+              We've sent a confirmation link to <strong>{email}</strong>
+            </p>
+            <p className="text-sm text-gray-500 mt-2">
+              Click the link in the email to complete your account setup and continue to encryption setup.
+            </p>
+          </div>
+          <Button
+            onClick={() => {
+              setEmailSent(false);
+              setStep('account');
+            }}
+            variant="outline"
+            className="w-full"
+          >
+            Back to Signup
+          </Button>
+        </div>
+      </Card>
+    );
+  }
 
   if (step === 'encryption') {
     return (

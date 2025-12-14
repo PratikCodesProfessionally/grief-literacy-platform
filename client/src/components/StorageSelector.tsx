@@ -108,8 +108,16 @@ export function StorageSelector({ onSelect, currentSelection }: StorageSelectorP
   };
 
   const handleAuthSuccess = () => {
-    setShowAuth(false);
-    // After login, allow selecting cloud/hybrid
+    // Check if user is actually authenticated (has session)
+    if (user) {
+      setShowAuth(false);
+      // User is logged in, allow selecting cloud/hybrid
+    } else {
+      // User signed up but needs email confirmation
+      setShowAuth(false);
+      // Show a message that email confirmation is needed
+      alert('Account created! Please check your email and click the confirmation link to use cloud storage.');
+    }
   };
 
   if (showAuth) {

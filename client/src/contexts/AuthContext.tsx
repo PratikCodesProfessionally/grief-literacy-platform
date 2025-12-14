@@ -7,7 +7,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   isAuthenticated: boolean;
-  signUp: (email: string, password: string, displayName?: string) => Promise<{ error: AuthError | null }>;
+  signUp: (email: string, password: string, displayName?: string) => Promise<{ error: AuthError | null; user: User | null; needsEmailConfirmation: boolean }>;
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signInWithMagicLink: (email: string) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
@@ -42,9 +42,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
+
+      // Ensure profile exists when user signs in
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', session.user.id)
+          .single();
+
+        if (!profile) {
+          // Create profile if it doesn't exist
+          const { error: profileError } = await supabase.from('profiles').insert({
+            id: session.user.id,
+            email: session.user.email!,
+            display_name: session.user.user_metadata?.display_name || null,
+            storage_preference: 'hybrid',
+            encryption_enabled: import.meta.env.VITE_ENABLE_ENCRYPTION === 'true',
+          });
+
+          if (profileError) {
+            console.error('Failed to create profile on login:', profileError);
+          }
+        }
+      }
+
       setLoading(false);
     });
 
@@ -63,10 +88,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         },
       });
 
-      if (error) return { error };
+      if (error) return { error, user: null, needsEmailConfirmation: false };
 
-      // Create profile in profiles table
-      if (data.user) {
+      // Check if email confirmation is required
+      const needsEmailConfirmation = !data.session && data.user && !data.user.email_confirmed_at;
+
+      // If email confirmation is required, don't create profile yet
+      if (needsEmailConfirmation) {
+        return { error: null, user: data.user, needsEmailConfirmation: true };
+      }
+
+      // Create profile in profiles table only if user is confirmed
+      if (data.user && data.session) {
         const { error: profileError } = await supabase.from('profiles').insert({
           id: data.user.id,
           email: data.user.email!,
@@ -77,12 +110,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (profileError) {
           console.error('Failed to create profile:', profileError);
+          // Don't fail the signup if profile creation fails - it might be created by trigger
         }
       }
 
-      return { error: null };
+      return { error: null, user: data.user, needsEmailConfirmation: false };
     } catch (error) {
-      return { error: error as AuthError };
+      return { error: error as AuthError, user: null, needsEmailConfirmation: false };
     }
   };
 
