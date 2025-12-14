@@ -316,14 +316,14 @@ export function LettersPage() {
       )}
 
       {/* Education card */}
-      <Card className="bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 print:hidden">
+      <Card className="bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-700 print:hidden">
         <CardHeader>
-          <CardTitle className="text-amber-800 dark:text-amber-200">💝 Letters as Healing</CardTitle>
-          <CardDescription className="text-amber-700 dark:text-amber-300">
+          <CardTitle className="text-amber-800 dark:text-amber-100">💝 Letters as Healing</CardTitle>
+          <CardDescription className="text-amber-700 dark:text-amber-200">
             Writing letters to loved ones helps process grief and maintain connection
           </CardDescription>
         </CardHeader>
-        <CardContent className="text-amber-700 dark:text-amber-300">
+        <CardContent className="text-amber-700 dark:text-amber-200">
           <ul className="space-y-1 text-sm">
             <li>• Express feelings you couldn't say before</li>
             <li>• Share important life updates and milestones</li>
