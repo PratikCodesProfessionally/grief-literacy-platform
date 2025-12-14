@@ -1,5 +1,6 @@
 -- Grief Literacy Platform - Supabase Database Schema
 -- Run this SQL in Supabase SQL Editor to set up the database
+-- This script is idempotent - safe to run multiple times
 
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -86,6 +87,21 @@ ALTER TABLE public.journal_entries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.prompts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_prompt_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.sync_conflicts ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies first (makes script idempotent)
+DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Users can insert own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Users can view own journal entries" ON public.journal_entries;
+DROP POLICY IF EXISTS "Users can insert own journal entries" ON public.journal_entries;
+DROP POLICY IF EXISTS "Users can update own journal entries" ON public.journal_entries;
+DROP POLICY IF EXISTS "Users can delete own journal entries" ON public.journal_entries;
+DROP POLICY IF EXISTS "Authenticated users can view prompts" ON public.prompts;
+DROP POLICY IF EXISTS "Users can view own prompt history" ON public.user_prompt_history;
+DROP POLICY IF EXISTS "Users can insert own prompt history" ON public.user_prompt_history;
+DROP POLICY IF EXISTS "Users can view own conflicts" ON public.sync_conflicts;
+DROP POLICY IF EXISTS "Users can insert own conflicts" ON public.sync_conflicts;
+DROP POLICY IF EXISTS "Users can update own conflicts" ON public.sync_conflicts;
 
 -- Profiles policies
 CREATE POLICY "Users can view own profile"

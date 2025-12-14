@@ -284,33 +284,33 @@ export function StoryTherapyPage() {
         </CardContent>
       </Card>
 
-      <div className="grid lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
         <Card className="lg:col-span-1 hover-lift">
           <CardHeader>
-            <CardTitle className="text-2xl">Story Prompts</CardTitle>
-            <CardDescription className="text-base">
+            <CardTitle className="text-xl sm:text-2xl">Story Prompts</CardTitle>
+            <CardDescription className="text-sm sm:text-base">
               Choose a prompt to begin your therapeutic storytelling session
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3 max-h-96 overflow-y-auto">
+          <CardContent className="space-y-3 max-h-[28rem] sm:max-h-96 overflow-y-auto">
             {storyPrompts.map((prompt, index) => (
               <Button
                 key={index}
                 variant={selectedPrompt === prompt.text ? "default" : "outline"}
-                className="w-full text-left justify-start h-auto p-4 rounded-2xl transition-all duration-300 hover:shadow-soft hover:scale-[1.02]"
+                className="w-full text-left justify-start h-auto p-3 sm:p-4 rounded-xl sm:rounded-2xl transition-all duration-300 hover:shadow-soft hover:scale-[1.02]"
                 onClick={() => setSelectedPrompt(prompt.text)}
               >
-                <div className="w-full">
-                  <div className="flex items-center justify-between mb-2">
-                    <Badge className={`${getCategoryColor(prompt.category)} rounded-full px-3 py-1`}>
+                <div className="w-full min-w-0">
+                  <div className="flex items-center justify-between mb-2 gap-2">
+                    <Badge className={`${getCategoryColor(prompt.category)} rounded-full px-2 sm:px-3 py-1 text-xs`}>
                       {prompt.category}
                     </Badge>
                     {completedPrompts.has(prompt.text) && (
-                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
                     )}
                   </div>
-                  <div className="text-sm font-medium mb-2 leading-relaxed">{prompt.text}</div>
-                  <div className="flex items-center space-x-2 text-xs">
+                  <div className="text-xs sm:text-sm font-medium mb-2 leading-relaxed break-words">{prompt.text}</div>
+                  <div className="flex flex-wrap items-center gap-2 text-xs">
                     <Badge variant="outline" className={`${getDifficultyColor(prompt.difficulty)} rounded-full`}>
                       {prompt.difficulty}
                     </Badge>

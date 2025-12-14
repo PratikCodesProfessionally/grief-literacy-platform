@@ -582,13 +582,13 @@ export function BooksPage() {
       )}
 
       {/* Disclaimer */}
-      <Card className="bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800">
+      <Card className="bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-700">
         <CardContent className="pt-6">
           <div className="flex items-start space-x-3">
-            <div className="text-amber-600 text-xl" aria-hidden="true">📚</div>
+            <div className="text-amber-600 dark:text-amber-400 text-xl flex-shrink-0" aria-hidden="true">📚</div>
             <div>
-              <h3 className="font-medium text-amber-800 dark:text-amber-200 mb-2">Book Recommendations Disclaimer</h3>
-              <p className="text-sm text-amber-700 dark:text-amber-300">
+              <h3 className="font-semibold text-amber-800 dark:text-amber-100 mb-2">Book Recommendations Disclaimer</h3>
+              <p className="text-sm text-amber-700 dark:text-amber-200 leading-relaxed">
                 These book recommendations are curated for educational purposes. We are not affiliated with publishers or authors.
                 Please purchase books through your preferred retailer. Reading suggestions should complement, not replace,
                 professional grief counseling when needed.

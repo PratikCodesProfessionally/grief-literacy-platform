@@ -1184,7 +1184,7 @@ At once`,
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
         <div className="space-y-6">
           {/* Storage Controls vor den Healing Poems */}
           <Card className="hover-lift">
@@ -1192,32 +1192,32 @@ At once`,
           </Card>
           <Card className="hover-lift">
             <CardHeader>
-              <CardTitle className="text-2xl">Healing Poems</CardTitle>
-              <CardDescription className="text-base">
+              <CardTitle className="text-xl sm:text-2xl">Healing Poems</CardTitle>
+              <CardDescription className="text-sm sm:text-base">
                Read poems that bring light to the healing journey
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4 max-h-96 overflow-y-auto">
+            <CardContent className="space-y-4 max-h-[32rem] sm:max-h-96 overflow-y-auto">
               {healingPoems.map((poem) => (
                 <Card key={poem.id} className="hover:shadow-soft-lg transition-all duration-300 border-2 hover:border-accent/30">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-2">
-                        <h3 className="font-semibold text-lg">{poem.title}</h3>
-                        <p className="text-sm text-muted-foreground">by {poem.author}</p>
-                        <div className="flex items-center space-x-2">
-                          <Badge className={`${getCategoryColor(poem.category)} rounded-full px-3 py-1`}>
+                  <CardHeader className="pb-3 px-3 sm:px-6">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                      <div className="space-y-2 min-w-0">
+                        <h3 className="font-semibold text-base sm:text-lg break-words">{poem.title}</h3>
+                        <p className="text-xs sm:text-sm text-muted-foreground">by {poem.author}</p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge className={`${getCategoryColor(poem.category)} rounded-full px-2 sm:px-3 py-1 text-xs`}>
                             {poem.category}
                           </Badge>
                           <span className="text-xs text-muted-foreground">{poem.readTime}</span>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-1">
+                      <div className="flex items-center space-x-1 flex-shrink-0">
                         <Button
                           size="sm"
                           variant="ghost"
                           onClick={() => toggleFavorite(poem.id)}
-                          className="rounded-full hover:bg-accent/20 transition-all duration-300"
+                          className="rounded-full hover:bg-accent/20 transition-all duration-300 h-8 w-8 p-0"
                         >
                           <Heart 
                             className={`h-4 w-4 transition-all duration-300 ${favoritePoems.has(poem.id) ? 'fill-red-400 text-red-400 scale-110' : ''}`}
@@ -1227,22 +1227,22 @@ At once`,
                           size="sm"
                           variant="ghost"
                           onClick={() => readAloud(poem.id)}
-                          className="rounded-full hover:bg-accent/20 transition-all duration-300"
+                          className="rounded-full hover:bg-accent/20 transition-all duration-300 h-8 w-8 p-0"
                         >
                           <Volume2 className={`h-4 w-4 transition-all duration-300 ${isReading === poem.id ? 'text-primary scale-110' : ''}`} />
                         </Button>
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="pt-0">
-                    <p className="text-sm whitespace-pre-line italic leading-relaxed text-foreground/80">
+                  <CardContent className="pt-0 px-3 sm:px-6">
+                    <p className="text-xs sm:text-sm whitespace-pre-line italic leading-relaxed text-foreground/80 break-words">
                       {poem.content}
                     </p>
-                    <div className="flex items-center space-x-2 mt-4">
+                    <div className="flex flex-wrap items-center gap-2 mt-4">
                       <Button 
                         size="sm" 
                         variant="outline" 
-                        className="rounded-full hover:bg-accent/20 transition-all duration-300"
+                        className="rounded-full hover:bg-accent/20 transition-all duration-300 text-xs sm:text-sm h-8"
                         onClick={() => sharePoem(poem)}
                       >
                         <Share className="h-3 w-3 mr-1" />
@@ -1251,7 +1251,7 @@ At once`,
                       <Button 
                         size="sm" 
                         variant="outline" 
-                        className="rounded-full hover:bg-accent/20 transition-all duration-300"
+                        className="rounded-full hover:bg-accent/20 transition-all duration-300 text-xs sm:text-sm h-8"
                         onClick={() => saveHealingPoem(poem.id, poem.title)}
                       >
                         {savedHealingPoems.has(poem.id) ? (

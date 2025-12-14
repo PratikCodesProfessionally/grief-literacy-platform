@@ -283,13 +283,13 @@ export function MusicTherapyPage() {
       </div>
 
       {/* AI Generated Content Disclaimer */}
-      <Card className="bg-amber-50/50 dark:bg-amber-900/10 border-2 border-amber-200/50 dark:border-amber-800/50 hover-lift">
+      <Card className="bg-amber-50 dark:bg-amber-950/40 border-2 border-amber-200 dark:border-amber-700 hover-lift">
         <CardContent className="pt-6">
           <div className="flex items-start space-x-3">
-            <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5" />
+            <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
             <div>
-              <h4 className="font-medium text-amber-800 dark:text-amber-200">AI Generated Music Content</h4>
-              <p className="text-sm text-amber-700 dark:text-amber-300 mt-1 leading-relaxed">
+              <h4 className="font-semibold text-amber-800 dark:text-amber-100">AI Generated Music Content</h4>
+              <p className="text-sm text-amber-700 dark:text-amber-200 mt-1 leading-relaxed">
                 All music tracks and audio content are AI-generated for demonstration purposes. This is not actual copyrighted music.
                 The therapeutic concepts are based on established music therapy practices.
               </p>
@@ -351,35 +351,35 @@ export function MusicTherapyPage() {
         </Card>
       )}
 
-      <div className="grid lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
         <div className="space-y-6">
           {musicCategories.map((category, index) => (
             <Card key={index} className={`bg-gradient-to-br ${category.color} hover-lift border-2`}>
-              <CardHeader>
+              <CardHeader className="px-4 sm:px-6">
                 <div className="flex items-center space-x-3">
-                  <div className="text-3xl">{category.icon}</div>
-                  <div>
-                    <CardTitle className="text-xl">{category.title}</CardTitle>
-                    <CardDescription className="text-base">{category.description}</CardDescription>
+                  <div className="text-2xl sm:text-3xl flex-shrink-0">{category.icon}</div>
+                  <div className="min-w-0">
+                    <CardTitle className="text-lg sm:text-xl">{category.title}</CardTitle>
+                    <CardDescription className="text-sm sm:text-base">{category.description}</CardDescription>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
+              <CardContent className="px-4 sm:px-6">
+                <div className="space-y-2 sm:space-y-3">
                   {category.tracks.map((track, trackIndex) => (
-                    <div key={trackIndex} className="flex items-center justify-between p-3 bg-white/60 dark:bg-gray-800/60 rounded-2xl hover:bg-white/80 dark:hover:bg-gray-800/80 transition-all duration-300 backdrop-blur-sm border border-white/50">
-                      <span className="text-sm font-medium">{track}</span>
-                      <div className="flex items-center space-x-2">
+                    <div key={trackIndex} className="flex items-center justify-between gap-2 p-2 sm:p-3 bg-white/60 dark:bg-gray-800/60 rounded-xl sm:rounded-2xl hover:bg-white/80 dark:hover:bg-gray-800/80 transition-all duration-300 backdrop-blur-sm border border-white/50">
+                      <span className="text-xs sm:text-sm font-medium truncate min-w-0">{track}</span>
+                      <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
                         <Button
                           size="sm"
                           variant="ghost"
                           onClick={() => addToPlaylist(track)}
                           title="Add to playlist"
-                          className="rounded-full hover:bg-accent/30 transition-all duration-300"
+                          className="rounded-full hover:bg-accent/30 transition-all duration-300 h-8 w-8 p-0"
                         >
                           <Plus className="h-4 w-4" />
                         </Button>
-                        <Button size="sm" variant="outline" onClick={() => handlePlay(track)} className="rounded-full hover:bg-accent/30 transition-all duration-300">
+                        <Button size="sm" variant="outline" onClick={() => handlePlay(track)} className="rounded-full hover:bg-accent/30 transition-all duration-300 h-8 w-8 p-0">
                           {currentTrack === track && isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                         </Button>
                       </div>
@@ -394,8 +394,8 @@ export function MusicTherapyPage() {
         <div className="space-y-6">
           <Card className="hover-lift">
             <CardHeader>
-              <CardTitle className="text-2xl">Music Activities</CardTitle>
-              <CardDescription className="text-base">Interactive ways to engage with music therapy</CardDescription>
+              <CardTitle className="text-xl sm:text-2xl">Music Activities</CardTitle>
+              <CardDescription className="text-sm sm:text-base">Interactive ways to engage with music therapy</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               {activities.map((activity, index) => (

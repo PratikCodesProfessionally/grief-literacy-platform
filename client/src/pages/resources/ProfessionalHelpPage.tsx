@@ -199,41 +199,41 @@ export function ProfessionalHelpPage() {
       </div>
 
       {/* Emergency Warning */}
-      <Card className="bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800">
+      <Card className="bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-700">
         <CardContent className="pt-6">
           <div className="flex items-start space-x-3">
-            <AlertTriangle className="h-6 w-6 text-red-600 mt-0.5 flex-shrink-0" />
+            <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
             <div>
-              <h3 className="font-medium text-red-800 dark:text-red-200 mb-2">
+              <h3 className="font-semibold text-red-800 dark:text-red-100 mb-2 text-base sm:text-lg">
                 🚨 In Case of Emergency
               </h3>
-              <p className="text-sm text-red-700 dark:text-red-300 mb-3">
+              <p className="text-sm text-red-700 dark:text-red-200 mb-3">
                 If you're having thoughts of harming yourself or others, please contact emergency services immediately:
               </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                <div className="bg-white dark:bg-gray-800 p-3 rounded border-red-200 border">
+                <div className="bg-white dark:bg-gray-800/80 p-3 rounded-lg border border-red-200 dark:border-red-700">
                   <div className="flex items-center space-x-2 mb-1">
                     <span className="text-lg">🇩🇪</span>
-                    <strong>Germany:</strong>
+                    <strong className="text-gray-900 dark:text-gray-100">Germany:</strong>
                   </div>
-                  <p>Emergency: <strong>112</strong></p>
-                  <p>Police: <strong>110</strong></p>
+                  <p className="text-gray-700 dark:text-gray-200">Emergency: <strong className="text-red-600 dark:text-red-300">112</strong></p>
+                  <p className="text-gray-700 dark:text-gray-200">Police: <strong className="text-red-600 dark:text-red-300">110</strong></p>
                 </div>
-                <div className="bg-white dark:bg-gray-800 p-3 rounded border-red-200 border">
+                <div className="bg-white dark:bg-gray-800/80 p-3 rounded-lg border border-red-200 dark:border-red-700">
                   <div className="flex items-center space-x-2 mb-1">
                     <span className="text-lg">🇬🇧</span>
-                    <strong>UK:</strong>
+                    <strong className="text-gray-900 dark:text-gray-100">UK:</strong>
                   </div>
-                  <p>Emergency: <strong>999</strong></p>
-                  <p>NHS: <strong>111</strong></p>
+                  <p className="text-gray-700 dark:text-gray-200">Emergency: <strong className="text-red-600 dark:text-red-300">999</strong></p>
+                  <p className="text-gray-700 dark:text-gray-200">NHS: <strong className="text-red-600 dark:text-red-300">111</strong></p>
                 </div>
-                <div className="bg-white dark:bg-gray-800 p-3 rounded border-red-200 border">
+                <div className="bg-white dark:bg-gray-800/80 p-3 rounded-lg border border-red-200 dark:border-red-700">
                   <div className="flex items-center space-x-2 mb-1">
                     <span className="text-lg">🇺🇸</span>
-                    <strong>USA:</strong>
+                    <strong className="text-gray-900 dark:text-gray-100">USA:</strong>
                   </div>
-                  <p>Emergency: <strong>911</strong></p>
-                  <p>Crisis: <strong>988</strong></p>
+                  <p className="text-gray-700 dark:text-gray-200">Emergency: <strong className="text-red-600 dark:text-red-300">911</strong></p>
+                  <p className="text-gray-700 dark:text-gray-200">Crisis: <strong className="text-red-600 dark:text-red-300">988</strong></p>
                 </div>
               </div>
             </div>
