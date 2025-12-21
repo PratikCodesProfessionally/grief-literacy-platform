@@ -5,7 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, Play, Pause, Volume2, VolumeX, Mic, MicOff, Download, Plus, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Play, Pause, Volume2, VolumeX, Mic, MicOff, Download, Plus, AlertTriangle, Loader2 } from 'lucide-react';
+
+// Audio preload cache - stores preloaded Audio elements
+const audioCache = new Map<string, HTMLAudioElement>();
 
 export function MusicTherapyPage() {
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
@@ -14,6 +17,9 @@ export function MusicTherapyPage() {
   const [isPlaying, setIsPlaying] = React.useState(false);
   const [volume, setVolume] = React.useState(50);
   const [isMuted, setIsMuted] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [loadingTrack, setLoadingTrack] = React.useState<string | null>(null);
+  const [preloadProgress, setPreloadProgress] = React.useState(0);
 
   const [progress, setProgress] = React.useState(0);          // 0..100 (%)
   const [duration, setDuration] = React.useState(0);          // seconds
@@ -21,7 +27,15 @@ export function MusicTherapyPage() {
 
   const [isRecording, setIsRecording] = React.useState(false);
   const [recordingTime, setRecordingTime] = React.useState(0);
-  const [recordings, setRecordings] = React.useState<string[]>([]);
+  const [recordings, setRecordings] = React.useState<{name: string; url: string; duration: number}[]>([]);
+  const [playingRecordingIndex, setPlayingRecordingIndex] = React.useState<number | null>(null);
+  const [recordingError, setRecordingError] = React.useState<string | null>(null);
+  
+  // Recording refs
+  const mediaRecorderRef = React.useRef<MediaRecorder | null>(null);
+  const recordingChunksRef = React.useRef<Blob[]>([]);
+  const recordingAudioRef = React.useRef<HTMLAudioElement | null>(null);
+  
   const [playlistName, setPlaylistName] = React.useState('');
   const [customPlaylist, setCustomPlaylist] = React.useState<string[]>([]);
   const [journalEntry, setJournalEntry] = React.useState('');
@@ -65,13 +79,19 @@ export function MusicTherapyPage() {
     { id: 'rhythm',   title: "Use rhythm to express your emotions", description: "Let the beat guide your feelings" },
   ];
 
+  // Get all tracks for preloading
+  const allTracks = React.useMemo(() => 
+    musicCategories.flatMap(cat => cat.tracks), 
+    []
+  );
+
   // --- Helpers ---------------------------------------------------------------
 
   // From "Ocean Waves (AI Generated)" -> "/audio/ocean-waves.mp3"
-  const trackToSrc = (track: string) => {
+  const trackToSrc = React.useCallback((track: string) => {
     const base = track.replace(/\(.*?\)/g, '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     return `/audio/${base}.mp3`;
-  };
+  }, []);
 
   const formatTime = (secs: number) => {
     if (!isFinite(secs)) return '0:00';
@@ -79,6 +99,70 @@ export function MusicTherapyPage() {
     const s = Math.floor(secs % 60);
     return `${m}:${s.toString().padStart(2, '0')}`;
   };
+
+  // --- Preload audio function ------------------------------------------------
+  const preloadAudio = React.useCallback((track: string): Promise<HTMLAudioElement> => {
+    const src = trackToSrc(track);
+    
+    // Return cached audio if available
+    if (audioCache.has(src)) {
+      return Promise.resolve(audioCache.get(src)!);
+    }
+
+    return new Promise((resolve, reject) => {
+      const audio = new Audio();
+      audio.preload = 'auto';
+      
+      const handleCanPlay = () => {
+        audioCache.set(src, audio);
+        audio.removeEventListener('canplaythrough', handleCanPlay);
+        audio.removeEventListener('error', handleError);
+        resolve(audio);
+      };
+      
+      const handleError = (e: Event) => {
+        audio.removeEventListener('canplaythrough', handleCanPlay);
+        audio.removeEventListener('error', handleError);
+        reject(e);
+      };
+      
+      audio.addEventListener('canplaythrough', handleCanPlay);
+      audio.addEventListener('error', handleError);
+      audio.src = src;
+      audio.load();
+    });
+  }, [trackToSrc]);
+
+  // --- Preload all tracks on mount -------------------------------------------
+  React.useEffect(() => {
+    let mounted = true;
+    let loadedCount = 0;
+
+    const preloadAllTracks = async () => {
+      for (const track of allTracks) {
+        if (!mounted) break;
+        try {
+          await preloadAudio(track);
+          loadedCount++;
+          if (mounted) {
+            setPreloadProgress(Math.round((loadedCount / allTracks.length) * 100));
+          }
+        } catch (err) {
+          console.warn(`Failed to preload ${track}:`, err);
+          loadedCount++;
+          if (mounted) {
+            setPreloadProgress(Math.round((loadedCount / allTracks.length) * 100));
+          }
+        }
+      }
+    };
+
+    preloadAllTracks();
+
+    return () => {
+      mounted = false;
+    };
+  }, [allTracks, preloadAudio]);
 
   // --- Audio wiring ----------------------------------------------------------
 
@@ -90,9 +174,17 @@ export function MusicTherapyPage() {
     // ensure correct src for selected track
     const nextSrc = trackToSrc(currentTrack);
     if (audio.getAttribute('data-src') !== nextSrc) {
-      audio.src = nextSrc;
-      audio.setAttribute('data-src', nextSrc);
-      // after setting src, we wait for metadata before we can seek/display duration
+      // Check if we have a preloaded version
+      const cachedAudio = audioCache.get(nextSrc);
+      if (cachedAudio) {
+        // Copy the src from cached audio (already loaded)
+        audio.src = nextSrc;
+        audio.setAttribute('data-src', nextSrc);
+      } else {
+        // Fall back to loading directly
+        audio.src = nextSrc;
+        audio.setAttribute('data-src', nextSrc);
+      }
     }
 
     // set volume/mute state on every change
@@ -101,10 +193,14 @@ export function MusicTherapyPage() {
 
     if (isPlaying) {
       // browsers require a user gesture (your button click satisfies it)
-      audio.play().catch((err) => {
-        console.warn('Playback failed:', err);
-        setIsPlaying(false);
-      });
+      setIsLoading(true);
+      audio.play()
+        .then(() => setIsLoading(false))
+        .catch((err) => {
+          console.warn('Playback failed:', err);
+          setIsPlaying(false);
+          setIsLoading(false);
+        });
     } else {
       audio.pause();
     }
@@ -152,16 +248,33 @@ export function MusicTherapyPage() {
 
   // --- UI handlers -----------------------------------------------------------
 
-  const handlePlay = (track: string) => {
+  const handlePlay = React.useCallback(async (track: string) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    // If clicking the same track, just toggle play/pause
     if (currentTrack === track) {
-      setIsPlaying((p) => !p); // toggle play/pause
-    } else {
-      setCurrentTrack(track);
-      setIsPlaying(true);
-      setProgress(0);
-      setCurrentTime(0);
+      setIsPlaying((p) => !p);
+      return;
     }
-  };
+
+    // Switch to new track
+    setLoadingTrack(track);
+    
+    // Stop current playback immediately
+    audio.pause();
+    audio.currentTime = 0;
+    
+    // Reset state for new track
+    setProgress(0);
+    setCurrentTime(0);
+    setDuration(0);
+    
+    // Set new track and start playing
+    setCurrentTrack(track);
+    setIsPlaying(true);
+    setLoadingTrack(null);
+  }, [currentTrack]);
 
   const handleVolumeChange = (newVolume: number) => {
     setVolume(newVolume);
@@ -179,16 +292,159 @@ export function MusicTherapyPage() {
     setCurrentTime(t);
   };
 
-  const startRecording = () => {
-    setIsRecording(true);
-    setRecordingTime(0);
+  // Get current track index in the flat list of all tracks
+  const getCurrentTrackIndex = React.useCallback(() => {
+    if (!currentTrack) return -1;
+    return allTracks.indexOf(currentTrack);
+  }, [currentTrack, allTracks]);
+
+  // Play previous track
+  const playPreviousTrack = React.useCallback(() => {
+    const currentIndex = getCurrentTrackIndex();
+    if (currentIndex <= 0) {
+      // If first track or no track, go to last track
+      handlePlay(allTracks[allTracks.length - 1]);
+    } else {
+      handlePlay(allTracks[currentIndex - 1]);
+    }
+  }, [getCurrentTrackIndex, allTracks, handlePlay]);
+
+  // Play next track
+  const playNextTrack = React.useCallback(() => {
+    const currentIndex = getCurrentTrackIndex();
+    if (currentIndex >= allTracks.length - 1 || currentIndex === -1) {
+      // If last track or no track, go to first track
+      handlePlay(allTracks[0]);
+    } else {
+      handlePlay(allTracks[currentIndex + 1]);
+    }
+  }, [getCurrentTrackIndex, allTracks, handlePlay]);
+
+  const startRecording = async () => {
+    setRecordingError(null);
+    try {
+      // Request microphone with high quality audio settings
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          sampleRate: 44100,
+          channelCount: 1
+        } 
+      });
+      
+      // Try to use the best available audio codec
+      let mimeType = 'audio/webm;codecs=opus';
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = 'audio/webm';
+        if (!MediaRecorder.isTypeSupported(mimeType)) {
+          mimeType = 'audio/mp4';
+          if (!MediaRecorder.isTypeSupported(mimeType)) {
+            mimeType = ''; // Let browser choose default
+          }
+        }
+      }
+      
+      const options: MediaRecorderOptions = {
+        audioBitsPerSecond: 128000
+      };
+      if (mimeType) {
+        options.mimeType = mimeType;
+      }
+      
+      const mediaRecorder = new MediaRecorder(stream, options);
+      mediaRecorderRef.current = mediaRecorder;
+      recordingChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          recordingChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        const actualMimeType = mediaRecorder.mimeType || 'audio/webm';
+        const blob = new Blob(recordingChunksRef.current, { type: actualMimeType });
+        const url = URL.createObjectURL(blob);
+        const name = `Recording ${recordings.length + 1}`;
+        setRecordings((r) => [...r, { name, url, duration: recordingTime }]);
+        
+        // Stop all tracks to release microphone
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      // Request data every 250ms for smoother recording
+      mediaRecorder.start(250);
+      setIsRecording(true);
+      setRecordingTime(0);
+    } catch (err) {
+      console.error('Failed to start recording:', err);
+      setRecordingError('Could not access microphone. Please allow microphone access and try again.');
+    }
   };
 
   const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
     setIsRecording(false);
-    const name = `Recording ${recordings.length + 1} (${formatTime(recordingTime)})`;
-    setRecordings((r) => [...r, name]);
-    setRecordingTime(0);
+  };
+
+  const playRecording = (index: number) => {
+    const recording = recordings[index];
+    if (!recording) return;
+
+    // Stop any currently playing recording
+    if (recordingAudioRef.current) {
+      recordingAudioRef.current.pause();
+      recordingAudioRef.current = null;
+    }
+
+    // If clicking the same recording that's playing, just stop it
+    if (playingRecordingIndex === index) {
+      setPlayingRecordingIndex(null);
+      return;
+    }
+
+    const audio = new Audio(recording.url);
+    recordingAudioRef.current = audio;
+    
+    audio.onended = () => {
+      setPlayingRecordingIndex(null);
+      recordingAudioRef.current = null;
+    };
+    
+    audio.play();
+    setPlayingRecordingIndex(index);
+  };
+
+  const downloadRecording = (index: number) => {
+    const recording = recordings[index];
+    if (!recording) return;
+
+    const a = document.createElement('a');
+    a.href = recording.url;
+    a.download = `${recording.name}.webm`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  const deleteRecording = (index: number) => {
+    // Stop if currently playing
+    if (playingRecordingIndex === index) {
+      if (recordingAudioRef.current) {
+        recordingAudioRef.current.pause();
+        recordingAudioRef.current = null;
+      }
+      setPlayingRecordingIndex(null);
+    }
+    
+    // Revoke the URL to free memory
+    URL.revokeObjectURL(recordings[index].url);
+    
+    setRecordings((r) => r.filter((_, i) => i !== index));
   };
 
   const addToPlaylist = (track: string) => {
@@ -262,8 +518,8 @@ export function MusicTherapyPage() {
 
   return (
     <div className="space-y-8 p-4 max-w-7xl mx-auto">
-      {/* hidden audio element */}
-      <audio ref={audioRef} preload="metadata" playsInline />
+      {/* hidden audio element with auto preload */}
+      <audio ref={audioRef} preload="auto" playsInline />
 
       <div className="flex items-center space-x-4">
         <Link to="/therapy">
@@ -281,6 +537,15 @@ export function MusicTherapyPage() {
           </p>
         </div>
       </div>
+
+      {/* Preload Progress Indicator */}
+      {preloadProgress < 100 && (
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span>Loading music library... {preloadProgress}%</span>
+          <Progress value={preloadProgress} className="h-2 w-32" />
+        </div>
+      )}
 
       {/* AI Generated Content Disclaimer */}
       <Card className="bg-amber-50 dark:bg-amber-950/40 border-2 border-amber-200 dark:border-amber-700 hover-lift">
@@ -340,11 +605,38 @@ export function MusicTherapyPage() {
               </div>
 
               <div className="flex items-center justify-center space-x-4">
-                <Button size="lg" onClick={() => seekToPercent(0)} variant="outline" className="rounded-full hover:bg-accent/20 transition-all duration-300">⏮</Button>
-                <Button size="lg" onClick={() => handlePlay(currentTrack)} className="rounded-full w-16 h-16 shadow-soft-lg hover:scale-105 transition-all duration-300">
-                  {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
+                <Button 
+                  size="lg" 
+                  onClick={playPreviousTrack} 
+                  variant="outline" 
+                  className="rounded-full hover:bg-accent/20 transition-all duration-300"
+                  title="Previous track"
+                >
+                  ⏮
                 </Button>
-                <Button size="lg" onClick={() => seekToPercent(100)} variant="outline" className="rounded-full hover:bg-accent/20 transition-all duration-300">⏭</Button>
+                <Button 
+                  size="lg" 
+                  onClick={() => handlePlay(currentTrack)} 
+                  disabled={isLoading}
+                  className="rounded-full w-16 h-16 shadow-soft-lg hover:scale-105 transition-all duration-300"
+                >
+                  {isLoading ? (
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  ) : isPlaying ? (
+                    <Pause className="h-6 w-6" />
+                  ) : (
+                    <Play className="h-6 w-6" />
+                  )}
+                </Button>
+                <Button 
+                  size="lg" 
+                  onClick={playNextTrack} 
+                  variant="outline" 
+                  className="rounded-full hover:bg-accent/20 transition-all duration-300"
+                  title="Next track"
+                >
+                  ⏭
+                </Button>
               </div>
             </div>
           </CardContent>
@@ -359,16 +651,16 @@ export function MusicTherapyPage() {
                 <div className="flex items-center space-x-3">
                   <div className="text-2xl sm:text-3xl flex-shrink-0">{category.icon}</div>
                   <div className="min-w-0">
-                    <CardTitle className="text-lg sm:text-xl">{category.title}</CardTitle>
-                    <CardDescription className="text-sm sm:text-base">{category.description}</CardDescription>
+                    <CardTitle className="text-lg sm:text-xl text-gray-900 dark:text-gray-100">{category.title}</CardTitle>
+                    <CardDescription className="text-sm sm:text-base text-gray-700 dark:text-gray-300">{category.description}</CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="px-4 sm:px-6">
                 <div className="space-y-2 sm:space-y-3">
                   {category.tracks.map((track, trackIndex) => (
-                    <div key={trackIndex} className="flex items-center justify-between gap-2 p-2 sm:p-3 bg-white/60 dark:bg-gray-800/60 rounded-xl sm:rounded-2xl hover:bg-white/80 dark:hover:bg-gray-800/80 transition-all duration-300 backdrop-blur-sm border border-white/50">
-                      <span className="text-xs sm:text-sm font-medium truncate min-w-0">{track}</span>
+                    <div key={trackIndex} className="flex items-center justify-between gap-2 p-2 sm:p-3 bg-white/80 dark:bg-gray-800/80 rounded-xl sm:rounded-2xl hover:bg-white dark:hover:bg-gray-700 transition-all duration-300 backdrop-blur-sm border border-gray-200 dark:border-gray-600 shadow-sm">
+                      <span className="text-xs sm:text-sm font-medium truncate min-w-0 text-gray-900 dark:text-gray-100">{track}</span>
                       <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
                         <Button
                           size="sm"
@@ -379,8 +671,20 @@ export function MusicTherapyPage() {
                         >
                           <Plus className="h-4 w-4" />
                         </Button>
-                        <Button size="sm" variant="outline" onClick={() => handlePlay(track)} className="rounded-full hover:bg-accent/30 transition-all duration-300 h-8 w-8 p-0">
-                          {currentTrack === track && isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => handlePlay(track)} 
+                          disabled={loadingTrack === track}
+                          className="rounded-full hover:bg-accent/30 transition-all duration-300 h-8 w-8 p-0"
+                        >
+                          {loadingTrack === track ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : currentTrack === track && isPlaying ? (
+                            <Pause className="h-4 w-4" />
+                          ) : (
+                            <Play className="h-4 w-4" />
+                          )}
                         </Button>
                       </div>
                     </div>
@@ -424,6 +728,11 @@ export function MusicTherapyPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="text-center space-y-4">
+                {recordingError && (
+                  <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-xl text-sm text-red-700 dark:text-red-300">
+                    {recordingError}
+                  </div>
+                )}
                 {isRecording ? (
                   <div className="space-y-4 p-6 bg-gradient-to-br from-red-50/50 to-pink-50/50 dark:from-red-900/10 dark:to-pink-900/10 rounded-2xl">
                     <div className="text-red-500 text-5xl animate-pulse">🔴</div>
@@ -449,10 +758,35 @@ export function MusicTherapyPage() {
                   <h4 className="font-medium text-lg">Your Recordings:</h4>
                   {recordings.map((rec, idx) => (
                     <div key={idx} className="flex items-center justify-between p-3 bg-muted/30 rounded-2xl hover:bg-muted/50 transition-all duration-300">
-                      <span className="text-sm">{rec}</span>
-                      <div className="space-x-1">
-                        <Button size="sm" variant="ghost" className="rounded-full"><Play className="h-3 w-3" /></Button>
-                        <Button size="sm" variant="ghost" className="rounded-full"><Download className="h-3 w-3" /></Button>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium">{rec.name}</span>
+                        <span className="text-xs text-muted-foreground">{formatTime(rec.duration)}</span>
+                      </div>
+                      <div className="flex space-x-1">
+                        <Button 
+                          size="sm" 
+                          variant={playingRecordingIndex === idx ? "default" : "ghost"} 
+                          className="rounded-full"
+                          onClick={() => playRecording(idx)}
+                        >
+                          {playingRecordingIndex === idx ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          className="rounded-full"
+                          onClick={() => downloadRecording(idx)}
+                        >
+                          <Download className="h-3 w-3" />
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          className="rounded-full text-red-500 hover:text-red-700 hover:bg-red-100"
+                          onClick={() => deleteRecording(idx)}
+                        >
+                          ✕
+                        </Button>
                       </div>
                     </div>
                   ))}
