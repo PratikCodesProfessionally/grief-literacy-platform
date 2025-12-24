@@ -910,6 +910,76 @@ Can be true
 At once`,
       category: "Self-Love",
       readTime: "3 min"
+},
+{
+  id: 16,
+  title: "You don't need healing or do you?",
+  author: "unknown",
+  content:`You arenot punctured 
+You are in human society 
+
+You are not thatched
+You are in human society, mate
+
+You are not blistered 
+You are in human society 
+
+But are you not human?
+
+Where should one go?
+When blisters are about to burst
+Where should one let the steam blow?
+When wounds are bust 
+When hearts have grown coarse and robust?
+
+When temples sell their preachings?
+The salvation, the one above 
+Taboos- ovulation, the one below
+'donation, donation? In this peaceful world mellow'
+Brothels are the new temples
+'Oh hellow!'
+
+When psychologist sell their teachings
+Sothat the market can do more leachings
+your financial piggy bank is leaking
+When the peace is taken away while you are sitting 
+While you try to prevent your mental peace from sipping 
+Keep your sanity from slipping
+
+And you get hit by ads while ducking 
+'You are a sitting duck '
+Ain't you mate or are you dodging?
+Weaving between the bullets
+Of self-help gurus
+And wellness brands
+And productivity hacks
+And mindfulness apps
+(Only $9.99/month)
+
+It's not standup comedy 
+It's poetry, mate
+It is standup comedy 
+It's human society, mate
+
+When poets are comedians
+Comedians are poets 
+You give them the punchline
+They wait for it to hurt less
+
+Welcome to human society, mate!!!
+
+Poetry is the joke you tell 
+When you've forgotten to laugh
+Society is the audience 
+that forgot how to listen enough 
+
+So we stand up mate
+perform
+pretend
+make 'em laugh 
+till the very end `,
+  category: "wholescale comedy",
+  readTime: "2 min"
 }
   ];
 
