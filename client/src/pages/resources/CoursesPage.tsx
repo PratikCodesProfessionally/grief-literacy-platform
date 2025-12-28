@@ -393,7 +393,7 @@ export function CoursesPage() {
                     )}
                     {currentLessonContent === 'The Kübler-Ross Model Explained' && (
                       <img
-                        src="/Images/TheKüblerRossModelExplainedInfographic.png"
+                        src="/Images/TheKueblerRossModelExplainedInfographic.png"
                         alt="Infographic: The Kübler-Ross Model Explained"
                         className="w-full max-w-2xl mx-auto rounded-lg shadow-md border my-6"
                       />
