@@ -333,21 +333,44 @@ export function CoursesPage() {
             </CardHeader>
             <CardContent>
               <div className="bg-gray-900 rounded-lg aspect-video flex items-center justify-center mb-6">
-                <div className="text-center text-white">
-                  <Play className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg">AI Generated Lesson: {currentLessonContent}</p>
-                  <p className="text-sm opacity-75">Simulated Duration: 12:34</p>
-                  <p className="text-xs opacity-60 mt-2">This is a demonstration of AI-generated educational content</p>
-                </div>
+                {currentLessonContent === 'Introduction to Grief Science' ? (
+                  <div className="w-full">
+                    <video
+                      className="w-full h-full rounded-lg mb-4"
+                      controls
+                      poster="/assets/lesson1-poster.png"
+                    >
+                      <source src="/videos/IntroductionToGriefScience.mp4" type="video/mp4" />
+                      Your browser does not support the video tag.
+                    </video>
+                  </div>
+                ) : (
+                  <div className="text-center text-white">
+                    <Play className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                    <p className="text-lg">AI Generated Lesson: {currentLessonContent}</p>
+                    <p className="text-sm opacity-75">Simulated Duration: 12:34</p>
+                    <p className="text-xs opacity-60 mt-2">This is a demonstration of AI-generated educational content</p>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-6">
                 <div>
                   <h3 className="text-lg font-semibold mb-3">Lesson Overview</h3>
                   <p className="text-gray-700 dark:text-gray-300">
-                    In this AI-generated lesson, we'll explore the key concepts around {currentLessonContent.toLowerCase()}. 
+                    In this AI-generated lesson, we'll explore the key concepts around {currentLessonContent.toLowerCase()}.
                     You'll learn practical strategies and gain insights that will help you on your grief journey.
                     This content is created by AI based on established grief research and therapeutic approaches.
+                  </p>
+                  {currentLessonContent === 'Introduction to Grief Science' && (
+                    <img
+                      src="/Images/IntroductionToGriefScienceInfographic.png"
+                      alt="Infographic: Introduction to Grief Science"
+                      className="w-full max-w-2xl mx-auto rounded-lg shadow-md border my-6"
+                    />
+                  )}
+                  <p className="text-gray-700 dark:text-gray-300 mt-4">
+                    Modern research suggests that grieving is a complex, biopsychosocial process that involves a dynamic interplay between the mind, brain, and body. Scientists have identified Prolonged Grief Disorder (PGD) as a specific condition where the brain’s reward and attachment systems, particularly the nucleus accumbens and amygdala, remain intensely activated by a "craving" for the deceased. To adapt healthily, individuals often move through a Dual Process Model, which involves oscillating between confronting the emotional pain of the loss and attending to the practical demands of restoring their daily lives. While neurobiological studies highlight how inflammation and neural pathways change after a death, community-sourced advice emphasizes practical coping through mindfulness, social support, and creative outlets. Ultimately, these sources illustrate that resilience is common, but recovery requires a balance of emotional processing and periods of respite from the intensity of grief.
                   </p>
                 </div>
 
@@ -387,6 +410,22 @@ export function CoursesPage() {
                     </Button>
                   )}
                 </div>
+                {/* Professional Sources Section for Lesson 1 */}
+                {currentLessonContent === 'Introduction to Grief Science' && (
+                  <div className="mt-10">
+                    <h3 className="text-lg font-semibold mb-3">Sources & Further Reading</h3>
+                    <ul className="list-disc pl-6 text-gray-700 dark:text-gray-300 space-y-2 text-sm">
+                      <li><strong>Wikipedia.</strong> "Disenfranchised grief." Defines grief not acknowledged by society, with examples such as the death of a pet or an ex-spouse.</li>
+                      <li><strong>O’Connor, Mary-Frances.</strong> "Grief: A Brief History of Research on How Body, Mind, and Brain Adapt." <em>Psychosomatic Medicine</em> (2019). Integrates psychology, neuroscience, and immunology to examine adaptation after loss.</li>
+                      <li><strong>Stroebe, Margaret, and Henk Schut.</strong> "The Dual Process Model of Coping with Bereavement: Rationale and Description." <em>Death Studies</em> (1999). Introduces the Dual Process Model, focusing on oscillation between loss- and restoration-oriented stressors.</li>
+                      <li><strong>Bookey.</strong> "The Grieving Brain Summary." Summarizes Mary-Frances O'Connor's book, <em>The Grieving Brain: The Surprising Science of How We Learn from Love and Loss</em>, explaining neurobiological challenges in grief.</li>
+                      <li><strong>Kakarala, S. E., et al.</strong> "The Neurobiological Reward System in Prolonged Grief Disorder (PGD): A Systematic Review." <em>Psychiatry Research: Neuroimaging</em> (2020). Examines the connection between PGD and the brain's reward pathways, including the nucleus accumbens.</li>
+                      <li><strong>Eisenberger, Naomi I.</strong> "The neural bases of social pain: Evidence for shared representations with physical pain." <em>Psychosomatic Medicine</em> (2012). Shows that social rejection and loss activate the same neural regions as physical pain (dACC, anterior insula).</li>
+                      <li><strong>Reddit.</strong> "Tips for surviving sadness?" Thread from r/TheGirlSurvivalGuide community, sharing personal coping strategies for grief (mindfulness, art, volunteering).</li>
+                      <li><strong>Three Oaks Hospice.</strong> "Worden’s Four Tasks of Mourning." Outlines J. William Worden's framework for healing, including accepting the reality of loss and adjusting to a world without the deceased.</li>
+                    </ul>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
