@@ -328,30 +328,52 @@ export function CoursesPage() {
               <CardTitle className="flex items-center space-x-2">
                 <Play className="h-5 w-5 text-blue-600" />
                 <span>Lesson Content (AI Generated)</span>
-                <span className="text-sm font-normal text-gray-500">(Simulated Duration: 12:34)</span>
+                {/* Removed simulated duration text */}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="bg-gray-900 rounded-lg aspect-video flex items-center justify-center mb-6">
-                {currentLessonContent === 'Introduction to Grief Science' ? (
-                  <div className="w-full">
-                    <video
-                      className="w-full h-full rounded-lg mb-4"
-                      controls
-                      poster="/assets/lesson1-poster.png"
-                    >
-                      <source src="/videos/IntroductionToGriefScience.mp4" type="video/mp4" />
-                      Your browser does not support the video tag.
-                    </video>
-                  </div>
-                ) : (
-                  <div className="text-center text-white">
-                    <Play className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                    <p className="text-lg">AI Generated Lesson: {currentLessonContent}</p>
-                    <p className="text-sm opacity-75">Simulated Duration: 12:34</p>
-                    <p className="text-xs opacity-60 mt-2">This is a demonstration of AI-generated educational content</p>
-                  </div>
-                )}
+                {(() => {
+                  console.log('Current Lesson Content:', currentLessonContent);
+                  if (currentLessonContent === 'Introduction to Grief Science') {
+                    return (
+                      <div className="w-full">
+                        <video
+                          key={currentLessonContent}
+                          className="w-full h-full rounded-lg mb-4"
+                          controls
+                          poster="/assets/lesson1-poster.png"
+                        >
+                          <source src="/videos/IntroductionToGriefScience.mp4" type="video/mp4" />
+                          Your browser does not support the video tag.
+                        </video>
+                      </div>
+                    );
+                  } else if (currentLessonContent === 'The Kübler-Ross Model Explained') {
+                    console.log('Loading video for Lesson 2:', '/videos/nonexistent.mp4');
+                    return (
+                      <div className="w-full">
+                        <video
+                          key={currentLessonContent}
+                          className="w-full h-full rounded-lg mb-4"
+                          controls
+                          poster="/assets/lesson2-poster.png"
+                        >
+                          <source src="/videos/TheKueblerRossModelExplained.mp4" type="video/mp4" />
+                          Your browser does not support the video tag.
+                        </video>
+                      </div>
+                    );
+                  } else {
+                    return (
+                      <div className="text-center text-white">
+                        <Play className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                        <p className="text-lg">AI Generated Lesson: {currentLessonContent}</p>
+                        <p className="text-xs opacity-60 mt-2">This is a demonstration of AI-generated educational content</p>
+                      </div>
+                    );
+                  }
+                })()}
               </div>
 
               <div className="space-y-6">
@@ -362,16 +384,48 @@ export function CoursesPage() {
                     You'll learn practical strategies and gain insights that will help you on your grief journey.
                     This content is created by AI based on established grief research and therapeutic approaches.
                   </p>
+                    {currentLessonContent === 'Introduction to Grief Science' && (
+                      <img
+                        src="/Images/IntroductionToGriefScienceInfographic.png"
+                        alt="Infographic: Introduction to Grief Science"
+                        className="w-full max-w-2xl mx-auto rounded-lg shadow-md border my-6"
+                      />
+                    )}
+                    {currentLessonContent === 'The Kübler-Ross Model Explained' && (
+                      <img
+                        src="/Images/TheKüblerRossModelExplainedInfographic.png"
+                        alt="Infographic: The Kübler-Ross Model Explained"
+                        className="w-full max-w-2xl mx-auto rounded-lg shadow-md border my-6"
+                      />
+                    )}
                   {currentLessonContent === 'Introduction to Grief Science' && (
-                    <img
-                      src="/Images/IntroductionToGriefScienceInfographic.png"
-                      alt="Infographic: Introduction to Grief Science"
-                      className="w-full max-w-2xl mx-auto rounded-lg shadow-md border my-6"
-                    />
+                    <p className="text-gray-700 dark:text-gray-300 mt-4">
+                      Modern research suggests that grieving is a complex, biopsychosocial process that involves a dynamic interplay between the mind, brain, and body. Scientists have identified Prolonged Grief Disorder (PGD) as a specific condition where the brain’s reward and attachment systems, particularly the nucleus accumbens and amygdala, remain intensely activated by a "craving" for the deceased. To adapt healthily, individuals often move through a Dual Process Model, which involves oscillating between confronting the emotional pain of the loss and attending to the practical demands of restoring their daily lives. While neurobiological studies highlight how inflammation and neural pathways change after a death, community-sourced advice emphasizes practical coping through mindfulness, social support, and creative outlets. Ultimately, these sources illustrate that resilience is common, but recovery requires a balance of emotional processing and periods of respite from the intensity of grief.
+                    </p>
                   )}
-                  <p className="text-gray-700 dark:text-gray-300 mt-4">
-                    Modern research suggests that grieving is a complex, biopsychosocial process that involves a dynamic interplay between the mind, brain, and body. Scientists have identified Prolonged Grief Disorder (PGD) as a specific condition where the brain’s reward and attachment systems, particularly the nucleus accumbens and amygdala, remain intensely activated by a "craving" for the deceased. To adapt healthily, individuals often move through a Dual Process Model, which involves oscillating between confronting the emotional pain of the loss and attending to the practical demands of restoring their daily lives. While neurobiological studies highlight how inflammation and neural pathways change after a death, community-sourced advice emphasizes practical coping through mindfulness, social support, and creative outlets. Ultimately, these sources illustrate that resilience is common, but recovery requires a balance of emotional processing and periods of respite from the intensity of grief.
-                  </p>
+                  {currentLessonContent === 'The Kübler-Ross Model Explained' && (
+                    <>
+                      <p className="text-gray-700 dark:text-gray-300 mt-4">
+                        These sources examine the evolution of death and grieving in modern society, tracing the shift from traditional home-based care to institutionalized medical environments. Influential figures like Elisabeth Kübler-Ross have shown how the rise of advanced medical technology contributed to a denial of mortality among physicians, who often perceived death as a professional failure. In response, the hospice movement emerged, aiming to restore dignity through palliative care and holistic support for the terminally ill. Contemporary psychological frameworks now challenge the notion of a linear "five stages of grief," proposing instead that mourning is a complex, oscillating process involving both confronting loss and restoring daily life. Additionally, researchers highlight the importance of cultural rituals and digital memorials in providing essential structures for emotional regulation and communal healing. Practical guidance for educational script writing further emphasizes the need for clear, conversational communication when addressing these sensitive topics.
+                      </p>
+                      <div className="text-gray-700 dark:text-gray-300 mt-4 space-y-2">
+                        <p>
+                          The five stages of grief, originally developed by psychiatrist Elisabeth Kübler-Ross in her 1969 book <em>On Death and Dying</em>, are Denial, Anger, Bargaining, Depression, and Acceptance. Although these stages—often abbreviated as DABDA—are now widely used to describe the experiences of the bereaved, they were originally formulated to describe the emotional journey of terminally ill patients coming to terms with their own impending death.
+                        </p>
+                        <p>The five stages, as experienced by patients facing mortality, are:</p>
+                        <ul className="list-disc pl-6">
+                          <li><strong>Denial:</strong> This serves as an initial defense mechanism to help the individual survive the shock of a terminal diagnosis. Patients may believe there has been a mistake or that the news simply isn't true.</li>
+                          <li><strong>Anger:</strong> As the reality of the situation sinks in, the patient may manifest feelings of fear or rage, often asking "Why me?" and directing this anger toward doctors, family, or their own faith.</li>
+                          <li><strong>Bargaining:</strong> In this stage, patients often try to negotiate or find a path of least objection to salvage the situation. This might involve internal promises or pleas to a higher power in an attempt to delay the inevitable or "bargain" for more time.</li>
+                          <li><strong>Depression:</strong> When the patient can no longer ignore the reality of their condition, they may experience extreme sadness, apathy, and demotivation. This stage reflects the loss of hope as they face the end of their life as they knew it.</li>
+                          <li><strong>Acceptance:</strong> The final stage is reached when the individual comes to terms with the change and their inhibitions are lowered. For a dying patient, this is the stage of finding clarity and peace with their mortality.</li>
+                        </ul>
+                        <p>
+                          While these stages have become a cultural icon, the sources emphasize that they were never intended to be a strict linear sequence. Patients may skip stages, revisit them, or experience multiple emotions simultaneously. Furthermore, modern grief experts like David Kessler have since proposed a sixth stage: <strong>Finding Meaning</strong>, which focuses on how individuals heal by finding purpose in loss.
+                        </p>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <div>
@@ -426,6 +480,21 @@ export function CoursesPage() {
                     </ul>
                   </div>
                 )}
+                {currentLessonContent === 'The Kübler-Ross Model Explained' && (
+                  <div className="mt-10">
+                    <h3 className="text-lg font-semibold mb-3">Sources & Further Reading</h3>
+                    <ul className="list-disc pl-6 text-gray-700 dark:text-gray-300 space-y-2 text-sm">
+                      <li><strong>Riaz, F., & Mustafa, A.</strong> (2025). "Digital Mourning and the Evolution of Grief: A Review of Social Media's Role in Shaping Contemporary Bereavement Practices." <em>Scholars Journal of Arts, Humanities and Social Sciences</em>. Theoretical foundation for digital dramaturgy, continuing bonds, and public performance of grief on social media.</li>
+                      <li><strong>Boudville, D.</strong> (2023). "The Effect of Belief in Grief-Stages, Self-Blame, & Social Conformity on the Grieving Process." Master’s Thesis, Utrecht University. Explores Terror Management Theory (TMT) and the interaction of social conformity and self-blame with traditional grief stages.</li>
+                      <li><strong>Corr, C. A.</strong> (2019). "What nursing can learn from a proper appreciation of the five stages." <em>Revista da Escola de Enfermagem da USP</em>. Critical history of the DABDA model, its original purpose, and lack of empirical validation for general bereavement.</li>
+                      <li><strong>Malik, P.</strong> (2025). "The Kübler Ross Change Curve in the Workplace." Whatfix Blog. Details the adaptation of grief stages into organizational change management.</li>
+                      <li><strong>Kübler-Ross, E.</strong> (1969). <em>On Death and Dying</em>. Seminal book based on interviews with over 200 terminally ill patients, leading to the five stages model.</li>
+                      <li><strong>Kessler, D.</strong> (2019). <em>Finding Meaning: The Sixth Stage of Grief</em>. Introduces the sixth stage of "Finding Meaning" as an extension for healing beyond acceptance.</li>
+                      <li><strong>Walker-Journey, J.</strong> (2022). "The 5 Stages of Divorce Grief." DivorceNet. Applies the Kübler-Ross model to "social death" and divorce.</li>
+                      <li><strong>Reddit (r/askscience).</strong> (2022). "How accurate are the '5 stages of grief' to model behavior during the loss of an important person?" Synthesis of modern critiques and personal narratives, including media like Radiolab's "The Queen of Dying".</li>
+                    </ul>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -445,10 +514,14 @@ export function CoursesPage() {
                         ? 'bg-blue-100 dark:bg-blue-900/20' 
                         : index < (completedLessons[selectedCourse] || 0)
                         ? 'bg-green-50 dark:bg-green-900/20'
+                        : index === (completedLessons[selectedCourse] || 0)
+                        ? 'hover:bg-blue-50 dark:hover:bg-blue-800'
                         : 'hover:bg-gray-50 dark:hover:bg-gray-800'
                     }`}
                     onClick={() => {
-                      if (index <= (completedLessons[selectedCourse] || 0)) {
+                      // Allow navigation to all completed lessons, the current, and the next available lesson
+                      const maxUnlocked = (completedLessons[selectedCourse] || 0);
+                      if (index <= maxUnlocked + 1) {
                         setCurrentLesson(index);
                       }
                     }}
