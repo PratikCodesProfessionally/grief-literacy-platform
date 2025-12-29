@@ -350,7 +350,6 @@ export function CoursesPage() {
                       </div>
                     );
                   } else if (currentLessonContent === 'The Kübler-Ross Model Explained') {
-                    console.log('Loading video for Lesson 2:', '/videos/nonexistent.mp4');
                     return (
                       <div className="w-full">
                         <video
@@ -360,6 +359,20 @@ export function CoursesPage() {
                           poster="/assets/lesson2-poster.png"
                         >
                           <source src="/videos/TheKueblerRossModelExplained.mp4" type="video/mp4" />
+                          Your browser does not support the video tag.
+                        </video>
+                      </div>
+                    );
+                  } else if (currentLessonContent === 'Beyond the 5 Stages: Modern Understanding') {
+                    return (
+                      <div className="w-full">
+                        <video
+                          key={currentLessonContent}
+                          className="w-full h-full rounded-lg mb-4"
+                          controls
+                          poster="/assets/lesson3-poster.png"
+                        >
+                          <source src="/videos/BeyondThe5Stages.mp4" type="video/mp4" />
                           Your browser does not support the video tag.
                         </video>
                       </div>
@@ -384,20 +397,27 @@ export function CoursesPage() {
                     You'll learn practical strategies and gain insights that will help you on your grief journey.
                     This content is created by AI based on established grief research and therapeutic approaches.
                   </p>
-                    {currentLessonContent === 'Introduction to Grief Science' && (
-                      <img
-                        src="/Images/IntroductionToGriefScienceInfographic.png"
-                        alt="Infographic: Introduction to Grief Science"
-                        className="w-full max-w-2xl mx-auto rounded-lg shadow-md border my-6"
-                      />
-                    )}
-                    {currentLessonContent === 'The Kübler-Ross Model Explained' && (
-                      <img
-                        src="/Images/TheKueblerRossModelExplainedInfographic.png"
-                        alt="Infographic: The Kübler-Ross Model Explained"
-                        className="w-full max-w-2xl mx-auto rounded-lg shadow-md border my-6"
-                      />
-                    )}
+                  {currentLessonContent === 'Introduction to Grief Science' && (
+                    <img
+                      src="/Images/IntroductionToGriefScienceInfographic.png"
+                      alt="Infographic: Introduction to Grief Science"
+                      className="w-full max-w-2xl mx-auto rounded-lg shadow-md border my-6"
+                    />
+                  )}
+                  {currentLessonContent === 'The Kübler-Ross Model Explained' && (
+                    <img
+                      src="/Images/TheKueblerRossModelExplainedInfographic.png"
+                      alt="Infographic: The Kübler-Ross Model Explained"
+                      className="w-full max-w-2xl mx-auto rounded-lg shadow-md border my-6"
+                    />
+                  )}
+                  {currentLessonContent === 'Beyond the 5 Stages: Modern Understanding' && (
+                    <img
+                      src="/Images/BeyondThe5Stages.png"
+                      alt="Infographic: Beyond the 5 Stages: Modern Understanding"
+                      className="w-full max-w-2xl mx-auto rounded-lg shadow-md border my-6"
+                    />
+                  )}
                   {currentLessonContent === 'Introduction to Grief Science' && (
                     <p className="text-gray-700 dark:text-gray-300 mt-4">
                       Modern research suggests that grieving is a complex, biopsychosocial process that involves a dynamic interplay between the mind, brain, and body. Scientists have identified Prolonged Grief Disorder (PGD) as a specific condition where the brain’s reward and attachment systems, particularly the nucleus accumbens and amygdala, remain intensely activated by a "craving" for the deceased. To adapt healthily, individuals often move through a Dual Process Model, which involves oscillating between confronting the emotional pain of the loss and attending to the practical demands of restoring their daily lives. While neurobiological studies highlight how inflammation and neural pathways change after a death, community-sourced advice emphasizes practical coping through mindfulness, social support, and creative outlets. Ultimately, these sources illustrate that resilience is common, but recovery requires a balance of emotional processing and periods of respite from the intensity of grief.
@@ -425,6 +445,104 @@ export function CoursesPage() {
                         </p>
                       </div>
                     </>
+                  )}
+                  {currentLessonContent === 'Beyond the 5 Stages: Modern Understanding' && (
+                    <div className="text-gray-700 dark:text-gray-300 mt-4 space-y-2">
+                      <p>
+                        Contemporary psychology has moved away from linear stage-based models, such as the Kübler-Ross five-stage model, which are now criticized for being empirically unsupported and potentially harmful if they lead mourners to believe they are "grieving wrong". Modern frameworks instead emphasize dynamic, non-linear processes and the reconstruction of meaning.
+                      </p>
+                      <p>The following modern grief models are supported by the sources:</p>
+                      <ol className="list-decimal pl-6 space-y-2">
+                        <li>
+                          <strong>The Dual Process Model (DPM)</strong><br/>
+                          <em>Scientific Source: Margaret Stroebe and Henk Schut (1999).</em><br/>
+                          <span>This model describes a healthy grieving process as a dynamic oscillation between two types of activities:</span>
+                          <ul className="list-disc pl-6">
+                            <li><strong>Loss-Oriented:</strong> Focusing on the grief itself, such as crying, looking at photos, and processing the pain of the bond.</li>
+                            <li><strong>Restoration-Oriented:</strong> Attending to life changes, such as mastering new tasks the deceased used to handle, developing a new identity, and finding distractions from the pain.</li>
+                            <li>Mourners do not just "complete" grief but move back and forth between these modes to adjust to their new reality.</li>
+                          </ul>
+                        </li>
+                        <li>
+                          <strong>Continuing Bonds Theory</strong><br/>
+                          <em>Scientific Source: Klass, Silverman, and Nickman (1996).</em><br/>
+                          <span>Contrary to earlier beliefs that mourners must "let go" or seek "closure," this theory suggests that it is healthy and normal to maintain a continued psychological relationship with the deceased. This may involve talking to the deceased, preserving digital legacies on social media, or incorporating their memory into daily life.</span>
+                        </li>
+                        <li>
+                          <strong>The Tasks of Mourning</strong><br/>
+                          <em>Scientific Source: J. William Worden (1991/2009).</em><br/>
+                          <span>Worden frames grief as an active process involving four essential tasks that a person must "undertake" rather than passively endure:</span>
+                          <ol className="list-decimal pl-6">
+                            <li>Accepting the reality of the loss.</li>
+                            <li>Processing the pain of grief.</li>
+                            <li>Adjusting to a world without the deceased (internal, external, and spiritual adjustments).</li>
+                            <li>Finding an enduring connection with the deceased while embarking on a new life.</li>
+                          </ol>
+                        </li>
+                        <li>
+                          <strong>Meaning Reconstruction Model</strong><br/>
+                          <em>Scientific Source: Robert Neimeyer (2001).</em><br/>
+                          <span>This model views grief as a process of rebuilding a shattered sense of identity and worldview. Because a major loss can make the world feel like it no longer makes sense, the bereaved must gradually reconstruct their understanding of themselves and their purpose to live meaningfully in a changed world.</span>
+                        </li>
+                        <li>
+                          <strong>Resilience Trajectory Model</strong><br/>
+                          <em>Scientific Source: George Bonanno (2004).</em><br/>
+                          <span>Bonanno’s research highlights that resilience is the most common outcome following a loss. Unlike the "recovery" model (where functioning drops and slowly returns), the resilience trajectory shows a stable equilibrium where individuals continue to experience positive emotions and maintain functioning despite transient waves of grief.</span>
+                        </li>
+                        <li>
+                          <strong>Tonkin’s Model (Growing Around Grief)</strong><br/>
+                          <em>Scientific Source: Lois Tonkin (1996).</em><br/>
+                          <span>Often described through the visual of a circle, this model suggests that grief does not shrink over time. Instead, the grief remains the same size, but the person’s life grows larger around it as they gain new experiences, relationships, and roles.</span>
+                        </li>
+                        <li>
+                          <strong>Two-Track Model of Bereavement</strong><br/>
+                          <em>Scientific Source: Simon Shimshon Rubin (1981).</em><br/>
+                          <span>This model assesses grief along two separate but related axes:</span>
+                          <ul className="list-disc pl-6">
+                            <li><strong>Track I:</strong> Biopsychosocial functioning, focusing on symptoms like anxiety, depression, and disruptions in work or social life.</li>
+                            <li><strong>Track II:</strong> The nature of the ongoing relational bond with the deceased, including preoccupation, imagery, and the transformation of the attachment.</li>
+                          </ul>
+                        </li>
+                      </ol>
+                      <p>
+                        Modern grief is less like a staircase where you finish one step to reach the next, and more like learning to walk in a new landscape; you may stumble back into old patterns of sadness (oscillation), but over time, the paths you build for yourself (restoration) become more familiar even as the original landmark of your loss remains.
+                      </p>
+                      <div className="mt-6">
+                        <h4 className="text-lg font-semibold mb-4">Summary Table of Differences</h4>
+                        <div className="overflow-x-auto">
+                          <table className="min-w-full table-auto border-collapse border border-gray-300 dark:border-gray-600">
+                            <thead>
+                              <tr className="bg-gray-100 dark:bg-gray-700">
+                                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-left font-semibold">Feature</th>
+                                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-left font-semibold">Dual Process Model (DPM)</th>
+                                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-left font-semibold">Meaning Reconstruction</th>
+                                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-left font-semibold">Continuing Bonds</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr className="bg-white dark:bg-gray-800">
+                                <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 font-medium">Primary Mechanism</td>
+                                <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">Oscillation between loss and restoration.</td>
+                                <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">Rebuilding a shattered worldview.</td>
+                                <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">Maintaining an ongoing connection.</td>
+                              </tr>
+                              <tr className="bg-gray-50 dark:bg-gray-700">
+                                <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 font-medium">Key Question</td>
+                                <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">How do I balance my pain with my new responsibilities?</td>
+                                <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">How do I make sense of my life now that this has happened?</td>
+                                <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">How can I keep this person with me as I move forward?</td>
+                              </tr>
+                              <tr className="bg-white dark:bg-gray-800">
+                                <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 font-medium">View of "Closure"</td>
+                                <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">Unnecessary; focuses on "dosage" and adjustment.</td>
+                                <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">Viewed as a process of narrative integration.</td>
+                                <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">Rejects the idea of "letting go" or "closure".</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
                   )}
                 </div>
 
@@ -454,7 +572,7 @@ export function CoursesPage() {
                 <div className="flex space-x-4">
                   <Button 
                     onClick={() => completeLesson(selectedCourse)}
-                    disabled={currentLesson >= (completedLessons[selectedCourse] || 0)}
+                    disabled={isLastLesson && (completedLessons[selectedCourse] || 0) >= course.lessons}
                   >
                     {isLastLesson ? 'Complete Course' : 'Mark as Complete & Continue'}
                   </Button>
