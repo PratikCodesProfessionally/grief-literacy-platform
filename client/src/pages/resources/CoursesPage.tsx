@@ -377,6 +377,20 @@ export function CoursesPage() {
                         </video>
                       </div>
                     );
+                  } else if (currentLessonContent === 'Anticipatory Grief') {
+                    return (
+                      <div className="w-full">
+                        <video
+                          key={currentLessonContent}
+                          className="w-full h-full rounded-lg mb-4"
+                          controls
+                          poster="/assets/lesson4-poster.png"
+                        >
+                          <source src="/videos/Lesson4 AnticipatoryGrief.mp4" type="video/mp4" />
+                          Your browser does not support the video tag.
+                        </video>
+                      </div>
+                    );
                   } else {
                     return (
                       <div className="text-center text-white">
@@ -401,21 +415,28 @@ export function CoursesPage() {
                     <img
                       src="/Images/IntroductionToGriefScienceInfographic.png"
                       alt="Infographic: Introduction to Grief Science"
-                      className="w-full max-w-2xl mx-auto rounded-lg shadow-md border my-6"
+                      className="w-full max-w-full sm:max-w-2xl mx-auto rounded-lg shadow-md border my-6"
                     />
                   )}
                   {currentLessonContent === 'The Kübler-Ross Model Explained' && (
                     <img
                       src="/Images/TheKueblerRossModelExplainedInfographic.png"
                       alt="Infographic: The Kübler-Ross Model Explained"
-                      className="w-full max-w-2xl mx-auto rounded-lg shadow-md border my-6"
+                      className="w-full max-w-full sm:max-w-2xl mx-auto rounded-lg shadow-md border my-6"
                     />
                   )}
                   {currentLessonContent === 'Beyond the 5 Stages: Modern Understanding' && (
                     <img
                       src="/Images/BeyondThe5Stages.png"
                       alt="Infographic: Beyond the 5 Stages: Modern Understanding"
-                      className="w-full max-w-2xl mx-auto rounded-lg shadow-md border my-6"
+                      className="w-full max-w-full sm:max-w-2xl mx-auto rounded-lg shadow-md border my-6"
+                    />
+                  )}
+                  {currentLessonContent === 'Anticipatory Grief' && (
+                    <img
+                      src="/Images/AnticipatoryGrief.png"
+                      alt="Infographic: Anticipatory Grief"
+                      className="w-full max-w-full sm:max-w-2xl mx-auto rounded-lg shadow-md border my-6"
                     />
                   )}
                   {currentLessonContent === 'Introduction to Grief Science' && (
@@ -428,7 +449,7 @@ export function CoursesPage() {
                       <p className="text-gray-700 dark:text-gray-300 mt-4">
                         These sources examine the evolution of death and grieving in modern society, tracing the shift from traditional home-based care to institutionalized medical environments. Influential figures like Elisabeth Kübler-Ross have shown how the rise of advanced medical technology contributed to a denial of mortality among physicians, who often perceived death as a professional failure. In response, the hospice movement emerged, aiming to restore dignity through palliative care and holistic support for the terminally ill. Contemporary psychological frameworks now challenge the notion of a linear "five stages of grief," proposing instead that mourning is a complex, oscillating process involving both confronting loss and restoring daily life. Additionally, researchers highlight the importance of cultural rituals and digital memorials in providing essential structures for emotional regulation and communal healing. Practical guidance for educational script writing further emphasizes the need for clear, conversational communication when addressing these sensitive topics.
                       </p>
-                      <div className="text-gray-700 dark:text-gray-300 mt-4 space-y-2">
+                      <div className="text-gray-700 dark:text-gray-300 mt-4 space-y-2 break-words">
                         <p>
                           The five stages of grief, originally developed by psychiatrist Elisabeth Kübler-Ross in her 1969 book <em>On Death and Dying</em>, are Denial, Anger, Bargaining, Depression, and Acceptance. Although these stages—often abbreviated as DABDA—are now widely used to describe the experiences of the bereaved, they were originally formulated to describe the emotional journey of terminally ill patients coming to terms with their own impending death.
                         </p>
@@ -447,7 +468,7 @@ export function CoursesPage() {
                     </>
                   )}
                   {currentLessonContent === 'Beyond the 5 Stages: Modern Understanding' && (
-                    <div className="text-gray-700 dark:text-gray-300 mt-4 space-y-2">
+                    <div className="text-gray-700 dark:text-gray-300 mt-4 space-y-2 break-words">
                       <p>
                         Contemporary psychology has moved away from linear stage-based models, such as the Kübler-Ross five-stage model, which are now criticized for being empirically unsupported and potentially harmful if they lead mourners to believe they are "grieving wrong". Modern frameworks instead emphasize dynamic, non-linear processes and the reconstruction of meaning.
                       </p>
@@ -542,6 +563,49 @@ export function CoursesPage() {
                           </table>
                         </div>
                       </div>
+                    </div>
+                  )}
+                  {currentLessonContent === 'Anticipatory Grief' && (
+                    <div className="text-gray-700 dark:text-gray-300 mt-4 space-y-2 sm:space-y-4 break-words">
+                      <p>
+                        Anticipatory grief is an emotional and physical response that occurs before a loss actually happens, typically following a terminal diagnosis or the onset of a progressive, life-limiting condition. It is often described as an "action state" of engagement in grief work, where individuals begin mourning, coping, and planning their lives in response to an impending loss while the person is still physically present. While most commonly associated with caregivers and family members, it is also experienced by the dying individuals themselves, a process sometimes specified as preparatory grief.
+                      </p>
+                      <p>
+                        Anticipatory grief differs from conventional (post-loss) grief in several fundamental ways:
+                      </p>
+                      <ul className="list-disc pl-6 space-y-2">
+                        <li><strong>Temporal Orientation:</strong> Conventional grief is reactive, occurring as a direct consequence of a death that has already taken place. In contrast, anticipatory grief is often proactive and future-oriented, focused on feared or anticipated losses, such as a future without the loved one's physical presence.</li>
+                        <li><strong>The "Rollercoaster" of Hope:</strong> Unlike the more linear adjustment sometimes seen after a loss, anticipatory grief is often described as a "rollercoaster". Grievers may oscillate between intense distress and periods of normalcy, often because they are simultaneously clinging to hope for a cure or a "miracle" while trying to accept the reality of the diagnosis.</li>
+                        <li><strong>Present vs. Future Losses:</strong> Anticipatory grief often overlaps with illness-related grief, which is present-oriented. Grievers may mourn the "person that was" due to changes in personality or function (common in dementia), even though the individual is still alive.</li>
+                        <li><strong>Nature of Emotions:</strong> Compared to conventional grief, anticipatory grief is frequently characterized by higher intensities of anger, loss of emotional control, and atypical grief responses. Grievers may feel "stuck in limbo," unsure how to process their emotions or prepare for an event that has not yet occurred.</li>
+                        <li><strong>Impact on Post-Death Bereavement:</strong> A common fallacy is that grieving early "uses up" a fixed volume of grief, thereby reducing the intensity of mourning after the death. Research suggests that while anticipatory grief can help some individuals prepare and develop coping skills to "cushion" the bereavement reaction, it does not necessarily lessen the ultimate pain of the loss. In some cases, caregivers may become so close to the loved one during the illness that their post-loss grief is actually intensified.</li>
+                      </ul>
+                      <p>
+                        Understanding these differences is vital for clinical support, as symptoms of anticipatory grief are frequently disguised as depression or anxiety. Facilitating this process through professional counseling or legacy projects can help individuals find a sense of closure and meaning before the final separation occurs.
+                      </p>
+                      <p className="italic">
+                        Analogy: If conventional grief is the wreckage left behind after a storm has passed, anticipatory grief is the tension and preparation felt while watching the clouds gather on the horizon—you are already dealing with the wind and rain of the person's decline, all while bracing for the impact of the storm that you know is coming but has not yet arrived.
+                      </p>
+                      <p>
+                        Caregivers and family members play a multifaceted role in the process of anticipatory grief, transitioning into a proactive "action state" of engagement in grief work while the loved one is still physically present. Their involvement is often characterized by a dual responsibility: they must manage complex caregiving duties—such as medical monitoring, personal care, and observing the patient—while simultaneously confronting the emotional reality of an impending loss. Family members, particularly spouses and children, often act as communication bridges between medical staff and the rest of the social network, which can lead to a sense of overwhelming responsibility. This period also involves a "rehearsal of death," where family members begin planning funeral arrangements, resolving unfinished business, and visualizing a future without the deceased. Additionally, they may participate in legacy projects, such as memory books or audio recordings, which help preserve the patient's essence and provide a therapeutic outlet for the family.
+                      </p>
+                      <p>
+                        However, this role frequently has a profound impact on their mental and physical health:
+                      </p>
+                      <ul className="list-disc pl-6 space-y-2">
+                        <li><strong>Emotional and Psychological Distress:</strong> Caregivers often experience a "rollercoaster" of emotions, shifting between intense distress, anger, irritability, and periods of normalcy. Common reactions include separation anxiety, guilt, and a sense of helplessness regarding the patient's suffering.</li>
+                        <li><strong>Cognitive Impact:</strong> The chronic stress of anticipation can lead to preoccupation with the dying person, forgetfulness, and difficulty concentrating or making critical medical and legal decisions.</li>
+                        <li><strong>Physical Manifestations:</strong> Somatic responses often mirror those of post-death grief, including sleep disturbances, appetite changes, headaches, nausea, and chronic fatigue. Research indicates these individuals may exhibit low diurnal cortisol levels, a biological marker of chronic stress linked to immune issues.</li>
+                        <li><strong>Role Entrapment:</strong> Caregivers often feel "trapped" in their caregiver identity, repressing their own personal needs and feelings ("How can I complain when he is the one dying?") to remain strong for the patient and other family members.</li>
+                        <li><strong>Gender Vulnerability:</strong> Women are often more susceptible to the negative mental health outcomes of anticipatory grief, reporting higher intensities of depression and anxiety.</li>
+                        <li><strong>Predictive Value for Bereavement:</strong> The extent of distress experienced before the death is a robust predictor of long-term functioning; high levels of pre-death grief increase the risk of developing prolonged grief disorder or clinical depression after the loss occurs. Interestingly, some studies suggest that post-bereavement reactions exist on a continuum with pre-loss mental health, meaning that pre-existing depression often independently affects how a caregiver reacts after the death.</li>
+                      </ul>
+                      <p>
+                        Early screening and psychotherapeutic interventions, such as cognitive-behavioral therapy or narrative approaches, can help caregivers build emotional resilience and preparedness, which are the strongest protective factors against long-term somatization and chronic pain.
+                      </p>
+                      <p className="italic">
+                        Analogy: For a caregiver, anticipatory grief is like running a marathon on shifting sand. While you are straining to carry the physical and medical weight of the patient, the "ground" of your emotional world is constantly moving—forcing you to adjust your footing between hope and reality, all while you are becoming physically exhausted by a race that has no clear finish line.
+                      </p>
                     </div>
                   )}
                 </div>
