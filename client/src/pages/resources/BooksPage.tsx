@@ -308,11 +308,24 @@ export function BooksPage() {
   summary: 'Through engaging tales of merchants, tradesmen, and citizens of ancient Babylon, George S. Clason distills fundamental principles of personal finance into memorable stories. The book teaches that wealth is built through consistent habits: paying yourself first, living below your means, seeking wise counsel, and making money work for you through prudent investments.',
   keyTopics: ['Personal Finance', 'Wealth Building', 'Saving Habits', 'Financial Independence', 'Money Management', 'Ancient Wisdom'],
   notesForHealing: 'Financial stress compounds grief and loss. These ancient principles offer a foundation for rebuilding security: start small by saving even 10% of income, seek guidance from those who\'ve succeeded, avoid get-rich schemes during vulnerable times. Financial stability creates space for emotional healing—one mindful decision at a time restores both material and psychological wellbeing.'
+},
+{
+  title: 'Das polygame Geschlecht',
+  author: 'Esther Ville',
+  description: 'A new perspective on postmodern feminism and men\'s mental health, exploring the complexities of gender dynamics in modern society.',
+  rating: 4.5,
+  category: 'Social Issues',
+  pages: 133,
+  published: '1974',
+  isbn: '978-3957511454',
+  summary: 'Esther Ville challenges traditional views on gender and relationships, offering fresh insights into men\'s mental health and postmodern feminist thought. This book examines how societal expectations impact both men and women, providing a nuanced understanding of contemporary gender dynamics.',
+  keyTopics: ['Men\'s Mental Health', 'Postmodern Feminism', 'Gender Dynamics', 'Social Perspectives', 'Modern Relationships'],
+  notesForHealing: 'For those exploring identity and societal roles during times of change, this book offers new frameworks for understanding personal and collective healing in the context of evolving gender norms.'
 }
   ];
 
   // Available categories for the filter dropdown.
-  const categories = ['all', 'Memoir', 'Self-Help', 'Spiritual', 'Psychology', 'Health', 'Family', 'Pet Loss', 'Resilience','Financial Health'];
+  const categories = ['all', 'Memoir', 'Self-Help', 'Spiritual', 'Psychology', 'Health', 'Family', 'Pet Loss', 'Resilience','Financial Health', 'Social Issues'];
 
   // -----------------------------
   // 2.3) Persistence effects
