@@ -134,10 +134,21 @@ export default defineConfig(({ mode }) => {
         '@': path.resolve(__dirname, './client/src'),
       },
     },
+    // Optimize dependencies
+    optimizeDeps: {
+      include: ['pdfjs-dist'],
+    },
     root: path.join(process.cwd(), 'client'),
     build: {
       outDir: path.join(process.cwd(), 'dist'),
       emptyOutDir: true,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            pdfjs: ['pdfjs-dist'],
+          },
+        },
+      },
     },
     clearScreen: false,
     server: {

@@ -9,7 +9,7 @@ import {
   Gamepad2,
   ArrowRight
 } from 'lucide-react';
-import { GrandmaSue } from '@/components/GrandmaSue';
+import { GrandmaSueEnhanced } from '@/components/GrandmaSueEnhanced';
 
 interface Feature {
   id: number;
@@ -366,8 +366,8 @@ export function HomePage() {
         </div>
       </motion.section>
 
-      {/* Floating Grandma Sue Chatbot */}
-      <GrandmaSue />
+      {/* Floating Grandma Sue Chatbot - Enhanced with RAG & Voice */}
+      <GrandmaSueEnhanced />
 
       {/* Custom Animations */}
       <style>{`
