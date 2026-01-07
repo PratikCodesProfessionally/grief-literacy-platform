@@ -391,6 +391,20 @@ export function CoursesPage() {
                         </video>
                       </div>
                     );
+                  } else if (currentLessonContent === 'Complicated vs Normal Grief') {
+                    return (
+                      <div className="w-full">
+                        <video
+                          key={currentLessonContent}
+                          className="w-full h-full rounded-lg mb-4"
+                          controls
+                          poster="/assets/lesson5-poster.png"
+                        >
+                          <source src="/videos/NormalvscomplicatedGrief.mp4" type="video/mp4" />
+                          Your browser does not support the video tag.
+                        </video>
+                      </div>
+                    );
                   } else {
                     return (
                       <div className="text-center text-white">
@@ -438,6 +452,20 @@ export function CoursesPage() {
                       alt="Infographic: Anticipatory Grief"
                       className="w-full max-w-full sm:max-w-2xl mx-auto rounded-lg shadow-md border my-6"
                     />
+                  )}
+                  {currentLessonContent === 'Complicated vs Normal Grief' && (
+                    <>
+                      <img
+                        src="/Images/NormalvsComplicatedGrief.png"
+                        alt="Infographic: Normal vs Complicated Grief - Part 1"
+                        className="w-full max-w-full sm:max-w-2xl mx-auto rounded-lg shadow-md border my-6"
+                      />
+                      <img
+                        src="/Images/NormalvsComplicatedGrief2.png"
+                        alt="Infographic: Normal vs Complicated Grief - Part 2"
+                        className="w-full max-w-full sm:max-w-2xl mx-auto rounded-lg shadow-md border my-6"
+                      />
+                    </>
                   )}
                   {currentLessonContent === 'Introduction to Grief Science' && (
                     <p className="text-gray-700 dark:text-gray-300 mt-4">
@@ -606,6 +634,203 @@ export function CoursesPage() {
                       <p className="italic">
                         Analogy: For a caregiver, anticipatory grief is like running a marathon on shifting sand. While you are straining to carry the physical and medical weight of the patient, the "ground" of your emotional world is constantly moving—forcing you to adjust your footing between hope and reality, all while you are becoming physically exhausted by a race that has no clear finish line.
                       </p>
+                    </div>
+                  )}
+                  {currentLessonContent === 'Complicated vs Normal Grief' && (
+                    <div className="text-gray-700 dark:text-gray-300 mt-4 space-y-4 break-words">
+                      <h4 className="text-lg font-semibold">What is Normal Grief?</h4>
+                      <p>
+                        Normal grief (often referred to as uncomplicated or adaptive grief) is defined as a natural, universal response and adaptive process following the loss of a loved one. It is characterized as a fluid and evolving process rather than a static emotional state, typically involving an initial period of acute grief that gradually transitions into integrated or abiding grief as the individual adapts to the new reality. This process is not orderly or predictable; it often involves emotional oscillation where a person moves back and forth between focusing on their loss and re-engaging with daily life. While the experience is intensely painful, it is usually tolerable and self-limited, with most symptoms beginning to subside within six months to two years post-loss.
+                      </p>
+                      
+                      <h5 className="font-semibold mt-4">Typical Manifestations of Normal Grief:</h5>
+                      
+                      <div className="ml-4 space-y-3">
+                        <div>
+                          <p className="font-medium">Emotional Manifestations</p>
+                          <ul className="list-disc pl-6 space-y-1">
+                            <li><strong>Initial Shock and Numbness:</strong> Disbelief and emotional numbness are common immediately following an unexpected death.</li>
+                            <li><strong>Primary Feelings:</strong> Profound sadness, sorrow, yearning, and longing for the deceased are hallmark reactions.</li>
+                            <li><strong>Dysphoric States:</strong> Individuals may experience anger, guilt, fear, anxiety, shame, and helplessness.</li>
+                            <li><strong>Positive Emotions:</strong> Adaptive grief also includes periods of relief, joy, or peace, which may co-occur with sadness.</li>
+                            <li><strong>Grief Bursts:</strong> Short periods (20-30 minutes) of intense distress or pangs triggered by reminders or anniversaries.</li>
+                          </ul>
+                        </div>
+                        
+                        <div>
+                          <p className="font-medium">Cognitive Manifestations</p>
+                          <ul className="list-disc pl-6 space-y-1">
+                            <li><strong>Preoccupation:</strong> Frequent, intrusive thoughts or preoccupying memories and images of the person who died.</li>
+                            <li><strong>Confusion and Disorientation:</strong> A sense of confusion, brain fog, and difficulty making decisions or concentrating on tasks.</li>
+                            <li><strong>Sensory Experiences:</strong> Feeling the presence of the deceased, having dreams of them, or experiencing fleeting illusions and hallucinations.</li>
+                            <li><strong>Identity Issues:</strong> A state of depersonalization or uncertainty regarding one's identity and social role after the loss.</li>
+                            <li><strong>Spiritual Inquiry:</strong> Questioning life goals or established spiritual and religious beliefs.</li>
+                          </ul>
+                        </div>
+                        
+                        <div>
+                          <p className="font-medium">Physical (Somatic) Manifestations</p>
+                          <ul className="list-disc pl-6 space-y-1">
+                            <li><strong>Stress Response:</strong> Activation of the sympathetic nervous system ("fight or flight"), leading to hypervigilance.</li>
+                            <li><strong>Sleep and Energy:</strong> Insomnia, sleep disturbances, a persistent lack of energy, or overwhelming fatigue.</li>
+                            <li><strong>Gastrointestinal Distress:</strong> Feelings of hollowness or pain in the stomach, nausea, and digestive issues.</li>
+                            <li><strong>Respiratory and Cardiac Symptoms:</strong> Tightness in the chest or throat, breathlessness, and heart palpitations.</li>
+                            <li><strong>Musculoskeletal Pain:</strong> Headaches, migraines, back and neck pain, muscle weakness, or spasms.</li>
+                            <li><strong>Appetite Changes:</strong> Significant weight loss or gain resulting from a reduction or increase in appetite.</li>
+                          </ul>
+                        </div>
+                        
+                        <div>
+                          <p className="font-medium">Behavioral Manifestations</p>
+                          <ul className="list-disc pl-6 space-y-1">
+                            <li><strong>Expressions of Distress:</strong> Frequent crying or sobbing.</li>
+                            <li><strong>Social and Functional Withdrawal:</strong> Withdrawing from social interactions and a temporary drop in work or school productivity.</li>
+                            <li><strong>Searching and Reminiscing:</strong> "Searching" behaviors, such as looking for the deceased in crowds or visiting places shared with them.</li>
+                            <li><strong>Relationship to Reminders:</strong> Either avoiding reminders of the loss or conversely, compulsively seeking proximity through the deceased's photographs or belongings.</li>
+                            <li><strong>Irritability:</strong> Becoming more aggressive, restless, or irritable than usual.</li>
+                          </ul>
+                        </div>
+                      </div>
+                      
+                      <p className="italic bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg">
+                        <strong>Analogy:</strong> Normal grief is like a physical wound. While it is initially raw, painful, and requires the body to redirect its energy toward healing, the wound eventually closes and leaves a scar. The scar remains a permanent part of the person, but it no longer prevents them from moving or functioning in their daily life.
+                      </p>
+
+                      <h4 className="text-lg font-semibold mt-6">What is Prolonged Grief Disorder (PGD)?</h4>
+                      <p>
+                        Prolonged Grief Disorder (PGD), formerly known as complicated grief, is defined as a severe and persistent bereavement response that disrupts adaptive functioning and is characterized by intense, long-lasting yearning for a deceased loved one. While normal grief is an adaptive process leading to integration of the loss, PGD represents a "derailment" of this transition, where the bereaved person remains stuck in a state of acute mourning.
+                      </p>
+                      
+                      <h5 className="font-semibold mt-4">Diagnostic Comparison: DSM-5-TR vs ICD-11</h5>
+                      <div className="overflow-x-auto mt-2">
+                        <table className="min-w-full table-auto border-collapse border border-gray-300 dark:border-gray-600 text-sm">
+                          <thead>
+                            <tr className="bg-gray-100 dark:bg-gray-700">
+                              <th className="border border-gray-300 dark:border-gray-600 px-3 py-2 text-left font-semibold">Criterion</th>
+                              <th className="border border-gray-300 dark:border-gray-600 px-3 py-2 text-left font-semibold">DSM-5-TR (2022)</th>
+                              <th className="border border-gray-300 dark:border-gray-600 px-3 py-2 text-left font-semibold">ICD-11 (2018)</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr className="bg-white dark:bg-gray-800">
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2 font-medium">Duration (Adults)</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">At least 12 months post-loss</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">At least 6 months post-loss</td>
+                            </tr>
+                            <tr className="bg-gray-50 dark:bg-gray-700">
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2 font-medium">Duration (Pediatrics)</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">At least 6 months post-loss</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Not specifically distinguished</td>
+                            </tr>
+                            <tr className="bg-white dark:bg-gray-800">
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2 font-medium">Core Symptoms</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Intense yearning/longing or preoccupation nearly every day</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Persistent and pervasive longing or cognitive preoccupation</td>
+                            </tr>
+                            <tr className="bg-gray-50 dark:bg-gray-700">
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2 font-medium">Associated Symptoms</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">At least 3 of 8 symptoms</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">At least 1 of 10 symptoms</td>
+                            </tr>
+                            <tr className="bg-white dark:bg-gray-800">
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2 font-medium">Cultural Caveat</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Must clearly exceed cultural norms</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Must markedly exceed cultural norms</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+
+                      <h5 className="font-semibold mt-4">Key Distinctions from Normal Grief:</h5>
+                      <ul className="list-disc pl-6 space-y-2">
+                        <li><strong>Persistence and Timing:</strong> Normal grief typically begins to lessen within six months to two years post-loss. In contrast, PGD is defined by symptoms that remain severe beyond the 6-month (ICD) or 12-month (DSM) mark.</li>
+                        <li><strong>Intensity and Frequency:</strong> Feelings in normal grief often come and go in "waves" or "bursts" triggered by reminders. In PGD, the distress is pervasive and nearly constant, occurring "most days" or "nearly every day".</li>
+                        <li><strong>Functional Disruption:</strong> While normal grief causes temporary social withdrawal, the bereaved eventually find a "new normal" and re-engage with life. PGD causes profound impairment that prevents the individual from recovering their own life.</li>
+                        <li><strong>Nature of the Distress:</strong> PGD is uniquely characterized by "separation distress"—an addictive-like craving and intense yearning for the deceased—whereas normal grief focuses more on general sadness and mourning.</li>
+                        <li><strong>Integration vs. Derailment:</strong> Normal grief is an adaptive, fluid process leading to integrated grief. PGD is viewed as an "inflamed" state where the healing process is halted or stuck.</li>
+                      </ul>
+
+                      <p className="italic bg-amber-50 dark:bg-amber-900/30 p-4 rounded-lg">
+                        <strong>Analogy:</strong> If normal grief is like a physical wound that slowly closes and leaves a permanent but manageable scar, Prolonged Grief Disorder is like that same wound becoming inflamed or infected. While the body attempts to heal naturally, the infection prevents the wound from closing, requiring specialized intervention to restart the healing process.
+                      </p>
+
+                      <h4 className="text-lg font-semibold mt-6">Neurobiological Differences</h4>
+                      <p>
+                        Research has identified significant neurobiological differences between normal grief and complicated grief. PGD can be conceptualized as a reward dysfunction disorder where the lost attachment figure is processed by the brain similarly to an addictive substance.
+                      </p>
+                      <ul className="list-disc pl-6 space-y-2">
+                        <li><strong>The Nucleus Accumbens:</strong> This key structure in the brain's reward pathway shows hyperactivity in individuals with PGD when exposed to reminders of the deceased, reinforcing the biological "need" for the lost person.</li>
+                        <li><strong>Persistent Craving:</strong> The core symptom of PGD—intense yearning—is viewed as a biological "craving" for the lost attachment figure.</li>
+                        <li><strong>The Orbitofrontal Cortex:</strong> Enhanced activation has been found in this region, which is involved in processing rewards and social attachment.</li>
+                        <li><strong>HPA Axis Dysfunction:</strong> PGD involves prolonged dysfunction of the hypothalamic-pituitary-adrenal axis, potentially leading to long-term physical health risks.</li>
+                      </ul>
+
+                      <p className="italic bg-purple-50 dark:bg-purple-900/30 p-4 rounded-lg">
+                        <strong>Analogy:</strong> Craving in complicated grief is like a GPS system stuck in a "recalculating" loop. The brain's reward center (the nucleus accumbens) keeps sending "drive" signals toward the old bridge (the deceased) because it still registers that person as the most rewarding destination, even though the path is permanently blocked.
+                      </p>
+
+                      <h4 className="text-lg font-semibold mt-6">Risk Factors for Complicated Grief</h4>
+                      <div className="ml-4 space-y-3">
+                        <div>
+                          <p className="font-medium">Relationship Type and Attachment Style</p>
+                          <ul className="list-disc pl-6 space-y-1">
+                            <li>Loss of a spouse, life partner, or child carries the highest risk</li>
+                            <li>Relationships characterized by excessive dependency or ambivalence</li>
+                            <li>Individuals with anxious attachment styles</li>
+                          </ul>
+                        </div>
+                        <div>
+                          <p className="font-medium">Circumstances of Death</p>
+                          <ul className="list-disc pl-6 space-y-1">
+                            <li>Unnatural and violent deaths (homicide, suicide, accidents)</li>
+                            <li>Sudden deaths without opportunity to say goodbye</li>
+                            <li>Witnessing a difficult dying process</li>
+                          </ul>
+                        </div>
+                        <div>
+                          <p className="font-medium">Pre-existing Factors</p>
+                          <ul className="list-disc pl-6 space-y-1">
+                            <li>History of mood or anxiety disorders</li>
+                            <li>Previous trauma or multiple losses</li>
+                            <li>Low perceived social support</li>
+                          </ul>
+                        </div>
+                      </div>
+
+                      <h4 className="text-lg font-semibold mt-6">Evidence-Based Treatment</h4>
+                      <p>
+                        The primary evidence-based intervention is <strong>Complicated Grief Treatment (CGT)</strong>, developed by Dr. M. Katherine Shear. This 16-session manualized protocol integrates techniques from CBT and Interpersonal Therapy.
+                      </p>
+                      <div className="ml-4 mt-2">
+                        <p className="font-medium">Three Phases of CGT:</p>
+                        <ol className="list-decimal pl-6 space-y-1">
+                          <li><strong>Introductory (Sessions 1-3):</strong> Psychoeducation, establishing a "secure base" with the therapist</li>
+                          <li><strong>Intermediate (Sessions 4-10):</strong> Imaginal Revisiting (narrating the death) and Situational Revisiting (gradual exposure to avoided reminders)</li>
+                          <li><strong>Final (Sessions 11-16):</strong> Future planning, redefining the bond with the deceased</li>
+                        </ol>
+                      </div>
+
+                      <p className="italic bg-green-50 dark:bg-green-900/30 p-4 rounded-lg mt-4">
+                        <strong>Analogy:</strong> Standard grief counseling is like a supportive cast that helps a patient walk while a bone heals naturally. Treating Prolonged Grief Disorder with CGT is like a surgeon having to reset a bone that has healed incorrectly; the therapist must actively address the "stuck" parts of the memory to allow for proper functional recovery.
+                      </p>
+
+                      <h4 className="text-lg font-semibold mt-6">Self-Assessment: When to Seek Help</h4>
+                      <p>Consider professional evaluation if, after 12 months, you experience:</p>
+                      <ul className="list-disc pl-6 space-y-1">
+                        <li>Intense, daily longing that makes it hard to care about anything else</li>
+                        <li>A precipitous drop in work productivity or inability to maintain daily routines</li>
+                        <li>Feeling as though "a part of yourself died" with the loved one</li>
+                        <li>Persistent inability to accept the finality of the loss</li>
+                        <li>Using alcohol or drugs to numb the pain</li>
+                        <li>Thoughts of wanting to die to be with the deceased</li>
+                      </ul>
+
+                      <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg mt-4">
+                        <p className="font-semibold">Important Message:</p>
+                        <p className="mt-2">
+                          It is vital not to pathologize normal grief because it is a universal human experience. However, recognizing when professional help is needed is equally critical because a significant minority experience a "derailment" of the natural healing process. Seeking evaluation is strength, not weakness.
+                        </p>
+                      </div>
                     </div>
                   )}
                 </div>
