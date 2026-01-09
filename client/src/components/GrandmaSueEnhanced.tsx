@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 
 // Import services
-import { ragPipelineService, type ConversationMessage, type RAGResponse } from '@/services/RAGPipelineService';
+import { ragPipelineService, type ConversationMessage, type RAGResponse, type AIProvider } from '@/services/RAGPipelineService';
 import { voiceService, type VoiceState } from '@/services/VoiceService';
 import { crisisDetectionService, type CrisisAssessment } from '@/services/CrisisDetectionService';
 import { knowledgeBaseService, type UploadedDocument } from '@/services/KnowledgeBaseService';
@@ -31,6 +31,7 @@ interface Message extends ConversationMessage {
   isVoice?: boolean;
   isCrisis?: boolean;
   sources?: string[];
+  provider?: AIProvider;
 }
 
 interface GrandmaSueState {
@@ -97,6 +98,9 @@ export function GrandmaSueEnhanced() {
   // Knowledge base state
   const [documents, setDocuments] = React.useState<UploadedDocument[]>([]);
   const [knowledgeCount, setKnowledgeCount] = React.useState(0);
+
+  // AI provider indicator (last assistant response)
+  const [aiProvider, setAiProvider] = React.useState<AIProvider | null>(null);
 
   // Crisis state
   const [currentCrisis, setCurrentCrisis] = React.useState<CrisisAssessment | null>(null);
@@ -285,6 +289,8 @@ export function GrandmaSueEnhanced() {
 
       const ragResponse = await ragPipelineService.processMessage(input, conversationHistory);
 
+      setAiProvider(ragResponse.provider);
+
       // Create assistant message
       const assistantMessage: Message = {
         id: `assistant-${Date.now()}`,
@@ -293,7 +299,8 @@ export function GrandmaSueEnhanced() {
         timestamp: new Date(),
         analysis: ragResponse.analysis,
         isCrisis: ragResponse.isCrisis,
-        sources: ragResponse.sources
+        sources: ragResponse.sources,
+        provider: ragResponse.provider
       };
 
       // Update messages
@@ -373,6 +380,8 @@ export function GrandmaSueEnhanced() {
 
       const ragResponse = await ragPipelineService.processMessage(input, conversationHistory);
 
+      setAiProvider(ragResponse.provider);
+
       // Create assistant message
       const assistantMessage: Message = {
         id: `assistant-${Date.now()}`,
@@ -381,7 +390,8 @@ export function GrandmaSueEnhanced() {
         timestamp: new Date(),
         analysis: ragResponse.analysis,
         isCrisis: ragResponse.isCrisis,
-        sources: ragResponse.sources
+        sources: ragResponse.sources,
+        provider: ragResponse.provider
       };
 
       // Update messages
@@ -407,13 +417,16 @@ export function GrandmaSueEnhanced() {
 
     } catch (error) {
       console.error('Failed to process message:', error);
+
+      setAiProvider('local');
       
       // Fallback response
       const fallbackMessage: Message = {
         id: `assistant-${Date.now()}`,
         role: 'assistant',
         content: "I'm here with you, dear one. Sometimes technology has hiccups, but my care for you doesn't change. Please, tell me more about what's on your heart.",
-        timestamp: new Date()
+        timestamp: new Date(),
+        provider: 'local'
       };
 
       setState(prev => ({
@@ -604,6 +617,11 @@ export function GrandmaSueEnhanced() {
                   {voiceSettings.enabled && (
                     <Badge variant="secondary" className="text-xs">
                       🎤 Voice
+                    </Badge>
+                  )}
+                  {aiProvider && (
+                    <Badge variant="secondary" className="text-xs">
+                      AI: {aiProvider === 'huggingface' ? 'Hugging Face' : aiProvider === 'claude' ? 'Claude' : aiProvider === 'gemini' ? 'Gemini' : 'Lokal'}
                     </Badge>
                   )}
                 </CardTitle>

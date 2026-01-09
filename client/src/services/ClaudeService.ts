@@ -15,14 +15,17 @@ export class ClaudeService {
   private apiKey: string;
   private baseUrl = 'https://api.anthropic.com/v1/messages';
   private model = 'claude-3-5-sonnet-20241022'; // Latest Claude model
+  private useBackendProxy: boolean;
   
   constructor() {
-    // API key should be set in environment variables
+    // Default to backend proxy for security (no key in the browser)
+    this.useBackendProxy = (import.meta.env.VITE_USE_BACKEND_AI_PROXY ?? 'true') === 'true';
+    // API key should be set in environment variables (only needed if proxy disabled)
     this.apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY || '';
   }
 
   isConfigured(): boolean {
-    return this.apiKey.length > 0;
+    return this.useBackendProxy || this.apiKey.length > 0;
   }
 
   async generateResponse(
@@ -40,22 +43,33 @@ export class ClaudeService {
     const systemPrompt = this.buildSystemPrompt(context);
 
     try {
-      const response = await fetch(this.baseUrl, {
+      const response = await fetch(this.useBackendProxy ? '/api/ai/claude' : this.baseUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': this.apiKey,
-          'anthropic-version': '2023-06-01',
-        },
-        body: JSON.stringify({
-          model: this.model,
-          max_tokens: 1024,
-          system: systemPrompt,
-          messages: messages.map(msg => ({
-            role: msg.role,
-            content: msg.content,
-          })),
-        }),
+        headers: this.useBackendProxy
+          ? { 'Content-Type': 'application/json' }
+          : {
+              'Content-Type': 'application/json',
+              'x-api-key': this.apiKey,
+              'anthropic-version': '2023-06-01',
+            },
+        body: JSON.stringify(
+          this.useBackendProxy
+            ? {
+                model: this.model,
+                max_tokens: 1024,
+                systemPrompt,
+                messages,
+              }
+            : {
+                model: this.model,
+                max_tokens: 1024,
+                system: systemPrompt,
+                messages: messages.map(msg => ({
+                  role: msg.role,
+                  content: msg.content,
+                })),
+              }
+        ),
       });
 
       if (!response.ok) {
@@ -65,6 +79,12 @@ export class ClaudeService {
       }
 
       const data = await response.json();
+
+      if (this.useBackendProxy) {
+        const text = typeof data?.text === 'string' ? data.text : '';
+        return text || this.getFallbackResponse();
+      }
+
       return data.content[0].text;
     } catch (error) {
       console.error('Failed to get Claude response:', error);

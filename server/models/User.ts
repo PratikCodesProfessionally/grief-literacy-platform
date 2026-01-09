@@ -133,7 +133,6 @@ const UserSchema: Schema = new Schema({
 /**
  * Indices für Performance-Optimierung
  */
-UserSchema.index({ email: 1 });
 UserSchema.index({ isActive: 1 });
 
 /**

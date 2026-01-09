@@ -21,3 +21,4 @@ export { emotionalAnalysisService, type EmotionalAnalysis, type EmotionalState, 
 // Existing services
 export { claudeService } from '@/services/ClaudeService';
 export { huggingFaceService } from '@/services/HuggingFaceService';
+export { geminiService } from '@/services/GeminiService';

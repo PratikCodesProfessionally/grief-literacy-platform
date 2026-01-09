@@ -21,6 +21,7 @@ import {
 } from './EmotionalAnalysisService';
 import { claudeService } from './ClaudeService';
 import { huggingFaceService } from './HuggingFaceService';
+import { geminiService } from './GeminiService';
 
 export interface ConversationMessage {
   role: 'user' | 'assistant';
@@ -29,8 +30,17 @@ export interface ConversationMessage {
   analysis?: EmotionalAnalysis;
 }
 
+export type AIProvider = 'claude' | 'huggingface' | 'gemini' | 'local';
+
+type AIProxyStatus = {
+  claude: boolean;
+  huggingface: boolean;
+  gemini: boolean;
+};
+
 export interface RAGResponse {
   response: string;
+  provider: AIProvider;
   analysis: EmotionalAnalysis;
   retrievedKnowledge: RetrievalResult;
   techniquesApplied: TechniqueType[];
@@ -146,6 +156,39 @@ const CRISIS_RESOURCES = {
 export class RAGPipelineService {
   private conversationHistory: ConversationMessage[] = [];
   private maxHistoryLength = 15;
+  private readonly useBackendAIProxy = (import.meta.env.VITE_USE_BACKEND_AI_PROXY ?? 'true') === 'true';
+  private aiProxyStatusPromise: Promise<AIProxyStatus | null> | null = null;
+
+  private getAIProxyStatus(): Promise<AIProxyStatus | null> {
+    if (!this.useBackendAIProxy) return Promise.resolve(null);
+    if (this.aiProxyStatusPromise) return this.aiProxyStatusPromise;
+
+    this.aiProxyStatusPromise = fetch('/api/ai/status', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+      .then(async (res) => {
+        if (!res.ok) {
+          console.warn('⚠️ Failed to fetch /api/ai/status:', res.status);
+          return null;
+        }
+        const data = (await res.json()) as AIProxyStatus;
+        if (!data || typeof data !== 'object') return null;
+        return {
+          claude: Boolean((data as any).claude),
+          huggingface: Boolean((data as any).huggingface),
+          gemini: Boolean((data as any).gemini),
+        };
+      })
+      .catch((err) => {
+        console.warn('⚠️ Error fetching /api/ai/status:', err);
+        return null;
+      });
+
+    return this.aiProxyStatusPromise;
+  }
 
   /**
    * Process user message through the full RAG pipeline
@@ -178,17 +221,21 @@ export class RAGPipelineService {
     
     // Step 4: Generate response
     let response: string;
+    let provider: 'claude' | 'huggingface' | 'gemini' | 'local' = 'local';
     
     try {
       // Try AI-powered response first
-      response = await this.generateAIResponse(
+      const aiResult = await this.generateAIResponse(
         userMessage,
         analysis,
         retrievedKnowledge,
         isCrisis
       );
+      response = aiResult.response;
+      provider = aiResult.provider;
+      console.log('✅ AI response generated successfully');
     } catch (error) {
-      console.error('AI generation failed, using knowledge-enhanced fallback:', error);
+      console.error('❌ AI generation failed, using knowledge-enhanced fallback:', error);
       // Fallback to local knowledge-enhanced response (with conversation history for context)
       response = this.generateLocalResponse(
         userMessage,
@@ -197,6 +244,7 @@ export class RAGPipelineService {
         isCrisis,
         this.conversationHistory
       );
+      console.log('📚 Using local fallback response');
     }
     
     // Extract source names for attribution
@@ -204,6 +252,7 @@ export class RAGPipelineService {
     
     return {
       response,
+      provider,
       analysis,
       retrievedKnowledge,
       techniquesApplied: retrievedKnowledge.techniques,
@@ -220,7 +269,7 @@ export class RAGPipelineService {
     analysis: EmotionalAnalysis,
     knowledge: RetrievalResult,
     isCrisis: boolean
-  ): Promise<string> {
+  ): Promise<{ response: string; provider: 'claude' | 'huggingface' | 'gemini' }> {
     // Build the enhanced system prompt
     const systemPrompt = this.buildEnhancedSystemPrompt(analysis, knowledge, isCrisis);
     
@@ -242,14 +291,73 @@ export class RAGPipelineService {
         .map(m => m.analysis!.problemType)
     };
 
-    // Try Claude first, then HuggingFace
-    if (claudeService.isConfigured()) {
-      return await this.generateWithClaude(systemPrompt, messages, context);
-    } else if (huggingFaceService.isConfigured()) {
-      return await this.generateWithHuggingFace(messages, context);
-    } else {
+    const proxyStatus = await this.getAIProxyStatus();
+    if (proxyStatus) {
+      console.log('ℹ️ AI proxy status:', proxyStatus);
+    }
+
+    // Try providers in order. If one fails (e.g. proxy not configured server-side), fall through.
+    const attemptedProviders: Array<'claude' | 'huggingface' | 'gemini'> = [];
+    let lastError: unknown = null;
+
+    const claudeAvailable = claudeService.isConfigured() && (!proxyStatus || proxyStatus.claude);
+    const huggingFaceAvailable = huggingFaceService.isConfigured() && (!proxyStatus || proxyStatus.huggingface);
+    const geminiAvailable = geminiService.isConfigured() && (!proxyStatus || proxyStatus.gemini);
+
+    if (claudeService.isConfigured() && proxyStatus && !proxyStatus.claude) {
+      console.log('ℹ️ Skipping Claude (not configured server-side)');
+    }
+    if (huggingFaceService.isConfigured() && proxyStatus && !proxyStatus.huggingface) {
+      console.log('ℹ️ Skipping HuggingFace (not configured server-side)');
+    }
+    if (geminiService.isConfigured() && proxyStatus && !proxyStatus.gemini) {
+      console.log('ℹ️ Skipping Gemini (not configured server-side)');
+    }
+
+    if (claudeAvailable) {
+      attemptedProviders.push('claude');
+      try {
+        console.log('🤖 Trying Claude for response generation');
+        const response = await this.generateWithClaude(systemPrompt, messages, context);
+        return { response, provider: 'claude' };
+      } catch (err) {
+        lastError = err;
+        console.warn('⚠️ Claude generation failed; trying next provider:', err);
+      }
+    }
+
+    if (huggingFaceAvailable) {
+      attemptedProviders.push('huggingface');
+      try {
+        console.log('🤖 Trying HuggingFace for response generation');
+        const response = await this.generateWithHuggingFace(messages, context);
+        return { response, provider: 'huggingface' };
+      } catch (err) {
+        lastError = err;
+        console.warn('⚠️ HuggingFace generation failed; trying next provider:', err);
+      }
+    }
+
+    if (geminiAvailable) {
+      attemptedProviders.push('gemini');
+      try {
+        console.log('🤖 Trying Gemini for response generation');
+        const response = await this.generateWithGemini(messages, context);
+        return { response, provider: 'gemini' };
+      } catch (err) {
+        lastError = err;
+        console.warn('⚠️ Gemini generation failed; no more providers left:', err);
+      }
+    }
+
+    if (attemptedProviders.length === 0) {
+      console.warn('⚠️ No AI service configured - using local fallback');
       throw new Error('No AI service configured');
     }
+
+    // We attempted at least one provider but all failed.
+    console.warn(`⚠️ All AI providers failed (${attemptedProviders.join(', ')}); using local fallback`);
+    throw (lastError instanceof Error ? lastError : new Error('All AI providers failed'));
   }
 
   /**
@@ -273,6 +381,16 @@ export class RAGPipelineService {
     context: { topics: string[]; sentiment: string; previousTopics: string[] }
   ): Promise<string> {
     return await huggingFaceService.generateResponse(messages, context);
+  }
+
+  /**
+   * Generate response using Gemini
+   */
+  private async generateWithGemini(
+    messages: Array<{ role: 'user' | 'assistant'; content: string }>,
+    context: { topics: string[]; sentiment: string; previousTopics: string[] }
+  ): Promise<string> {
+    return await geminiService.generateResponse(messages, context);
   }
 
   /**
@@ -1194,6 +1312,7 @@ What would feel most helpful for you right now?`;
     
     return {
       response,
+      provider: 'local',
       analysis: {
         emotionalState: 'neutral',
         emotionalIntensity: 'low',

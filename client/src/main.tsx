@@ -24,16 +24,23 @@ updateDarkClass();
 darkQuery.addEventListener('change', updateDarkClass);
 
 // Register Service Worker for PWA
-const updateSW = registerSW({
-  onNeedRefresh() {
-    if (confirm('Neue Version verfügbar! Jetzt aktualisieren?')) {
-      updateSW(true);
-    }
-  },
-  onOfflineReady() {
-    console.log('App ist bereit für Offline-Nutzung');
-  },
-});
+if (import.meta.env.PROD) {
+  const updateSW = registerSW({
+    onNeedRefresh() {
+      if (confirm('Neue Version verfügbar! Jetzt aktualisieren?')) {
+        updateSW(true);
+      }
+    },
+    onOfflineReady() {
+      console.log('App ist bereit für Offline-Nutzung');
+    },
+  });
+} else if ('serviceWorker' in navigator) {
+  // Dev: avoid noisy Workbox logs and stale SW behavior
+  navigator.serviceWorker.getRegistrations().then((regs) => {
+    regs.forEach((reg) => reg.unregister());
+  });
+}
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
