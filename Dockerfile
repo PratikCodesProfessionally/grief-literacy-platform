@@ -45,6 +45,10 @@ RUN npm prune --omit=dev
 # Final stage for app image
 FROM base
 
+# Ensure Node treats `dist/server/*.js` as ESM (package scope)
+# since TypeScript emits ESM .js when using nodenext.
+COPY --from=build /app/package.json /app/package.json
+
 # Copy built application
 COPY --from=build /app/dist /app/dist
 

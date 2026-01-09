@@ -22,5 +22,10 @@ services:
         sync: false
       - key: VITE_APP_URL
         sync: false
-      - key: VITE_HUGGINGFACE_API_KEY
+      # Server-side AI keys (used by /api/ai/* proxy)
+      - key: HUGGINGFACE_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
         sync: false
