@@ -405,6 +405,20 @@ export function CoursesPage() {
                         </video>
                       </div>
                     );
+                  } else if (currentLessonContent === 'Cultural Perspectives on Grief') {
+                    return (
+                      <div className="w-full">
+                        <video
+                          key={currentLessonContent}
+                          className="w-full h-full rounded-lg mb-4"
+                          controls
+                          poster="/assets/lesson6-poster.png"
+                        >
+                          <source src="/videos/CulturalPerspectivesOnGrief.mp4" type="video/mp4" />
+                          Your browser does not support the video tag.
+                        </video>
+                      </div>
+                    );
                   } else {
                     return (
                       <div className="text-center text-white">
@@ -466,6 +480,13 @@ export function CoursesPage() {
                         className="w-full max-w-full sm:max-w-2xl mx-auto rounded-lg shadow-md border my-6"
                       />
                     </>
+                  )}
+                  {currentLessonContent === 'Cultural Perspectives on Grief' && (
+                    <img
+                      src="/Images/CulturalPerspectivesOnGrief.png"
+                      alt="Infographic: Cultural Perspectives on Grief"
+                      className="w-full max-w-full sm:max-w-2xl mx-auto rounded-lg shadow-md border my-6"
+                    />
                   )}
                   {currentLessonContent === 'Introduction to Grief Science' && (
                     <p className="text-gray-700 dark:text-gray-300 mt-4">
@@ -833,6 +854,226 @@ export function CoursesPage() {
                       </div>
                     </div>
                   )}
+                  {currentLessonContent === 'Cultural Perspectives on Grief' && (
+                    <div className="text-gray-700 dark:text-gray-300 mt-4 space-y-4 break-words">
+                      <p>
+                        While grief is a biological universal, the cognitive and emotional architecture through which loss is processed is deeply contingent upon cultural, religious, and philosophical socialization. Grief is defined broadly as a person's total response to loss, encompassing physical, emotional, cognitive, behavioral, and spiritual dimensions. <strong>Mourning</strong> represents the culturally accepted process through which these personal feelings are expressed.
+                      </p>
+
+                      <h4 className="text-lg font-semibold mt-6">Western vs. Non-Western Approaches</h4>
+                      
+                      <div className="grid md:grid-cols-2 gap-4 mt-4">
+                        <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg">
+                          <h5 className="font-semibold mb-2">Western Conceptualizations</h5>
+                          <ul className="list-disc pl-4 space-y-1 text-sm">
+                            <li><strong>Linear Progression:</strong> Time viewed as "Newtonian"—grief is a "road to recovery" toward "closure"</li>
+                            <li><strong>Stage-Based Models:</strong> Kübler-Ross model (denial, anger, bargaining, depression, acceptance)</li>
+                            <li><strong>Private Expression:</strong> Individual reflection, personal eulogies, re-establishing a "new normal"</li>
+                          </ul>
+                        </div>
+                        <div className="bg-amber-50 dark:bg-amber-900/30 p-4 rounded-lg">
+                          <h5 className="font-semibold mb-2">Non-Western Approaches</h5>
+                          <ul className="list-disc pl-4 space-y-1 text-sm">
+                            <li><strong>The "Living Dead":</strong> Death as transition to ancestor status, not a final end</li>
+                            <li><strong>Communal Participation:</strong> Aboriginal "Sorry Business," West African "nine-night" celebrations</li>
+                            <li><strong>Cyclical View:</strong> Death integrated into recurring rhythms of life</li>
+                          </ul>
+                        </div>
+                      </div>
+
+                      <h5 className="font-semibold mt-4">Key Differences at a Glance</h5>
+                      <div className="overflow-x-auto mt-2">
+                        <table className="min-w-full table-auto border-collapse border border-gray-300 dark:border-gray-600 text-sm">
+                          <thead>
+                            <tr className="bg-gray-100 dark:bg-gray-700">
+                              <th className="border border-gray-300 dark:border-gray-600 px-3 py-2 text-left font-semibold">Feature</th>
+                              <th className="border border-gray-300 dark:border-gray-600 px-3 py-2 text-left font-semibold">Western Approach</th>
+                              <th className="border border-gray-300 dark:border-gray-600 px-3 py-2 text-left font-semibold">Non-Western Approach</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr className="bg-white dark:bg-gray-800">
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2 font-medium">Social Context</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Individualistic; private mourning</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Collectivist; communal transition</td>
+                            </tr>
+                            <tr className="bg-gray-50 dark:bg-gray-700">
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2 font-medium">Temporal View</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Linear; moving away from the loss</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Cyclical; integrated into recurring rhythms</td>
+                            </tr>
+                            <tr className="bg-white dark:bg-gray-800">
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2 font-medium">Goal of Grief</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Detachment and closure</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Continuing bonds and ancestral reverence</td>
+                            </tr>
+                            <tr className="bg-gray-50 dark:bg-gray-700">
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2 font-medium">Emotional Tone</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Solemn and introspective</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Can be vibrant and celebratory</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+
+                      <p className="italic bg-green-50 dark:bg-green-900/30 p-4 rounded-lg">
+                        <strong>Analogy:</strong> The Western view of grief is like a one-way path that one must travel to leave the forest of sorrow behind; in contrast, many non-Western cultures view grief like a changing season—an inevitable part of a recurring cycle that connects the earth, the community, and the spirit world in a continuous, revolving loop.
+                      </p>
+
+                      <h4 className="text-lg font-semibold mt-6">Core Definitions</h4>
+                      <ul className="list-disc pl-6 space-y-2">
+                        <li><strong>Bereavement:</strong> The objective state or period of suffering that follows the death of a loved one.</li>
+                        <li><strong>Grief:</strong> The personal, internal emotional reactions—such as sadness, anger, and guilt—that follow a loss.</li>
+                        <li><strong>Mourning:</strong> The external, culturally sanctioned process through which grief is expressed through rituals, dress codes, and behaviors.</li>
+                      </ul>
+
+                      <h4 className="text-lg font-semibold mt-6">Mourning Rituals Across Cultures</h4>
+                      
+                      <div className="space-y-3 ml-4">
+                        <div>
+                          <p className="font-medium">African Cultures</p>
+                          <p className="text-sm">In Ghana, funerals are vibrant celebrations with dancing, drinking, and "fantasy coffins" representing the deceased's achievements. The Bukusu of Kenya practice animal slaughtering, head shaving, and river cleansing for widows.</p>
+                        </div>
+                        <div>
+                          <p className="font-medium">East Asian Cultures</p>
+                          <p className="text-sm">Influenced by Confucianism, mourning expresses filial piety (xiao) through soul tablets, merit-making, and sutra chanting during the 49-day bardo period.</p>
+                        </div>
+                        <div>
+                          <p className="font-medium">Latin American Cultures</p>
+                          <p className="text-sm">Día de los Muertos transforms mourning into joyful celebration. Families build ofrendas (altars) with favorite foods and marigolds to guide spirits home.</p>
+                        </div>
+                        <div>
+                          <p className="font-medium">Indigenous Cultures</p>
+                          <p className="text-sm">Aboriginal "Sorry Business" involves mandatory community participation lasting weeks or months. Many groups maintain taboos against speaking the name of the deceased.</p>
+                        </div>
+                      </div>
+
+                      <h4 className="text-lg font-semibold mt-6">Religious Funeral Practices</h4>
+                      <div className="overflow-x-auto mt-2">
+                        <table className="min-w-full table-auto border-collapse border border-gray-300 dark:border-gray-600 text-sm">
+                          <thead>
+                            <tr className="bg-gray-100 dark:bg-gray-700">
+                              <th className="border border-gray-300 dark:border-gray-600 px-3 py-2 text-left font-semibold">Religion</th>
+                              <th className="border border-gray-300 dark:border-gray-600 px-3 py-2 text-left font-semibold">Primary Practices</th>
+                              <th className="border border-gray-300 dark:border-gray-600 px-3 py-2 text-left font-semibold">Beliefs</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr className="bg-white dark:bg-gray-800">
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Christianity</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Burial; church services with prayers</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Linear life; resurrection</td>
+                            </tr>
+                            <tr className="bg-gray-50 dark:bg-gray-700">
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Islam</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Immediate burial (24 hrs); body faces Mecca</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Acceptance of God's will (Qadar)</td>
+                            </tr>
+                            <tr className="bg-white dark:bg-gray-800">
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Judaism</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Shiva (7-day mourning); community support</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Honoring the dead (kibud hamet)</td>
+                            </tr>
+                            <tr className="bg-gray-50 dark:bg-gray-700">
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Hinduism</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Cremation; ashes in flowing water</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Reincarnation cycle</td>
+                            </tr>
+                            <tr className="bg-white dark:bg-gray-800">
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Buddhism</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Sutra chanting; merit-making; cremation</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Impermanence (anicca); 49-day bardo</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+
+                      <h4 className="text-lg font-semibold mt-6">Idioms of Distress</h4>
+                      <p>
+                        <strong>Idioms of distress</strong> are culturally specific ways individuals express psychological suffering. While Western cultures prioritize emotional symptoms (sadness, guilt), many collectivist societies express grief through somatic (physical) symptoms like heart pain or respiratory issues.
+                      </p>
+                      <ul className="list-disc pl-6 space-y-1 mt-2">
+                        <li><strong>Western Emotionalism:</strong> Grief as private psychological journey; verbalizing feelings to find "closure"</li>
+                        <li><strong>Non-Western Somatization:</strong> Deep grief reported as physical ailments; head shaving, wailing, or river cleansing as physical outlets</li>
+                        <li><strong>Malignant Grief:</strong> Suppressed grief that becomes "toxic," leading to chronic disease or loss of social function</li>
+                      </ul>
+
+                      <h4 className="text-lg font-semibold mt-6">Disenfranchised Grief</h4>
+                      <p>
+                        <strong>Disenfranchised grief</strong> occurs when a loss is not socially recognized or validated—leading to intense loneliness and shame. This happens through:
+                      </p>
+                      <ul className="list-disc pl-6 space-y-1 mt-2">
+                        <li><strong>Stigmatized deaths:</strong> Suicide, drug overdose, HIV/AIDS</li>
+                        <li><strong>Unrecognized relationships:</strong> Same-sex partners, ex-spouses, extramarital relationships</li>
+                        <li><strong>"Unimportant" losses:</strong> Miscarriage, pet loss</li>
+                        <li><strong>Cultural bereavement:</strong> Loss of homeland, language, and ancestral rituals experienced by migrants</li>
+                      </ul>
+
+                      <p className="italic bg-purple-50 dark:bg-purple-900/30 p-4 rounded-lg mt-4">
+                        <strong>Analogy:</strong> Imagine the community as a library with official shelves for "Approved Sorrows." When you suffer a disenfranchised loss, you are left holding a book the library refuses to recognize—your story remains hidden in your pocket, unread and unvalidated by the world.
+                      </p>
+
+                      <h4 className="text-lg font-semibold mt-6">Continuing Bonds vs. "Letting Go"</h4>
+                      <p>
+                        Cultural perspectives differ on whether mourners should "let go" or maintain ongoing connections with the deceased:
+                      </p>
+                      <div className="grid md:grid-cols-2 gap-4 mt-4">
+                        <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg">
+                          <h5 className="font-semibold mb-2">Western: Movement Toward Closure</h5>
+                          <ul className="list-disc pl-4 space-y-1 text-sm">
+                            <li>Linear progression toward "moving forward"</li>
+                            <li>Kübler-Ross aimed for "acceptance" as final stage</li>
+                            <li>Modern "Continuing Bonds" theory now gaining traction</li>
+                          </ul>
+                        </div>
+                        <div className="bg-amber-50 dark:bg-amber-900/30 p-4 rounded-lg">
+                          <h5 className="font-semibold mb-2">Non-Western: The "Living Dead"</h5>
+                          <ul className="list-disc pl-4 space-y-1 text-sm">
+                            <li>Death as transition to ancestor status</li>
+                            <li>Connection is mandatory through rituals</li>
+                            <li>Soul tablets, Día de los Muertos ofrendas, naming children after deceased</li>
+                          </ul>
+                        </div>
+                      </div>
+
+                      <h4 className="text-lg font-semibold mt-6">The Cultural Caveat in Clinical Assessment</h4>
+                      <p>
+                        Both DSM-5-TR and ICD-11 include a <strong>"cultural caveat"</strong> requiring that grief symptoms must "clearly exceed" what is normal in the individual's specific cultural context before diagnosing Prolonged Grief Disorder.
+                      </p>
+                      <ul className="list-disc pl-6 space-y-1 mt-2">
+                        <li>Vietnam: Traditional mourning lasts 2 years</li>
+                        <li>Bali: Rituals can continue for up to 10 years</li>
+                        <li>Aboriginal Sorry Business: Weeks to months of mandatory participation</li>
+                        <li>Navajo: Condensed 4-day mourning, then deceased not mentioned again</li>
+                      </ul>
+
+                      <p className="italic bg-green-50 dark:bg-green-900/30 p-4 rounded-lg mt-4">
+                        <strong>Analogy:</strong> Assessing grief across cultures is like tuning a radio. If clinicians only listen for "Western signals," they may mistake communal wailing or multi-year rituals for pathological noise. To correctly diagnose, clinicians must first identify the cultural station the patient is tuned into.
+                      </p>
+
+                      <h4 className="text-lg font-semibold mt-6">Migration and Bicultural Grief</h4>
+                      <p>
+                        Globalization creates <strong>"cultural bereavement"</strong> where migrants navigate the loss of familiar structures while assimilating into host cultures that don't recognize their needs.
+                      </p>
+                      <ul className="list-disc pl-6 space-y-1 mt-2">
+                        <li><strong>Fragmentation of self:</strong> Feeling too "Westernized" for heritage, too "ethnic" for host society</li>
+                        <li><strong>Invisible death:</strong> Older generations dying in homeland while descendants are abroad</li>
+                        <li><strong>Thanatechnology:</strong> WhatsApp groups, digital memorials, and "cybercems" bridging geographic distance</li>
+                        <li><strong>Hybrid rituals:</strong> Combining traditional elements with Western-style "celebrations of life"</li>
+                      </ul>
+
+                      <p className="italic bg-amber-50 dark:bg-amber-900/30 p-4 rounded-lg mt-4">
+                        <strong>Analogy:</strong> Migrant grief is like a radio tuned between two stations—the individual hears a confusing mix of static from the host culture's "silent" frequency and the loud, ritualized broadcast of their heritage, struggling to find a clear signal that honors both worlds.
+                      </p>
+
+                      <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg mt-6">
+                        <p className="font-semibold">Key Takeaway:</p>
+                        <p className="mt-2">
+                          Grief expressions are like different languages for the same emotion. Just as there are countless languages to say "I love you," there are countless cultural frameworks for expressing "I am grieving." None is more correct than another—they are simply different dialects of the universal human experience of loss.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -900,6 +1141,70 @@ export function CoursesPage() {
                       <li><strong>Walker-Journey, J.</strong> (2022). "The 5 Stages of Divorce Grief." DivorceNet. Applies the Kübler-Ross model to "social death" and divorce.</li>
                       <li><strong>Reddit (r/askscience).</strong> (2022). "How accurate are the '5 stages of grief' to model behavior during the loss of an important person?" Synthesis of modern critiques and personal narratives, including media like Radiolab's "The Queen of Dying".</li>
                     </ul>
+                  </div>
+                )}
+                {currentLessonContent === 'Cultural Perspectives on Grief' && (
+                  <div className="mt-10">
+                    <h3 className="text-lg font-semibold mb-3">Sources & Further Reading</h3>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 italic">
+                      These sources provide a multi-disciplinary analysis of global thanatology, merging clinical psychological frameworks with ethnographic studies of traditional mourning rituals. They categorize grief not as a singular emotional state, but as a socially mediated performance dictated by regional, religious, and philosophical norms.
+                    </p>
+                    
+                    <h4 className="font-semibold text-sm mt-4 mb-2">African and Caribbean Heritage</h4>
+                    <ul className="list-disc pl-6 text-gray-700 dark:text-gray-300 space-y-1 text-sm">
+                      <li>Rituals of the <strong>Bukusu community</strong> in Kenya, including wailing and "Khuswala kumuse" (traditional preaching)</li>
+                      <li>Studies on terminal illness alienation in <strong>Ghana</strong> and the concept of "hysteresis" (cultural lag) in bicultural families</li>
+                      <li>Research on the <strong>"living dead"</strong> concept where deceased remain active family members</li>
+                    </ul>
+                    
+                    <h4 className="font-semibold text-sm mt-4 mb-2">Indigenous Worldviews</h4>
+                    <ul className="list-disc pl-6 text-gray-700 dark:text-gray-300 space-y-1 text-sm">
+                      <li>Research on Australian Aboriginal <strong>"Sorry Business"</strong> and <strong>"Malignant Grief"</strong> (intergenerational trauma from loss of land and language)</li>
+                      <li><strong>Haudenosaunee and Anishinabe</strong> perspectives on the "Sky World" and the role of fire in spiritual communication</li>
+                    </ul>
+                    
+                    <h4 className="font-semibold text-sm mt-4 mb-2">Western Psychological Frameworks</h4>
+                    <ul className="list-disc pl-6 text-gray-700 dark:text-gray-300 space-y-1 text-sm">
+                      <li><strong>Kübler-Ross, E.</strong> (1969). <em>On Death and Dying</em>. Five-stage model (denial, anger, bargaining, depression, acceptance)</li>
+                      <li><strong>Worden, J. W.</strong> Tasks of Mourning framework for healing</li>
+                      <li><strong>Stroebe & Schut.</strong> Dual Process Model of coping with bereavement</li>
+                      <li>Contrast between Western individualistic "closure" and global communal practices</li>
+                    </ul>
+                    
+                    <h4 className="font-semibold text-sm mt-4 mb-2">East and South Asian Perspectives</h4>
+                    <ul className="list-disc pl-6 text-gray-700 dark:text-gray-300 space-y-1 text-sm">
+                      <li>Confucian <strong>"filial piety" (xiao)</strong> and ritual propriety (li) as regulatory tools for emotional display</li>
+                      <li>Buddhist <strong>merit-making</strong> and the <strong>49-day bardo period</strong></li>
+                      <li>South Asian/Punjabi healing practices: <strong>"Seva"</strong> (selfless service) and <strong>"Kirtan"</strong> (devotional singing)</li>
+                    </ul>
+                    
+                    <h4 className="font-semibold text-sm mt-4 mb-2">Latin American Traditions</h4>
+                    <ul className="list-disc pl-6 text-gray-700 dark:text-gray-300 space-y-1 text-sm">
+                      <li><strong>Día de los Muertos</strong> research: symbolism of ofrendas, marigolds, and pan de muerto</li>
+                      <li>Analysis of how these rituals function as political communication for social justice</li>
+                    </ul>
+                    
+                    <h4 className="font-semibold text-sm mt-4 mb-2">Migration and Identity Loss</h4>
+                    <ul className="list-disc pl-6 text-gray-700 dark:text-gray-300 space-y-1 text-sm">
+                      <li>Studies on <strong>"cultural bereavement"</strong> and <strong>"immigration grief"</strong></li>
+                      <li>Research on the "fragmentation of the self" felt by adult children of immigrants who lose touch with ancestral languages and rituals</li>
+                    </ul>
+                    
+                    <h4 className="font-semibold text-sm mt-4 mb-2">Stigmatized Loss and Suicide</h4>
+                    <ul className="list-disc pl-6 text-gray-700 dark:text-gray-300 space-y-1 text-sm">
+                      <li>Examination of unique challenges faced by <strong>suicide loss survivors</strong>, including social avoidance and gossip</li>
+                      <li>Therapeutic benefits of <strong>"proactive engagement"</strong> and <strong>"personalized rituals"</strong></li>
+                    </ul>
+                    
+                    <h4 className="font-semibold text-sm mt-4 mb-2">Socio-Temporal Dimensions</h4>
+                    <ul className="list-disc pl-6 text-gray-700 dark:text-gray-300 space-y-1 text-sm">
+                      <li>Research on how <strong>linear versus cyclical</strong> conceptions of time influence perceived duration of grief</li>
+                      <li>Use of spatiotemporal metaphors like "moving forward" in Western grief discourse</li>
+                    </ul>
+                    
+                    <p className="text-gray-600 dark:text-gray-400 text-sm mt-4 italic bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+                      <strong>Analogy:</strong> Western clinical texts act as a magnifying glass focusing on the internal mechanisms of an individual's mind; in contrast, the ethnographic sources act as a wide-angle lens, capturing the village, the ancestors, and the historical landscape that collectively shape the mourning experience.
+                    </p>
                   </div>
                 )}
               </div>
