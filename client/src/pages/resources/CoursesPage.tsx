@@ -419,6 +419,20 @@ export function CoursesPage() {
                         </video>
                       </div>
                     );
+                  } else if (currentLessonContent === 'Building Your Support Network') {
+                    return (
+                      <div className="w-full">
+                        <video
+                          key={currentLessonContent}
+                          className="w-full h-full rounded-lg mb-4"
+                          controls
+                          poster="/assets/lesson7-poster.png"
+                        >
+                          <source src="/videos/BuildingYourSupportNetwork.mp4" type="video/mp4" />
+                          Your browser does not support the video tag.
+                        </video>
+                      </div>
+                    );
                   } else {
                     return (
                       <div className="text-center text-white">
@@ -485,6 +499,13 @@ export function CoursesPage() {
                     <img
                       src="/Images/CulturalPerspectivesOnGrief.png"
                       alt="Infographic: Cultural Perspectives on Grief"
+                      className="w-full max-w-full sm:max-w-2xl mx-auto rounded-lg shadow-md border my-6"
+                    />
+                  )}
+                  {currentLessonContent === 'Building Your Support Network' && (
+                    <img
+                      src="/Images/BuildingYourSupportNetwork.png"
+                      alt="Infographic: Building Your Support Network"
                       className="w-full max-w-full sm:max-w-2xl mx-auto rounded-lg shadow-md border my-6"
                     />
                   )}
@@ -1074,6 +1095,186 @@ export function CoursesPage() {
                       </div>
                     </div>
                   )}
+
+                  {currentLessonContent === 'Building Your Support Network' && (
+                    <div className="text-gray-700 dark:text-gray-300 mt-4 space-y-4 break-words">
+                      <h4 className="text-lg font-semibold mt-6">What are the different types of support networks available to grieving individuals, and how do they differ in their effectiveness?</h4>
+                      <p>
+                        Support networks for individuals navigating grief and loss are multi-dimensional systems categorized by their structure (network size and frequency) and function (the type of help provided). These functions generally fall into four categories: emotional (empathy and love), instrumental (tangible aid like financial help or chores), informational (advice), and appraisal (feedback and evaluation).
+                      </p>
+                      <div className="overflow-x-auto mt-2">
+                        <table className="min-w-full table-auto border-collapse border border-gray-300 dark:border-gray-600 text-sm">
+                          <thead>
+                            <tr className="bg-gray-100 dark:bg-gray-700">
+                              <th className="border border-gray-300 dark:border-gray-600 px-3 py-2 text-left font-semibold">Support Type</th>
+                              <th className="border border-gray-300 dark:border-gray-600 px-3 py-2 text-left font-semibold">Primary Characteristics and Unique Roles</th>
+                              <th className="border border-gray-300 dark:border-gray-600 px-3 py-2 text-left font-semibold">Effectiveness and Insights</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr className="bg-white dark:bg-gray-800">
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Professional Therapy</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Provides evidence-based treatment for primary conditions like depression, PTSD, and anxiety.</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Effective for interrupting negative thought cycles and identifying problematic behaviors to manage emotions in healthier ways.</td>
+                            </tr>
+                            <tr className="bg-gray-50 dark:bg-gray-700">
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Peer Support Groups</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Connects individuals with others facing similar struggles (e.g., parents grieving children, LGBTQ+ grief groups).</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Offers shared lived experience and professional moderation in a safe, often anonymous environment.</td>
+                            </tr>
+                            <tr className="bg-white dark:bg-gray-800">
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Family Support</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">An informal network providing the core of emotional safety and immediate practical help.</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Often the strongest predictor of lower anxiety; however, effectiveness can be hindered by "affiliate stigma" (family members feeling the shame of the condition).</td>
+                            </tr>
+                            <tr className="bg-gray-50 dark:bg-gray-700">
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Online Communities</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Digital platforms offering 24/7 accessibility and access to specialized niche communities across geographic barriers.</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Active usage (e.g., status updates) significantly predicts higher resilience; browsing passively can sometimes increase harmful social comparison.</td>
+                            </tr>
+                            <tr className="bg-white dark:bg-gray-800">
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Religious/Spiritual Communities</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Groups built on shared beliefs and values.</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Spiritual practices are vital coping mechanisms for reestablishing purpose, acceptance, and inner peace.</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <h5 className="font-semibold mt-4">Key Differences in Effectiveness</h5>
+                      <p>Research indicates that the effectiveness of these networks depends less on the number of people involved and more on the quality of the relationships and the specific type of support provided.</p>
+                      <ul className="list-disc pl-6 space-y-2">
+                        <li><strong>The Primacy of "Belonging Support":</strong> Longitudinal studies of individuals facing chronic adversity found that "belonging support"—the perceived availability of people to do things with—was the only dimension that consistently predicted significant decreases in depressive symptoms. This suggests that reintegrating into normal social activities (like book clubs or sports circles) is often more therapeutic for recovery than isolated trauma discussions.</li>
+                        <li><strong>The Interaction of Support Types:</strong> Support is most effective when emotional and instrumental dimensions interact. Providers' well-being is primarily driven by their own emotional engagement, but recipients experience the greatest boost in well-being when practical aid is delivered with genuine empathy. If aid is provided without empathy, it can be perceived as burdensome or dismissive.</li>
+                        <li><strong>Strong vs. Weak Ties:</strong> Your "support clique" (inner circle of ~5) provides high-intensity emotional sustenance. However, "weak ties" (casual acquaintances) are more likely to deliver novel information and diverse perspectives because they connect you to social circles outside your immediate "provincial" news and views.</li>
+                        <li><strong>Psychological Barriers:</strong> Stigma (public, self, and professional) remains a major barrier to activating these networks. Furthermore, 71% of young adults avoid talking about stress because they fear being a burden to others, which can lead to a cycle of isolation that fuels distress.</li>
+                      </ul>
+                      <p className="italic bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg">
+                        A healthy support system acts like a diversified investment portfolio: while your strong ties provide the emotional safety of a savings account, your weak ties and community connections provide the growth and new opportunities necessary for long-term resilience and recovery.
+                      </p>
+
+                      <h4 className="text-lg font-semibold mt-6">What are the most common barriers that prevent people from seeking support during grief?</h4>
+                      <p>
+                        The most common barriers preventing individuals from seeking support during grief are a combination of psychological hurdles, such as the fear of being a burden, and external obstacles, including social stigma and systemic inequalities. These barriers often create a "cycle of isolation" where the individual withdraws to avoid inconveniencing others, which in turn reinforces the distress that fueled the need for support in the first place.
+                      </p>
+                      <h5 className="font-semibold mt-4">The Role of Stigma</h5>
+                      <ul className="list-disc pl-6 space-y-2">
+                        <li><strong>Public Stigma:</strong> Fear of social rejection, discrimination, or negative professional consequences leads many to downplay or hide their symptoms. In high-pressure environments like healthcare or emergency services, seeking help is often equated with a failure of professional stamina.</li>
+                        <li><strong>Self-Stigma:</strong> This occurs when an individual internalizes negative stereotypes, leading to diminished self-worth. They may agree with the idea that needing help is a personal failure, which reduces the likelihood of seeking help regardless of the severity of their grief.</li>
+                        <li><strong>The Burden Complex:</strong> Approximately 71 percent of adults aged 18–35 avoid discussing their stress because they worry about being a burden to others. This "burden complex" makes it difficult for people to be their authentic selves or ask for specific needs to be met.</li>
+                      </ul>
+                      <h5 className="font-semibold mt-4">Cultural Norms and Expectations</h5>
+                      <ul className="list-disc pl-6 space-y-2">
+                        <li><strong>Self-Sufficiency vs. Vulnerability:</strong> Many cultures idealize independence and shame those who show vulnerability, pressuring individuals to "tough it out".</li>
+                        <li><strong>Cultural Values:</strong> Concepts like the Chinese culture of "face" (Mianzi) or Islamic beliefs that may misinterpret mental distress as spiritual possession can prevent families from accessing secular support.</li>
+                        <li><strong>Taboos:</strong> In communities where mental health or grief is seen as a taboo topic, there is often a lack of understanding that can lead to social ostracization of the grieving person.</li>
+                      </ul>
+                      <h5 className="font-semibold mt-4">Gender Expectations</h5>
+                      <ul className="list-disc pl-6 space-y-2">
+                        <li><strong>Masculinity and Stoicism:</strong> Men often equate help-seeking with a loss of control or a sense of failure. Because traditional roles emphasize being self-sufficient, men may fear that expressing emotional vulnerability makes them appear "unmasculine". This can result in atypical symptoms like anger or attempts to self-manage through substance use.</li>
+                        <li><strong>Female Disclosure:</strong> While women are statistically more likely to seek psychological help and disclose distress, they also face a higher risk of depression due to unequal power dynamics and the societal expectation that they should be the primary caregivers for others.</li>
+                      </ul>
+                      <h5 className="font-semibold mt-4">Socioeconomic Status (SES)</h5>
+                      <ul className="list-disc pl-6 space-y-2">
+                        <li><strong>Affordability and Coverage:</strong> The high cost of therapy, combined with limited insurance coverage or high copays, forces many to forego professional care altogether.</li>
+                        <li><strong>Geographical Access:</strong> Rural or underserved communities frequently face a shortage of mental health professionals, requiring grieving individuals to travel long distances or wait months for an appointment.</li>
+                        <li><strong>The "Strong Tie" Trap:</strong> Low-income individuals often rely heavily on "strong ties" (close kin) for survival. While these provide immediate aid, they can fragment the community into encapsulated networks that lack "weak ties"—casual acquaintances who typically serve as bridges to novel information and specialized resources.</li>
+                      </ul>
+                      <p className="italic bg-amber-50 dark:bg-amber-900/30 p-4 rounded-lg mt-4">
+                        <strong>Analogy:</strong> Seeking support during grief is like trying to reach a lighthouse during a storm. The lighthouse (support) is visible, but the path is blocked by a high wall (stigma). Cultural and gender expectations are like the heavy weights the person is told they must carry alone, while socioeconomic status determines if they even have a boat to make the journey. Many choose to stay in the dark, not because they don't see the light, but because the effort to scale the wall and carry the weight feels more exhausting than the storm itself.
+                      </p>
+
+                      <h4 className="text-lg font-semibold mt-6">How do online grief support communities differ from in-person support groups?</h4>
+                      <p>
+                        Online grief support communities and in-person support groups differ significantly in their structural delivery, though both aim to enhance psychological resilience and mitigate emotional distress. Digital support has evolved into a common instrument for obtaining aid and counsel, particularly for individuals navigating specific niches of loss.
+                      </p>
+                      <div className="overflow-x-auto mt-2">
+                        <table className="min-w-full table-auto border-collapse border border-gray-300 dark:border-gray-600 text-sm">
+                          <thead>
+                            <tr className="bg-gray-100 dark:bg-gray-700">
+                              <th className="border border-gray-300 dark:border-gray-600 px-3 py-2 text-left font-semibold">Benefit/Risk</th>
+                              <th className="border border-gray-300 dark:border-gray-600 px-3 py-2 text-left font-semibold">Online Communities</th>
+                              <th className="border border-gray-300 dark:border-gray-600 px-3 py-2 text-left font-semibold">In-Person Groups</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr className="bg-white dark:bg-gray-800">
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2 font-medium">Accessibility</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">24/7, geographic independence</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Scheduled, local</td>
+                            </tr>
+                            <tr className="bg-gray-50 dark:bg-gray-700">
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2 font-medium">Anonymity</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">High; reduces stigma</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Low; face-to-face</td>
+                            </tr>
+                            <tr className="bg-white dark:bg-gray-800">
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2 font-medium">Emotional Intimacy</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Depends on active vs. passive use</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Higher potential for deep connection</td>
+                            </tr>
+                             <tr className="bg-gray-50 dark:bg-gray-700">
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2 font-medium">Unique Benefit</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Access to specialized niche groups</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Physical presence and non-verbal cues</td>
+                            </tr>
+                            <tr className="bg-white dark:bg-gray-800">
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2 font-medium">Unique Risk</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Panic contagion, privacy concerns</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Social anxiety, public stigma</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                       <p className="italic bg-green-50 dark:bg-green-900/30 p-4 rounded-lg mt-4">
+                        <strong>Analogy:</strong> Digital grief support is like a worldwide library you can enter in your pajamas at 3:00 AM; it has a specialized book for every unique type of pain, but the connections are through a screen. In-person support is like a local community garden; it requires effort to leave the house, but the act of working the soil alongside others provides a tactile, grounding sense of presence a digital library cannot replicate.
+                      </p>
+
+                      <h4 className="text-lg font-semibold mt-6">How can grieving individuals identify "toxic support"?</h4>
+                      <p>
+                        Grieving individuals can identify unhelpful support by looking for patterns of emotional drain, a lack of empathy, and skewed power dynamics. While many people are well-meaning, their support becomes harmful when it dismisses the grieving person's reality or prioritizes the supporter's needs over the recipient's healing.
+                      </p>
+                      <h5 className="font-semibold mt-4">Key Red Flags in a Support Network</h5>
+                      <ul className="list-disc pl-6 space-y-2">
+                        <li><strong>Self-Absorption and Lack of Empathy:</strong> A supporter consistently focuses on themselves or shows little concern for your emotional well-being.</li>
+                        <li><strong>One-Sided Power Dynamics:</strong> You feel belittled, manipulated, or criticized, and find yourself "walking on eggshells."</li>
+                        <li><strong>"Data Collection":</strong> A person encourages you to share feelings only to use that information against you later.</li>
+                        <li><strong>Lack of Reciprocity:</strong> You are always giving and they are always taking.</li>
+                      </ul>
+                      <h5 className="font-semibold mt-4">Identifying Unhelpful Advice</h5>
+                      <ul className="list-disc pl-6 space-y-2">
+                        <li><strong>Dismissive Language:</strong> Advice that is disrespectful or dismissive of your unique strengths.</li>
+                        <li><strong>Victim-Blaming:</strong> Statements that imply your grief is your own fault.</li>
+                        <li><strong>Stoicism Demands:</strong> Advice that shames you for expressing emotions, pressuring you to "tough it out."</li>
+                        <li><strong>Instrumental Aid Without Empathy:</strong> Practical help delivered without genuine emotional engagement.</li>
+                      </ul>
+                      <p className="italic bg-purple-50 dark:bg-purple-900/30 p-4 rounded-lg mt-4">
+                        <strong>Analogy:</strong> Unhelpful support is like a leaky life jacket: it looks like it should keep you afloat, but as you lean on it, it slowly fills with water, making you heavier and more likely to sink. True support is a solid vessel that actively keeps the water out so you can navigate the waves at your own pace.
+                      </p>
+
+                       <h4 className="text-lg font-semibold mt-6">What is "complicated grief," and when should someone transition to professional treatment?</h4>
+                      <p>
+                        Grief becomes pathological or a "crisis" when an individual's usual coping skills are overwhelmed, leading to persistent emotional dysregulation and impaired functioning.
+                      </p>
+                      <h5 className="font-semibold mt-4">Clinical Indicators of Pathological Grief</h5>
+                      <ul className="list-disc pl-6 space-y-2">
+                        <li><strong>Impaired Daily Functioning:</strong> Significant and persistent difficulties at work or school.</li>
+                        <li><strong>Abrupt Physiological Changes:</strong> Dramatic disruptions in sleep, appetite, or personal hygiene.</li>
+                        <li><strong>Severe Emotional Distortion:</strong> Agitated mood swings, confused thinking, interpreting neutral interactions as negative.</li>
+                        <li><strong>Physical Manifestations:</strong> Somatic symptoms like tremors, chronic headaches, or nausea.</li>
+                        <li><strong>The "Burden Complex":</strong> An internalized belief that one is a burden, leading to total social withdrawal.</li>
+                      </ul>
+                      <h5 className="font-semibold mt-4">When to Transition to Professional Treatment</h5>
+                      <p>Transition when peer support is no longer sufficient. Key moments include:</p>
+                      <ul className="list-disc pl-6 space-y-2">
+                        <li><strong>Presence of Secondary Conditions:</strong> Grief is accompanied by PTSD, severe depression, or anxiety.</li>
+                        <li><strong>High-Risk Coping Mechanisms:</strong> Using substance abuse to self-manage or exhibiting reckless behaviors.</li>
+                        <li><strong>Emergency Threshold:</strong> The individual exhibits suicidal ideation, expresses hopelessness, or talks frequently about death.</li>
+                      </ul>
+                      <p className="italic bg-red-50 dark:bg-red-900/30 p-4 rounded-lg mt-4">
+                        <strong>Analogy:</strong> Navigating grief is like walking through a heavy fog. Peer support is a friend with a small flashlight. If the path crumbles into a deep pit (pathological grief), you need a professional search-and-rescue team (therapy) with specialized ropes and gear to pull you out.
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -1204,6 +1405,56 @@ export function CoursesPage() {
                     
                     <p className="text-gray-600 dark:text-gray-400 text-sm mt-4 italic bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
                       <strong>Analogy:</strong> Western clinical texts act as a magnifying glass focusing on the internal mechanisms of an individual's mind; in contrast, the ethnographic sources act as a wide-angle lens, capturing the village, the ancestors, and the historical landscape that collectively shape the mourning experience.
+                    </p>
+                  </div>
+                )}
+                {currentLessonContent === 'Building Your Support Network' && (
+                  <div className="mt-10">
+                    <h3 className="text-lg font-semibold mb-3">Sources & Further Reading</h3>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 italic">
+                      The answers provided are generated from a multi-disciplinary collection of academic journals, clinical research reports, sociological theories, and practical mental health guides. These materials are synthesized to provide a comprehensive look at how individuals and organizations navigate adversity, grief, and social connection.
+                    </p>
+                    
+                    <h4 className="font-semibold text-sm mt-4 mb-2">Sociological Theories of Connection</h4>
+                    <ul className="list-disc pl-6 text-gray-700 dark:text-gray-300 space-y-1 text-sm">
+                      <li><strong>Granovetter, M.</strong> "Strength of Weak Ties" theory — explains how acquaintances provide novel information and "bridges" between closed social circles</li>
+                      <li><strong>Dunbar, R.</strong> 5-15-50-150 hierarchical model — the mathematical limits and functional layers of human relationships, from the "support clique" to the "active network"</li>
+                    </ul>
+                    
+                    <h4 className="font-semibold text-sm mt-4 mb-2">Clinical and Longitudinal Research</h4>
+                    <ul className="list-disc pl-6 text-gray-700 dark:text-gray-300 space-y-1 text-sm">
+                      <li>Longitudinal investigation of functional social support and depressive symptoms — identified "belonging support" as the only consistent predictor of recovery</li>
+                      <li>Studies on the neurobiology of resilience: roles of <strong>oxytocin</strong> and the <strong>HPA axis</strong> in buffering stress through social connection</li>
+                    </ul>
+                    
+                    <h4 className="font-semibold text-sm mt-4 mb-2">Mental Health Barriers and Stigma</h4>
+                    <ul className="list-disc pl-6 text-gray-700 dark:text-gray-300 space-y-1 text-sm">
+                      <li><strong>Singapore Medical Journal</strong> — definitions of public, self, and affiliate stigma</li>
+                      <li><strong>My Black Dog & The Psychologist</strong> — analysis of stigma as barriers to seeking help</li>
+                      <li><strong>Newport Institute & Manhattan Mental Health Counseling</strong> — the "burden complex" and strategies for reframing vulnerability into gratitude</li>
+                    </ul>
+                    
+                    <h4 className="font-semibold text-sm mt-4 mb-2">Practical Behavioral Strategies</h4>
+                    <ul className="list-disc pl-6 text-gray-700 dark:text-gray-300 space-y-1 text-sm">
+                      <li><strong>Healthline, Recovery.com, PositivePsychology.com</strong> — techniques for relationship management</li>
+                      <li>The <strong>"Gray Rock" method</strong> for toxic interactions</li>
+                      <li>Three-step protocol for setting healthy boundaries</li>
+                    </ul>
+                    
+                    <h4 className="font-semibold text-sm mt-4 mb-2">Specialized and Professional Support</h4>
+                    <ul className="list-disc pl-6 text-gray-700 dark:text-gray-300 space-y-1 text-sm">
+                      <li><strong>VITAS Healthcare</strong> — specialized grief support groups for LGBTQ+, Men, and parents</li>
+                      <li><strong>Columbia University study</strong> — importance of alumni networks for career resilience and horizontal collaboration</li>
+                    </ul>
+                    
+                    <h4 className="font-semibold text-sm mt-4 mb-2">Crisis and Organizational Protocols</h4>
+                    <ul className="list-disc pl-6 text-gray-700 dark:text-gray-300 space-y-1 text-sm">
+                      <li><strong>CDC Crisis and Emergency Risk Communication (CERC)</strong> — systematic communication strategies for personal and organizational crises</li>
+                      <li><strong>Park University</strong> — leadership strategies for crisis management</li>
+                    </ul>
+                    
+                    <p className="text-gray-600 dark:text-gray-400 text-sm mt-4 italic bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+                      <strong>Analogy:</strong> Think of these sources as a comprehensive construction manual for a suspension bridge. The sociological theories represent the architectural blueprints for the cables and towers; the clinical research provides the stress-testing data for the materials; the practical guides are the safety protocols for the workers; and the specialized crisis plans are the emergency bypass procedures for when the structure is under extreme pressure. Together, they explain how to build a bridge that is strong enough to carry heavy emotional weight across the chasms of life.
                     </p>
                   </div>
                 )}
