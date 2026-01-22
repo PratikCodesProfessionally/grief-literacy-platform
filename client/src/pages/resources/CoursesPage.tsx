@@ -433,6 +433,20 @@ export function CoursesPage() {
                         </video>
                       </div>
                     );
+                  } else if (currentLessonContent === 'Creating Your Personal Grief Plan') {
+                    return (
+                      <div className="w-full">
+                        <video
+                          key={currentLessonContent}
+                          className="w-full h-full rounded-lg mb-4"
+                          controls
+                          poster="/assets/lesson8-poster.png"
+                        >
+                          <source src="/videos/Creating Your Personal Grief Plan.mp4" type="video/mp4" />
+                          Your browser does not support the video tag.
+                        </video>
+                      </div>
+                    );
                   } else {
                     return (
                       <div className="text-center text-white">
@@ -506,6 +520,13 @@ export function CoursesPage() {
                     <img
                       src="/Images/BuildingYourSupportNetwork.png"
                       alt="Infographic: Building Your Support Network"
+                      className="w-full max-w-full sm:max-w-2xl mx-auto rounded-lg shadow-md border my-6"
+                    />
+                  )}
+                  {currentLessonContent === 'Creating Your Personal Grief Plan' && (
+                    <img
+                      src="/Images/CreatingYourPersonalGriefPlan.png"
+                      alt="Infographic: Creating Your Personal Grief Plan"
                       className="w-full max-w-full sm:max-w-2xl mx-auto rounded-lg shadow-md border my-6"
                     />
                   )}
@@ -1275,6 +1296,230 @@ export function CoursesPage() {
                       </p>
                     </div>
                   )}
+                  {currentLessonContent === 'Creating Your Personal Grief Plan' && (
+                    <div className="text-gray-700 dark:text-gray-300 mt-4 space-y-4 break-words">
+                      <h4 className="text-lg font-semibold mt-6">What is a Personal Grief Plan?</h4>
+                      <p>
+                        A Personal Grief Plan is a proactive, personalized roadmap that helps individuals navigate their grief journey. It serves as a comprehensive framework for understanding your unique grief experience, identifying coping strategies, and building resilience. This plan transforms grief from an overwhelming emotional storm into a manageable process of healing and growth.
+                      </p>
+
+                      <h4 className="text-lg font-semibold mt-6">Comprehensive Guide: Creating Your Personal Grief Plan</h4>
+                      <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg mt-4">
+                        <h5 className="font-semibold mb-4 text-blue-800 dark:text-blue-200">Your Personal Grief Plan Workbook</h5>
+                        <p className="text-sm mb-4">
+                          Download our comprehensive Excel workbook to track your grief journey and build your personalized plan. This interactive tool includes:
+                        </p>
+                        <ul className="list-disc pl-6 text-sm mb-4 space-y-1">
+                          <li>Weekly mood and energy tracking</li>
+                          <li>Coping strategy effectiveness log</li>
+                          <li>Support network mapping</li>
+                          <li>Goal setting and progress monitoring</li>
+                          <li>Reflection prompts and journaling space</li>
+                        </ul>
+                        <a
+                          href="/PersonalGriefPlan_Tracking.xlsx"
+                          download="PersonalGriefPlan_Tracking.xlsx"
+                          className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+                        >
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          Download Grief Plan Workbook (Excel)
+                        </a>
+                      </div>
+
+                      <h4 className="text-lg font-semibold mt-6">Understanding Your Grief Profile</h4>
+                      <p className="mb-4">
+                        Before creating your plan, it's essential to understand how grief uniquely manifests in your life. Grief is not one-size-fits-all; it varies based on your personality, relationship to the loss, cultural background, and life circumstances.
+                      </p>
+
+                      <h5 className="font-semibold mt-4 mb-2">Common Grief Patterns</h5>
+                      <div className="grid md:grid-cols-2 gap-4 mb-6">
+                        <div className="bg-green-50 dark:bg-green-900/30 p-4 rounded-lg">
+                          <h6 className="font-semibold text-green-800 dark:text-green-200 mb-2">Instrumental Grievers</h6>
+                          <p className="text-sm">Focus on problem-solving and action. You might channel grief into projects, exercise, or helping others. Your challenge: Allowing yourself to feel emotions rather than always "doing."</p>
+                        </div>
+                        <div className="bg-purple-50 dark:bg-purple-900/30 p-4 rounded-lg">
+                          <h6 className="font-semibold text-purple-800 dark:text-purple-200 mb-2">Intuitive Grievers</h6>
+                          <p className="text-sm">Process grief through emotions and spirituality. You might journal, meditate, or seek meaning. Your challenge: Balancing emotional processing with practical daily tasks.</p>
+                        </div>
+                        <div className="bg-orange-50 dark:bg-orange-900/30 p-4 rounded-lg">
+                          <h6 className="font-semibold text-orange-800 dark:text-orange-200 mb-2">Blended Grievers</h6>
+                          <p className="text-sm">Move between emotional and active coping. You might alternate between crying and organizing memorial activities. Your strength: Flexibility in coping approaches.</p>
+                        </div>
+                        <div className="bg-red-50 dark:bg-red-900/30 p-4 rounded-lg">
+                          <h6 className="font-semibold text-red-800 dark:text-red-200 mb-2">Delayed Grievers</h6>
+                          <p className="text-sm">May not show intense grief immediately due to shock, responsibilities, or coping mechanisms. Your challenge: Finding safe spaces to process when ready.</p>
+                        </div>
+                      </div>
+
+                      <h4 className="text-lg font-semibold mt-6">Building Your Coping Strategy Toolkit</h4>
+                      <p className="mb-4">
+                        A grief plan includes multiple coping strategies because no single approach works for every situation. Think of these as tools in a toolbox—different tools for different jobs.
+                      </p>
+
+                      <h5 className="font-semibold mt-4 mb-2">Emotional Regulation Techniques</h5>
+                      <div className="space-y-3 mb-6">
+                        <div className="border-l-4 border-blue-500 pl-4">
+                          <h6 className="font-semibold">Grounding Exercises</h6>
+                          <p className="text-sm">When grief feels overwhelming, use the 5-4-3-2-1 technique: Name 5 things you can see, 4 you can touch, 3 you can hear, 2 you can smell, 1 you can taste.</p>
+                        </div>
+                        <div className="border-l-4 border-green-500 pl-4">
+                          <h6 className="font-semibold">Breathwork for Grief</h6>
+                          <p className="text-sm">Try the 4-7-8 breathing: Inhale for 4 counts, hold for 7, exhale for 8. This activates your parasympathetic nervous system and helps calm grief-triggered anxiety.</p>
+                        </div>
+                        <div className="border-l-4 border-purple-500 pl-4">
+                          <h6 className="font-semibold">Grief Journaling Prompts</h6>
+                          <ul className="text-sm list-disc pl-4 space-y-1">
+                            <li>"What would my loved one want me to know right now?"</li>
+                            <li>"What small act of kindness can I do for myself today?"</li>
+                            <li>"How has this loss changed my perspective on life?"</li>
+                          </ul>
+                        </div>
+                      </div>
+
+                      <h5 className="font-semibold mt-4 mb-2">Physical and Creative Outlets</h5>
+                      <div className="space-y-3 mb-6">
+                        <div className="border-l-4 border-orange-500 pl-4">
+                          <h6 className="font-semibold">Movement and Grief</h6>
+                          <p className="text-sm">Physical activity releases endorphins and helps process stored grief in the body. Try walking while listening to meaningful music, yoga with grief-specific modifications, or dance as emotional expression.</p>
+                        </div>
+                        <div className="border-l-4 border-pink-500 pl-4">
+                          <h6 className="font-semibold">Creative Expression</h6>
+                          <p className="text-sm">Art, music, writing, or crafting can externalize internal grief. Consider creating a memory book, painting your emotions, or composing music that represents your journey.</p>
+                        </div>
+                        <div className="border-l-4 border-teal-500 pl-4">
+                          <h6 className="font-semibold">Nature and Ritual</h6>
+                          <p className="text-sm">Connect with nature through walks, gardening, or creating personal rituals. Many find comfort in visiting meaningful places or creating small daily ceremonies honoring their loved one.</p>
+                        </div>
+                      </div>
+
+                      <h4 className="text-lg font-semibold mt-6">Creating Meaning and Purpose</h4>
+                      <p className="mb-4">
+                        While grief never fully "goes away," many find ways to create meaning from their loss. This doesn't diminish the pain but provides a framework for living with it.
+                      </p>
+
+                      <h5 className="font-semibold mt-4 mb-2">Legacy Projects</h5>
+                      <ul className="list-disc pl-6 space-y-2 mb-4">
+                        <li><strong>Memory Books:</strong> Compile photos, stories, and memories for family members</li>
+                        <li><strong>Charitable Work:</strong> Honor your loved one through causes they cared about</li>
+                        <li><strong>Teaching and Sharing:</strong> Use your experience to help others navigating similar losses</li>
+                        <li><strong>Creative Tributes:</strong> Plant a tree, create art, or establish a scholarship in their name</li>
+                      </ul>
+
+                      <h5 className="font-semibold mt-4 mb-2">Finding New Purpose</h5>
+                      <div className="bg-yellow-50 dark:bg-yellow-900/30 p-4 rounded-lg mb-6">
+                        <p className="text-sm">
+                          <strong>Post-Traumatic Growth:</strong> Research shows that many people experience positive changes after loss, including greater appreciation for life, stronger relationships, increased resilience, and new perspectives on what matters most. Your grief plan can include space to explore these growth opportunities.
+                        </p>
+                      </div>
+
+                      <h4 className="text-lg font-semibold mt-6">Maintaining Your Plan Over Time</h4>
+                      <p className="mb-4">
+                        Grief is not linear, and neither should your plan be rigid. Regular review and adjustment ensures it remains relevant to your current needs.
+                      </p>
+
+                      <h5 className="font-semibold mt-4 mb-2">Monthly Check-Ins</h5>
+                      <ul className="list-disc pl-6 space-y-1 mb-4">
+                        <li>Review what coping strategies are working</li>
+                        <li>Assess your support network's effectiveness</li>
+                        <li>Check progress on meaning-making goals</li>
+                        <li>Adjust for seasonal triggers or anniversaries</li>
+                      </ul>
+
+                      <h5 className="font-semibold mt-4 mb-2">Anniversary and Holiday Planning</h5>
+                      <p className="text-sm mb-4">
+                        Special dates often intensify grief. Plan ahead with extra self-care, supportive activities, and meaningful rituals. Consider creating "grief-friendly" traditions that honor both the loss and your ongoing life.
+                      </p>
+
+                      <div className="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg mt-6">
+                        <h5 className="font-semibold mb-4">Remember: Your Grief Plan is Personal</h5>
+                        <p className="text-sm mb-4">
+                          There is no "right" way to grieve or create a grief plan. What works for others might not work for you, and that's okay. Your plan should reflect your unique personality, circumstances, and relationship to the loss.
+                        </p>
+                        <p className="text-sm italic">
+                          "The goal of a personal grief plan is not to eliminate grief, but to help you live with it in a way that allows you to continue growing, loving, and finding meaning in your life."
+                        </p>
+                      </div>
+
+                      <h4 className="text-lg font-semibold mt-6">Step-by-Step Guide to Creating Your Plan</h4>
+                      <div className="space-y-4">
+                        <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg">
+                          <h5 className="font-semibold mb-2">Step 1: Self-Assessment (Week 1)</h5>
+                          <p className="text-sm">Spend time reflecting on your grief experience. Journal about your emotions, triggers, and what helps you cope. Identify your grief style—do you process internally or externally?</p>
+                        </div>
+                        <div className="bg-green-50 dark:bg-green-900/30 p-4 rounded-lg">
+                          <h5 className="font-semibold mb-2">Step 2: Build Your Toolkit (Weeks 2-3)</h5>
+                          <p className="text-sm">Experiment with different coping strategies. Try mindfulness meditation, physical exercise, creative activities, or talking with trusted friends. Note what works best for you.</p>
+                        </div>
+                        <div className="bg-yellow-50 dark:bg-yellow-900/30 p-4 rounded-lg">
+                          <h5 className="font-semibold mb-2">Step 3: Map Your Support Network (Week 4)</h5>
+                          <p className="text-sm">List people you can turn to for different types of support. Include professionals if needed. Remember that it's okay to set boundaries with unhelpful people.</p>
+                        </div>
+                        <div className="bg-purple-50 dark:bg-purple-900/30 p-4 rounded-lg">
+                          <h5 className="font-semibold mb-2">Step 4: Create Daily Structure (Ongoing)</h5>
+                          <p className="text-sm">Establish routines for sleep, meals, and self-care. Include small rituals that honor your loved one and provide comfort during difficult times.</p>
+                        </div>
+                        <div className="bg-red-50 dark:bg-red-900/30 p-4 rounded-lg">
+                          <h5 className="font-semibold mb-2">Step 5: Find Meaning and Purpose (Ongoing)</h5>
+                          <p className="text-sm">Explore ways to honor your loved one's memory through legacy projects, volunteering, or pursuing passions that give your life meaning.</p>
+                        </div>
+                      </div>
+
+                      <h4 className="text-lg font-semibold mt-6">Common Challenges and Solutions</h4>
+                      <div className="overflow-x-auto mt-2">
+                        <table className="min-w-full table-auto border-collapse border border-gray-300 dark:border-gray-600 text-sm">
+                          <thead>
+                            <tr className="bg-gray-100 dark:bg-gray-700">
+                              <th className="border border-gray-300 dark:border-gray-600 px-3 py-2 text-left font-semibold">Challenge</th>
+                              <th className="border border-gray-300 dark:border-gray-600 px-3 py-2 text-left font-semibold">Solution</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr className="bg-white dark:bg-gray-800">
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Feeling overwhelmed by the process</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Start with just one small step per day</td>
+                            </tr>
+                            <tr className="bg-gray-50 dark:bg-gray-700">
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Difficulty identifying coping strategies</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Keep a "grief journal" to track what helps</td>
+                            </tr>
+                            <tr className="bg-white dark:bg-gray-800">
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Unsupportive social network</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Seek out grief-specific support groups</td>
+                            </tr>
+                            <tr className="bg-gray-50 dark:bg-gray-700">
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Loss of motivation</td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">Set small, achievable goals and celebrate progress</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+
+                      <p className="italic bg-green-50 dark:bg-green-900/30 p-4 rounded-lg mt-4">
+                        <strong>Analogy:</strong> Creating a personal grief plan is like building a custom home. You start with the foundation of self-understanding, add the framework of coping strategies, furnish it with support networks, and decorate it with meaningful rituals. It's not about perfection—it's about creating a space where you can live comfortably with your grief.
+                      </p>
+
+                      <h4 className="text-lg font-semibold mt-6">When to Seek Professional Help</h4>
+                      <p>
+                        While a personal grief plan is an excellent tool for most people, there are times when professional support is essential:
+                      </p>
+                      <ul className="list-disc pl-6 space-y-2">
+                        <li><strong>Persistent intense grief:</strong> If your grief remains overwhelming after 6-12 months</li>
+                        <li><strong>Impaired functioning:</strong> Difficulty maintaining work, relationships, or daily activities</li>
+                        <li><strong>Mental health concerns:</strong> Symptoms of depression, anxiety, or PTSD</li>
+                        <li><strong>Substance use:</strong> Using alcohol or drugs to cope with grief</li>
+                        <li><strong>Suicidal thoughts:</strong> Any thoughts of self-harm or suicide</li>
+                      </ul>
+
+                      <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg mt-6">
+                        <p className="font-semibold">Remember:</p>
+                        <p className="mt-2">
+                          Your personal grief plan is a living document. Review and update it regularly as you grow and change. Grief is not a problem to be solved—it's a journey to be navigated with compassion and courage.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -1455,6 +1700,46 @@ export function CoursesPage() {
                     
                     <p className="text-gray-600 dark:text-gray-400 text-sm mt-4 italic bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
                       <strong>Analogy:</strong> Think of these sources as a comprehensive construction manual for a suspension bridge. The sociological theories represent the architectural blueprints for the cables and towers; the clinical research provides the stress-testing data for the materials; the practical guides are the safety protocols for the workers; and the specialized crisis plans are the emergency bypass procedures for when the structure is under extreme pressure. Together, they explain how to build a bridge that is strong enough to carry heavy emotional weight across the chasms of life.
+                    </p>
+                  </div>
+                )}
+                {currentLessonContent === 'Creating Your Personal Grief Plan' && (
+                  <div className="mt-10">
+                    <h3 className="text-lg font-semibold mb-3">Sources & Further Reading</h3>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 italic">
+                      These sources provide evidence-based guidance for creating personalized grief plans, drawing from clinical psychology, grief therapy research, and practical self-help strategies.
+                    </p>
+                    
+                    <h4 className="font-semibold text-sm mt-4 mb-2">Clinical Research on Grief Planning</h4>
+                    <ul className="list-disc pl-6 text-gray-700 dark:text-gray-300 space-y-1 text-sm">
+                      <li><strong>Shear, M. K.</strong> "Complicated Grief Treatment (CGT): Description and Case Study." <em>American Journal of Psychiatry</em> (2010). Details the structured approach to grief therapy that forms the basis for personal grief planning.</li>
+                      <li><strong>Neimeyer, R. A.</strong> "Meaning Reconstruction in Bereavement: From Principles to Practice." <em>Journal of Constructivist Psychology</em> (2009). Explores how personal grief plans can facilitate meaning-making after loss.</li>
+                      <li><strong>Stroebe, M., & Schut, H.</strong> "The Dual Process Model of Coping with Bereavement." <em>American Behavioral Scientist</em> (2010). The foundation for balancing grief work with restoration activities in personal plans.</li>
+                    </ul>
+                    
+                    <h4 className="font-semibold text-sm mt-4 mb-2">Self-Help and Practical Guides</h4>
+                    <ul className="list-disc pl-6 text-gray-700 dark:text-gray-300 space-y-1 text-sm">
+                      <li><strong>Didion, J.</strong> <em>The Year of Magical Thinking</em> (2005). Personal narrative demonstrating the importance of structured grief processing.</li>
+                      <li><strong>Rando, T. A.</strong> <em>How to Go On Living When Someone You Love Dies</em> (1991). Comprehensive guide to creating personalized grief management strategies.</li>
+                      <li><strong>Worden, J. W.</strong> <em>Grief Counseling and Grief Therapy</em> (2009). The four tasks of mourning as a framework for personal grief planning.</li>
+                    </ul>
+                    
+                    <h4 className="font-semibold text-sm mt-4 mb-2">Research on Coping Strategies</h4>
+                    <ul className="list-disc pl-6 text-gray-700 dark:text-gray-300 space-y-1 text-sm">
+                      <li><strong>Bonanno, G. A.</strong> "Loss, Trauma, and Human Resilience." <em>American Psychologist</em> (2004). Research on resilience trajectories and the role of proactive coping in grief.</li>
+                      <li><strong>Folkman, S.</strong> "The Case for Positive Emotions in the Stress Process." <em>American Psychologist</em> (2008). How positive emotions can be integrated into grief coping plans.</li>
+                      <li><strong>Tedeschi, R. G., & Calhoun, L. G.</strong> "Posttraumatic Growth: Conceptual Foundations and Empirical Evidence." <em>Psychological Inquiry</em> (2004). The potential for growth and meaning-making in personal grief plans.</li>
+                    </ul>
+                    
+                    <h4 className="font-semibold text-sm mt-4 mb-2">Digital Resources and Tools</h4>
+                    <ul className="list-disc pl-6 text-gray-700 dark:text-gray-300 space-y-1 text-sm">
+                      <li><strong>Grief Compass</strong> (griefcompass.com) — Interactive tool for creating personalized grief plans</li>
+                      <li><strong>What's Your Grief</strong> (whatsyourgrief.com) — Online resources for grief assessment and planning</li>
+                      <li><strong>Modern Loss</strong> (modernloss.com) — Community and resources for contemporary grief experiences</li>
+                    </ul>
+                    
+                    <p className="text-gray-600 dark:text-gray-400 text-sm mt-4 italic bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+                      <strong>Analogy:</strong> These sources are like a master carpenter's toolkit for building a personal grief plan. The clinical research provides the blueprints and structural integrity; the self-help guides offer practical instructions and examples; the coping research supplies the specialized tools for different situations; and the digital resources provide modern power tools for efficient construction. Together, they enable you to build a grief plan that's uniquely suited to your needs and circumstances.
                     </p>
                   </div>
                 )}
