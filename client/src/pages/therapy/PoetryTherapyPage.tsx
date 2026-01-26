@@ -1113,6 +1113,32 @@ Coordinates logged
 Moving on to the next dying world`,
   category: "Transmission",
   readTime: "2 min"
+},
+{
+  id: 19,
+  title: "Love (Inspired by Haldar Nag)",
+  author: "Unknown",
+  content: `Love is not silk
+nor the language of palaces.
+Love is the cracked heel of a woman
+walking to the well before sunrise.
+
+Love is rice shared
+when the pot is almost empty.
+It is a torn shawl
+still wrapped around another's cold.
+
+I did not learn love from books.
+I learned it from the soil
+that feeds even the feet
+that trample it.
+
+If you ask me where love lives
+it sleeps in the village dust,
+wakes with the rooster,
+and speaks in the voice of the poor.`,
+  category: "Love",
+  readTime: "1 min"
 }
   ];
 
@@ -1159,7 +1185,6 @@ Moving on to the next dying world`,
     }
   ];
 
-  // Recording timer effect
   React.useEffect(() => {
     let interval: NodeJS.Timeout;
     if (isRecording) {
