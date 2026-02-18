@@ -282,12 +282,25 @@ export function BooksPage() {
   summary: 'This book explores why we often find ourselves repeating the same patterns in relationships, despite wanting different outcomes. Yvi Blum provides practical tools and exercises to help readers identify their relationship patterns, understand their origins, and develop strategies to break old cycles. Through a combination of psychological insights and actionable steps, readers learn how to approach new relationships with awareness and create healthier, more fulfilling connections.',
   keyTopics: ['Relationship Patterns', 'Self-Awareness', 'Breaking Cycles', 'Emotional Growth', 'Healthy Relationships'],
   notesForHealing: 'If you keep encountering similar challenges in relationships, this book helps you pause and examine patterns with compassion rather than judgment. The exercises guide you toward conscious choice—building new relational habits one interaction at a time.'
+},
+{
+  title: 'Female Choice',
+  author: 'Meike Stoverock',
+  description: 'An evolutionary perspective on female mate selection and its implications for modern relationships and society.',
+  rating: 4.3,
+  category: "Women's Health",
+  pages: 448,
+  published: '2021',
+  isbn: '978-3-608-50480-4',
+  summary: 'Meike Stoverock explores the biological and evolutionary foundations of female mate choice, examining how these ancient patterns influence modern relationships, gender dynamics, and social structures. Drawing on evolutionary biology, anthropology, and psychology, the book challenges conventional narratives about relationships and offers insights into the tension between our evolutionary heritage and contemporary society.',
+  keyTopics: ["Female's Mental Health", 'Evolutionary Psychology', 'Gender Dynamics', 'Relationship Science', 'Social Evolution'],
+  notesForHealing: 'Understanding the evolutionary roots of relationship patterns can provide perspective on modern struggles. This book offers a framework for making sense of dynamics that might feel confusing or painful, helping readers approach their experiences with greater self-compassion and clarity.'
 }
 
   ];
 
   // Available categories for the filter dropdown.
-  const categories = ['all', 'Memoir', 'Self-Help', 'Spiritual', 'Psychology', 'Health', 'Family', 'Pet Loss', 'Resilience', 'Emotional Health'];
+  const categories = ['all', 'Memoir', 'Self-Help', 'Spiritual', 'Psychology', 'Health', 'Family', 'Pet Loss', 'Resilience', 'Emotional Health', "Women's Health"];
 
   // -----------------------------
   // 2.3) Persistence effects
@@ -383,6 +396,7 @@ export function BooksPage() {
       'Pet Loss': 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200',
       'Resilience': 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200',
       'Emotional Health': 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
+      "Women's Health": 'bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200',
     };
     return colors[category] || 'bg-gray-100 text-gray-800';
   };
