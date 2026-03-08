@@ -1139,6 +1139,52 @@ wakes with the rooster,
 and speaks in the voice of the poor.`,
   category: "Love",
   readTime: "1 min"
+},
+{
+  id: 20,
+  title: "Loveism",
+  author: "unknown",
+  content: `Only love can stop bloodsheds and wars 
+Only love can heal ancient mars
+Only love can heal ancient scars 
+
+Love sparks poetry 
+Only love can paint emptiness rosary 
+brew you healing potions of rosemary 
+
+Love makes cold winters warm
+Love propels old foes to join their arms
+Love reaches out with alms 
+
+Love has no room for atom bombs
+Love has no room for ballistics and guns
+Love has no room for lidar, laser and drones
+
+Only love can make you full and peach
+Love has no room for sanctions and siege
+Only love can build the bridge
+
+Love has no room for bombardments and flood
+Love has no room for smeared flags in mud
+Love has no room for borders drawn in cold blood
+
+Love has no room for vengeance sworn
+Love has no room for children torn 
+Love has no room for apathy and thorns
+
+Only love can see beyond the fear 
+Only love can hold the stranger near
+Only love can hold astranged dear
+
+Love has no room for hatred's fire 
+Love has no room for funeral pyre 
+Love has no room for barbed wire 
+
+Only love can lift us higher 
+Only love can end the mire 
+Only love is what we require.`,
+ category: "Love",
+ readTime: "2 min"
 }
   ];
 
