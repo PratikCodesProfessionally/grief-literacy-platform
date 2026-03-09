@@ -40,7 +40,7 @@ export default defineConfig(({ mode }) => {
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
-          maximumFileSizeToCacheInBytes: 8 * 1024 * 1024, // 8 MB (erhöht für große Infografiken)
+          maximumFileSizeToCacheInBytes: 12 * 1024 * 1024, // 12 MB (erhöht für große Icons/Infografiken)
           runtimeCaching: [
             {
               urlPattern: /^https:\/\/api\./i,
