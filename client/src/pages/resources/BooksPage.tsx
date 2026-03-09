@@ -328,10 +328,10 @@ export function BooksPage() {
   description: 'A scientific exploration of female mate choice and its evolutionary, biological, and social dimensions, challenging long-held assumptions about gender roles in reproduction and society.',
   rating: 4.6,
   category: 'Social Issues',
-  pages: 272,
+  pages: 352,
   published: '2021',
   isbn: '978-3-608-50480-4',
-  summary: 'Biologist Meike Stoverock draws on evolutionary biology, anthropology, and psychology to argue that female choice is a powerful, often underestimated force in human evolution and contemporary life. The book examines how women\'s preferences and decisions shape relationships, social structures, and even cultural norms—inviting readers to reconsider assumptions about passivity and agency in gender dynamics.',
+  summary: 'Biologist Meike Stoverock draws on evolutionary biology, anthropology, and psychology to argue that female choice is a powerful, often underestimated force in human evolution and contemporary life. The book examines how women\'s preferences and decisions shape relationships, social structures, and even cultural norms, inviting readers to reconsider assumptions about passivity and agency in gender dynamics.',
   keyTopics: ['Female\'s Mental Health', 'Evolutionary Biology', 'Female Agency', 'Gender Dynamics', 'Reproductive Choice', 'Social Norms'],
   notesForHealing: 'For women navigating loss of autonomy, identity shifts, or relationship grief, this book affirms that female choice and agency are deeply rooted and biologically significant. Reconnecting with your own preferences and values can be a powerful act of self-reclamation during healing.'
 }

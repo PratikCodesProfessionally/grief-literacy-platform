@@ -1,14 +1,7 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
-import { 
-  Brain, 
-  Users, 
-  Flower2, 
-  BookOpen,
-  Gamepad2,
-  ArrowRight
-} from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { GrandmaSueEnhanced } from '@/components/GrandmaSueEnhanced';
 
 interface Feature {
@@ -16,7 +9,7 @@ interface Feature {
   title: string;
   description: string;
   path: string;
-  icon: React.ComponentType<{ className?: string }>;
+  iconSrc: string;
   gradient: string;
   colorClass: string;
 }
@@ -32,7 +25,7 @@ export function HomePage() {
       y: 0,
       transition: { 
         duration: shouldReduceMotion ? 0 : 0.8, 
-        ease: 'easeOut' 
+        ease: 'easeOut' as const
       }
     }
   };
@@ -55,7 +48,7 @@ export function HomePage() {
       y: 0,
       transition: { 
         duration: shouldReduceMotion ? 0 : 0.6, 
-        ease: 'easeOut' 
+        ease: 'easeOut' as const
       }
     }
   };
@@ -66,7 +59,7 @@ export function HomePage() {
       title: 'Therapeutic Approaches',
       description: 'Express yourself through story, art, poetry and music therapy in a safe, healing space',
       path: '/therapy',
-      icon: Brain,
+      iconSrc: '/Images/TherapeuticApproachesIcon.png',
       gradient: 'from-sky-400 to-blue-500',
       colorClass: 'bg-gradient-to-br from-sky-400 to-blue-500',
     },
@@ -75,7 +68,7 @@ export function HomePage() {
       title: 'Support Community',
       description: 'Connect with others who understand. Join circles, find peer support, and honor memories together',
       path: '/community',
-      icon: Users,
+      iconSrc: '/Images/SupportCommunityIcon2.png',
       gradient: 'from-cyan-400 to-teal-500',
       colorClass: 'bg-gradient-to-br from-cyan-400 to-teal-500',
     },
@@ -84,7 +77,7 @@ export function HomePage() {
       title: 'Healing Tools',
       description: 'Access journaling, guided meditation, breathing exercises and emergency support resources',
       path: '/tools',
-      icon: Flower2,
+      iconSrc: '/Images/HealingToolsIcon.png',
       gradient: 'from-blue-400 to-indigo-500',
       colorClass: 'bg-gradient-to-br from-blue-400 to-indigo-500',
     },
@@ -93,7 +86,7 @@ export function HomePage() {
       title: 'Learning Resources',
       description: 'Explore curated books, courses, and professional resources for your healing journey',
       path: '/resources',
-      icon: BookOpen,
+      iconSrc: '/Images/LearningResourcesIcon.png',
       gradient: 'from-teal-400 to-cyan-500',
       colorClass: 'bg-gradient-to-br from-teal-400 to-cyan-500',
     },
@@ -167,14 +160,15 @@ export function HomePage() {
 
               <div className="relative flex flex-col md:flex-row items-center gap-6 md:gap-8">
                 {/* Icon */}
-                <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-white/20 backdrop-blur-sm
-                              flex items-center justify-center
+                <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden
+                              ring-4 ring-white/30
                               shadow-lg group-hover:shadow-xl
-                              group-hover:scale-110 group-hover:rotate-6
+                              group-hover:scale-110 group-hover:rotate-3
                               transition-all duration-500 ease-out">
-                  <Gamepad2 className="w-12 h-12 md:w-16 md:h-16 text-white
-                                     group-hover:scale-110
-                                     transition-transform duration-300" />
+                  <img src="/Images/InteractiveI2DSpaceIcon.png" alt="Interactive 2D Space"
+                       className="w-full h-full object-cover
+                                  group-hover:scale-110
+                                  transition-transform duration-300" />
                 </div>
 
                 {/* Content */}
@@ -199,68 +193,123 @@ export function HomePage() {
         </div>
       </motion.section>
 
-      {/* Feature Cards - Messenger-Inspired Design with Scroll Animations */}
+      {/* Healing Journey Timeline */}
       <motion.section 
         className="py-16 px-4"
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, amount: 0.2 }}
+        viewport={{ once: true, amount: 0.1 }}
         variants={staggerContainerVariant}
       >
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
-            {features.map((feature) => (
+        <div className="max-w-5xl mx-auto relative">
+
+          {/* Central Timeline Line */}
+          <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-sky-200 via-blue-300 to-cyan-200 -translate-x-1/2" />
+
+          {features.map((feature, index) => {
+            const isLeft = index % 2 === 0;
+            const isLast = index === features.length - 1;
+
+            return (
               <motion.div
                 key={feature.id}
                 variants={cardVariant}
+                className={`relative flex flex-col md:flex-row items-center ${!isLast ? 'mb-16 md:mb-24' : ''}`}
               >
-                <Link
-                  to={feature.path}
-                  className="group block"
-                >
-                  <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-8 md:p-10 
-                              shadow-md hover:shadow-xl 
-                              transform hover:scale-[1.02] hover:-translate-y-1
-                              transition-all duration-500 ease-out
-                              border border-sky-100/50
-                              hover:border-sky-200/60
-                              cursor-pointer
-                              focus:outline-none focus:ring-4 focus:ring-sky-300/50 focus:ring-offset-2
-                              active:scale-[1.01] active:-translate-y-0.5
-                              will-change-transform">
-                  
-                    {/* Icon Circle */}
-                    <div className={`w-20 h-20 md:w-24 md:h-24 rounded-full ${feature.colorClass} 
-                                flex items-center justify-center mb-6
-                                shadow-md group-hover:shadow-lg
-                                group-hover:scale-105
-                                transition-all duration-400 ease-out`}>
-                      <feature.icon className="w-10 h-10 md:w-12 md:h-12 text-white 
-                                           group-hover:scale-110 transition-transform duration-300" />
-                    </div>
+                {/* Timeline Node — center circle with image */}
+                <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 z-10
+                                w-20 h-20 rounded-full overflow-hidden
+                                ring-4 ring-white shadow-lg">
+                  <div className={`absolute inset-0 ${feature.colorClass}`} />
+                  <img src={feature.iconSrc} alt={feature.title}
+                       className="relative w-full h-full object-cover" />
+                </div>
 
-                    {/* Content */}
-                    <h3 className="text-2xl md:text-3xl font-semibold text-gray-900 mb-3
-                               group-hover:text-sky-700 transition-colors duration-300">
-                      {feature.title}
-                    </h3>
-                    <p className="text-gray-600 text-base md:text-lg leading-relaxed mb-6
-                              group-hover:text-gray-700 transition-colors duration-300">
-                      {feature.description}
-                    </p>
-
-                    {/* Arrow Link */}
-                    <div className="flex items-center text-sky-600 font-medium 
-                                group-hover:text-sky-700 transition-colors duration-300">
-                      <span className="group-hover:underline">Explore</span>
-                      <ArrowRight className="w-5 h-5 ml-2 transform group-hover:translate-x-1 
-                                         transition-transform duration-300 ease-out" />
+                {/* Left side content (even items) */}
+                {isLeft ? (
+                  <>
+                    <div className="w-full md:w-[calc(50%-60px)] md:pr-8">
+                      <Link to={feature.path} className="group block">
+                        <div className="bg-white/95 backdrop-blur-xl rounded-3xl overflow-hidden
+                                      shadow-md hover:shadow-xl border border-sky-100/50 hover:border-sky-200/60
+                                      transform hover:scale-[1.02] hover:-translate-y-1
+                                      transition-all duration-500 ease-out cursor-pointer
+                                      will-change-transform">
+                          {/* Image Banner */}
+                          <div className={`relative h-48 md:h-56 ${feature.colorClass}`}>
+                            <img src={feature.iconSrc} alt={feature.title}
+                                 className="absolute inset-0 w-full h-full object-cover
+                                            opacity-90 group-hover:opacity-100 group-hover:scale-105
+                                            transition-all duration-700 ease-out" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+                            <h3 className="absolute bottom-4 left-6 text-2xl md:text-3xl font-bold text-white
+                                         drop-shadow-lg">
+                              {feature.title}
+                            </h3>
+                          </div>
+                          {/* Text */}
+                          <div className="p-6 md:p-8">
+                            <p className="text-gray-600 text-base md:text-lg leading-relaxed mb-4
+                                        group-hover:text-gray-700 transition-colors duration-300">
+                              {feature.description}
+                            </p>
+                            <div className="flex items-center text-sky-600 font-medium
+                                          group-hover:text-sky-700 transition-colors duration-300">
+                              <span className="group-hover:underline">Explore</span>
+                              <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1
+                                                   transition-transform duration-300" />
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
                     </div>
-                  </div>
-                </Link>
+                    {/* Right spacer */}
+                    <div className="hidden md:block w-[calc(50%-60px)]" />
+                  </>
+                ) : (
+                  <>
+                    {/* Left spacer */}
+                    <div className="hidden md:block w-[calc(50%-60px)]" />
+                    <div className="w-full md:w-[calc(50%-60px)] md:pl-8">
+                      <Link to={feature.path} className="group block">
+                        <div className="bg-white/95 backdrop-blur-xl rounded-3xl overflow-hidden
+                                      shadow-md hover:shadow-xl border border-sky-100/50 hover:border-sky-200/60
+                                      transform hover:scale-[1.02] hover:-translate-y-1
+                                      transition-all duration-500 ease-out cursor-pointer
+                                      will-change-transform">
+                          {/* Image Banner */}
+                          <div className={`relative h-48 md:h-56 ${feature.colorClass}`}>
+                            <img src={feature.iconSrc} alt={feature.title}
+                                 className="absolute inset-0 w-full h-full object-cover
+                                            opacity-90 group-hover:opacity-100 group-hover:scale-105
+                                            transition-all duration-700 ease-out" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+                            <h3 className="absolute bottom-4 right-6 text-2xl md:text-3xl font-bold text-white
+                                         drop-shadow-lg text-right">
+                              {feature.title}
+                            </h3>
+                          </div>
+                          {/* Text */}
+                          <div className="p-6 md:p-8 text-right">
+                            <p className="text-gray-600 text-base md:text-lg leading-relaxed mb-4
+                                        group-hover:text-gray-700 transition-colors duration-300">
+                              {feature.description}
+                            </p>
+                            <div className="flex items-center justify-end text-sky-600 font-medium
+                                          group-hover:text-sky-700 transition-colors duration-300">
+                              <ArrowRight className="w-5 h-5 mr-2 rotate-180 group-hover:-translate-x-1
+                                                   transition-transform duration-300" />
+                              <span className="group-hover:underline">Explore</span>
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                    </div>
+                  </>
+                )}
               </motion.div>
-            ))}
-          </div>
+            );
+          })}
         </div>
       </motion.section>
 
