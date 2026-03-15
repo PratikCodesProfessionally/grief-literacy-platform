@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { MoodSelector } from '@/components/ui/mood-selector';
-import { ArrowLeft, CheckCircle, Clock, Palette, Sparkles, Users, Mic } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Clock, Palette, Sparkles, Users, Mic, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Activity modals (same folder)
@@ -39,6 +39,7 @@ export function ArtTherapyPage() {
     'healing-mandala': 'not-started',
     'digital-studio': 'not-started',
   });
+  const carouselRef = React.useRef<HTMLDivElement | null>(null);
 
   const moods = [
     { emoji: '😢', label: 'Sad', value: 'sad', color: 'border-blue-400' },
@@ -54,7 +55,8 @@ export function ArtTherapyPage() {
       id: 'emotion-color',
       title: 'Emotion Color Mapping',
       description: 'Use colors to express different feelings about your grief',
-      icon: '🎨',
+      imageSrc: '/Images/EmotionColorMapping.png',
+      imageClass: 'object-contain p-4 md:p-5 scale-100 group-hover:scale-[1.02]',
       themeColor: 'from-red-100 to-orange-100 dark:from-red-900/20 dark:to-orange-900/20',
       borderColor: 'border-red-200 dark:border-red-800',
       iconBg: 'bg-red-50 dark:bg-red-900/30',
@@ -64,7 +66,8 @@ export function ArtTherapyPage() {
       id: 'memory-collage',
       title: 'Memory Collage',
       description: 'Create a visual representation of cherished memories',
-      icon: '📸',
+      imageSrc: '/Images/MemoryCollage.png',
+      imageClass: 'object-contain p-3 md:p-4 scale-100 group-hover:scale-[1.02]',
       themeColor: 'from-blue-100 to-cyan-100 dark:from-blue-900/20 dark:to-cyan-900/20',
       borderColor: 'border-blue-200 dark:border-blue-800',
       iconBg: 'bg-blue-50 dark:bg-blue-900/30',
@@ -74,7 +77,8 @@ export function ArtTherapyPage() {
       id: 'symbolic-drawing',
       title: 'Symbolic Drawing',
       description: 'Draw symbols that represent your journey through grief',
-      icon: '🖼️',
+      imageSrc: '/Images/SymbolicDrawing.png',
+      imageClass: 'object-contain p-5 md:p-6 scale-95 group-hover:scale-100',
       themeColor: 'from-green-100 to-emerald-100 dark:from-green-900/20 dark:to-emerald-900/20',
       borderColor: 'border-green-200 dark:border-green-800',
       iconBg: 'bg-green-50 dark:bg-green-900/30',
@@ -84,7 +88,8 @@ export function ArtTherapyPage() {
       id: 'healing-mandala',
       title: 'Healing Mandala',
       description: 'Create circular patterns that promote inner peace',
-      icon: '🔮',
+      imageSrc: '/Images/HealingMandala.png',
+      imageClass: 'object-contain p-4 md:p-5 scale-100 group-hover:scale-[1.02]',
       themeColor: 'from-purple-100 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/20',
       borderColor: 'border-purple-200 dark:border-purple-800',
       iconBg: 'bg-purple-50 dark:bg-purple-900/30',
@@ -152,6 +157,16 @@ export function ArtTherapyPage() {
   const completedCount = Object.values(activityProgress).filter((s) => s === 'completed').length;
   const totalActivities = Object.keys(activityProgress).length;
   const overallProgress = (completedCount / totalActivities) * 100;
+
+  const scrollCarousel = (direction: 'left' | 'right') => {
+    if (!carouselRef.current) return;
+    const firstCard = carouselRef.current.querySelector<HTMLElement>('[data-carousel-card="true"]');
+    const scrollAmount = firstCard ? firstCard.offsetWidth + 20 : carouselRef.current.clientWidth;
+    carouselRef.current.scrollBy({
+      left: direction === 'right' ? scrollAmount : -scrollAmount,
+      behavior: 'smooth',
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 dark:from-gray-900 dark:via-purple-900/20 dark:to-gray-900 relative overflow-hidden">
@@ -252,54 +267,70 @@ export function ArtTherapyPage() {
           />
         )}
 
-        {/* Art Activities Grid */}
-        <div className="grid md:grid-cols-2 gap-6">
-          {artActivities.map((activity) => (
-            <Card
-              key={activity.id}
-              className={cn(
-                'group hover:shadow-2xl hover:scale-[1.03] transition-all duration-300 overflow-hidden',
-                'bg-gradient-to-br',
-                activity.themeColor,
-                activity.borderColor,
-                'border-2 relative'
-              )}
-            >
-              {/* Artistic shine effect */}
-              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
-              <CardHeader className="relative">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className={cn('p-3 rounded-xl text-2xl transition-transform group-hover:scale-110', activity.iconBg)}>
-                      {activity.icon}
-                    </div>
-                    <div className="flex-1">
-                      <CardTitle className="text-xl mb-1">{activity.title}</CardTitle>
-                      <CardDescription className="text-sm mb-3 text-gray-700 dark:text-gray-300">{activity.description}</CardDescription>
-                      <p className="text-xs text-gray-800 dark:text-gray-300 font-medium">{activity.detailedDescription}</p>
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end space-y-2">
-                    {getProgressIcon(activityProgress[activity.id])}
-                    {getProgressBadge(activityProgress[activity.id])}
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <Button
-                  className="w-full group-hover:shadow-md transition-shadow"
+        {/* Art Activities Carousel */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between px-1">
+            <h2 className="text-lg md:text-xl font-semibold text-gray-800 dark:text-gray-100">Art Activities</h2>
+            <div className="flex items-center gap-2">
+              <p className="text-xs md:text-sm text-gray-600 dark:text-gray-300">Swipe or use arrows</p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={() => scrollCarousel('left')}
+                aria-label="Previous activity"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={() => scrollCarousel('right')}
+                aria-label="Next activity"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          <div
+            ref={carouselRef}
+            className="flex overflow-x-auto pb-2 snap-x snap-mandatory scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            {artActivities.map((activity) => (
+              <Card
+                key={activity.id}
+                data-carousel-card="true"
+                className={cn(
+                  'snap-start shrink-0 w-full md:w-[calc(50%-10px)] mr-5 last:mr-0',
+                  'group hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 overflow-hidden',
+                  'bg-gradient-to-br',
+                  activity.themeColor,
+                  activity.borderColor,
+                  'border-2 relative'
+                )}
+              >
+                <button
+                  type="button"
+                  className="relative w-full h-[340px] md:h-[420px] focus:outline-none focus-visible:ring-4 focus-visible:ring-purple-400/60"
                   onClick={() => handleActivityStart(activity.id)}
                   disabled={activityProgress[activity.id] === 'completed'}
+                  aria-label={activity.title}
                 >
-                  {activityProgress[activity.id] === 'completed'
-                    ? 'Completed'
-                    : activityProgress[activity.id] === 'in-progress'
-                    ? 'Continue Activity'
-                    : 'Start Activity'}
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
+                  <img
+                    src={activity.imageSrc}
+                    alt={activity.title}
+                    className={`absolute inset-0 w-full h-full transition-transform duration-500 ${activity.imageClass ?? 'object-cover group-hover:scale-105'}`}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-black/10" />
+                  <div className="absolute top-3 right-3">{getProgressIcon(activityProgress[activity.id])}</div>
+                </button>
+              </Card>
+            ))}
+          </div>
         </div>
 
         {/* Advanced Digital Art Studio Card */}

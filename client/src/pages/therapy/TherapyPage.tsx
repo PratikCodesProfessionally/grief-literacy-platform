@@ -11,6 +11,8 @@ interface TherapyOption {
   title: string;
   description: string;
   iconSrc: string;
+  imageClass?: string;
+  bannerImageClass?: string;
   path: string;
   colorClass: string;
 }
@@ -33,6 +35,7 @@ export function TherapyPage() {
       title: 'Canvessence',
       description: 'Use visual expression and creative art to explore and heal emotional wounds',
       iconSrc: '/Images/CanvassenceIcon.jpg',
+      imageClass: 'scale-[1.0] object-center group-hover:scale-[1.04]',
       path: '/therapy/art',
       colorClass: 'bg-gradient-to-br from-cyan-400 to-teal-500',
     },
@@ -49,6 +52,8 @@ export function TherapyPage() {
       title: 'Euphora',
       description: 'Process emotions and memories through music, sound and therapeutic rhythm',
       iconSrc: '/Images/EuphoriaIcon.png',
+      imageClass: 'object-cover object-center scale-100 group-hover:scale-[1.04]',
+      bannerImageClass: 'object-top',
       path: '/therapy/music',
       colorClass: 'bg-gradient-to-br from-teal-400 to-cyan-500',
     },
@@ -97,7 +102,7 @@ export function TherapyPage() {
                                   group cursor-pointer">
                     <div className={`absolute inset-0 ${option.colorClass}`} />
                     <img src={option.iconSrc} alt={option.title}
-                         className="relative w-full h-full object-cover" />
+                      className={`relative w-full h-full object-cover ${option.imageClass ?? ''}`} />
                   </div>
 
                   {/* Left side content (even items) */}
@@ -113,9 +118,9 @@ export function TherapyPage() {
                             {/* Image Banner */}
                             <div className={`relative h-48 md:h-56 ${option.colorClass}`}>
                               <img src={option.iconSrc} alt={option.title}
-                                   className="absolute inset-0 w-full h-full object-cover
-                                              opacity-90 group-hover:opacity-100 group-hover:scale-105
-                                              transition-all duration-700 ease-out" />
+                                className={`absolute inset-0 w-full h-full object-cover
+                                     opacity-90 group-hover:opacity-100 group-hover:scale-105
+                                     transition-all duration-700 ease-out ${option.imageClass ?? ''} ${option.bannerImageClass ?? ''}`} />
                               <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
                               <h3 className="absolute bottom-4 left-6 text-2xl md:text-3xl font-bold text-white
                                            drop-shadow-lg">
@@ -155,9 +160,9 @@ export function TherapyPage() {
                             {/* Image Banner */}
                             <div className={`relative h-48 md:h-56 ${option.colorClass}`}>
                               <img src={option.iconSrc} alt={option.title}
-                                   className="absolute inset-0 w-full h-full object-cover
-                                              opacity-90 group-hover:opacity-100 group-hover:scale-105
-                                              transition-all duration-700 ease-out" />
+                                className={`absolute inset-0 w-full h-full object-cover
+                                     opacity-90 group-hover:opacity-100 group-hover:scale-105
+                                     transition-all duration-700 ease-out ${option.imageClass ?? ''} ${option.bannerImageClass ?? ''}`} />
                               <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
                               <h3 className="absolute bottom-4 right-6 text-2xl md:text-3xl font-bold text-white
                                            drop-shadow-lg text-right">
