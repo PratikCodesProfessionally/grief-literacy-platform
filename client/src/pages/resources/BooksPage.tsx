@@ -328,12 +328,25 @@ export function BooksPage() {
   description: 'A scientific exploration of female mate choice and its evolutionary, biological, and social dimensions, challenging long-held assumptions about gender roles in reproduction and society.',
   rating: 4.6,
   category: 'Social Issues',
-  pages: 352,
+  pages: 351,
   published: '2021',
   isbn: '978-3-608-50480-4',
-  summary: 'Biologist Meike Stoverock draws on evolutionary biology, anthropology, and psychology to argue that female choice is a powerful, often underestimated force in human evolution and contemporary life. The book examines how women\'s preferences and decisions shape relationships, social structures, and even cultural norms, inviting readers to reconsider assumptions about passivity and agency in gender dynamics.',
+  summary: 'Biologist Meike Stoverock draws on evolutionary biology, anthropology, and psychology to argue that female choice is a powerful, often underestimated force in human evolution and contemporary life. The book examines how women\'s preferences and decisions shape relationships, social structures, and even cultural norms—inviting readers to reconsider assumptions about passivity and agency in gender dynamics.',
   keyTopics: ['Female\'s Mental Health', 'Evolutionary Biology', 'Female Agency', 'Gender Dynamics', 'Reproductive Choice', 'Social Norms'],
   notesForHealing: 'For women navigating loss of autonomy, identity shifts, or relationship grief, this book affirms that female choice and agency are deeply rooted and biologically significant. Reconnecting with your own preferences and values can be a powerful act of self-reclamation during healing.'
+},
+{
+  title: 'Dein Crashkurs fürs Leben',
+  author: 'Lorenzo Wienecke, Anna Wienecke, Juri Galkin',
+  description: 'Everything you need to know about finances, insurance, taxes, and rent — a practical guide for navigating adult life.',
+  rating: 4.7,
+  category: 'Financial Wisdom',
+  pages: 240,
+  published: '2024',
+  isbn: '978-3959727617',
+  summary: 'Lorenzo Wienecke, Anna Wienecke, and Juri Galkin deliver a compact and accessible guide to the most important real-life topics that school never taught: how taxes work, which insurance policies you actually need, how to find an apartment, and how to manage your personal finances. Written in plain language without jargon, this book equips young adults with the practical knowledge they need to navigate adult life with confidence.',
+  keyTopics: ['Persönliche Finanzen', 'Steuern', 'Versicherungen', 'Miete & Wohnen', 'Finanzielle Unabhängigkeit', 'Alltagswissen'],
+  notesForHealing: 'Financial uncertainty can significantly amplify grief and stress. This book provides practical, actionable knowledge that restores a sense of orientation and control — a small but concrete step toward stability that can offer grounding even in the most difficult chapters of life.'
 }
   ];
 
