@@ -1185,6 +1185,72 @@ Only love can end the mire
 Only love is what we require.`,
  category: "Love",
  readTime: "2 min"
+},
+{
+  id: 21,
+  title: "To a Woman in Her Natural State",
+  author: "Unknown",
+  content: `I like your wrinkles of time
+that have gathered wisdom of ages
+I like the twinkle in your eyes
+that have photographed the periwinkle of sages
+
+The dark circles of your deep dive
+like a cyclic ester dimer in the curie's lab of lactide
+The freckles you hide
+like rosalind franklin's X-Ray Diffraction to ignite
+the double helix Model of DNA Nucleotide
+
+The lines around your chin
+dark patches in your unmasked skin
+like dark matter of Vera Rubin
+whose universe kept spinning 
+past every doubt they pinned
+The courage you carry to unmask 
+the messages etched in stardust's past
+like Midnight's shadows in the telescope of Gaposchkin 
+
+Your 6 am face
+like the first algorithm written by Ada Lovelace
+
+I know
+you have been conditioned to be a natural shopper
+But flow gently Oh woman
+like the first compiler developed by Grace Hopper 
+
+The pain of your innocent tears
+that violate the symmetry of devil-may-care
+society 
+that boos
+the disapproving Chien-Shiung Wus
+
+Your self doubt like a stumbling block
+for Jumping genes of Barbara McClintock
+
+The billion dollar beauty industry
+like the creamy product of mountain gorillas
+for Dian Fossey 
+Human and gorillas
+they are not different say jane goodalls
+
+You simple face 
+is the living proof of rebellion
+for uncanny Dorothy Vaughan
+
+The silve hair of your stress
+like the non-reflective glass of Blodgett
+
+The uneven skin tone 
+The dark circles 
+The flecks
+The patches and specks
+the ridges and the wrecks
+the sabotage in your neck
+like the geometric preface
+of Karen Uhlenbeck`,
+  category: "Open Letter",
+  readTime: "3 min"
+
 }
   ];
 
