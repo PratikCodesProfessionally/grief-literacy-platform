@@ -22,6 +22,16 @@ interface VoiceRecording {
   duration: number;
 }
 
+interface HealingPoem {
+  id: number;
+  title: string;
+  author: string;
+  content: string;
+  category: string;
+  readTime: string;
+  audioSrc?: string;
+}
+
 export function PoetryTherapyPage() {
   const [selectedPoem, setSelectedPoem] = React.useState('');
   const [userPoem, setUserPoem] = React.useState('');
@@ -283,7 +293,7 @@ export function PoetryTherapyPage() {
     </div>
   );
   
-  const healingPoems = [
+  const healingPoems: HealingPoem[] = [
     {
       id: 1,
       title: "Grief Speaks",
@@ -1249,7 +1259,8 @@ the sabotage in your neck
 like the geometric preface
 of Karen Uhlenbeck`,
   category: "Open Letter",
-  readTime: "3 min"
+  readTime: "3 min",
+  audioSrc: "/audio/ToAWomanInHerNaturalState.mp3"
 
 }
   ];
@@ -1320,22 +1331,71 @@ of Karen Uhlenbeck`,
   const readAloud = (poemId: number) => {
     if (isReading === poemId) {
       setIsReading(null);
+      if (audioPlayerRef.current) {
+        audioPlayerRef.current.pause();
+        audioPlayerRef.current.currentTime = 0;
+        audioPlayerRef.current = null;
+      }
       // Stop speech synthesis
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
       }
     } else {
       setIsReading(poemId);
-      // Start speech synthesis
+      const poem = healingPoems.find(p => p.id === poemId);
+      if (!poem) return;
+
+      // If a dedicated audio file exists, play it first.
+      if (poem.audioSrc) {
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+        }
+
+        if (audioPlayerRef.current) {
+          audioPlayerRef.current.pause();
+        }
+
+        const audio = new Audio(poem.audioSrc);
+        audioPlayerRef.current = audio;
+        audio.onended = () => {
+          setIsReading(null);
+          audioPlayerRef.current = null;
+        };
+        audio.onerror = () => {
+          setIsReading(null);
+          audioPlayerRef.current = null;
+          toast({
+            title: "Fehler",
+            description: "Audio konnte nicht abgespielt werden",
+            variant: "destructive",
+          });
+        };
+
+        audio.play().catch(() => {
+          setIsReading(null);
+          audioPlayerRef.current = null;
+          toast({
+            title: "Fehler",
+            description: "Audio konnte nicht abgespielt werden",
+            variant: "destructive",
+          });
+        });
+        return;
+      }
+
+      // Fallback to speech synthesis.
       if ('speechSynthesis' in window) {
-        const poem = healingPoems.find(p => p.id === poemId);
-        if (poem) {
+        if (audioPlayerRef.current) {
+          audioPlayerRef.current.pause();
+          audioPlayerRef.current.currentTime = 0;
+          audioPlayerRef.current = null;
+        }
+
           const utterance = new SpeechSynthesisUtterance(poem.content);
           utterance.rate = 0.8;
           utterance.pitch = 1;
           utterance.onend = () => setIsReading(null);
           window.speechSynthesis.speak(utterance);
-        }
       }
     }
   };
