@@ -308,11 +308,50 @@ export function BooksPage() {
   summary: 'Through engaging tales of merchants, tradesmen, and citizens of ancient Babylon, George S. Clason distills fundamental principles of personal finance into memorable stories. The book teaches that wealth is built through consistent habits: paying yourself first, living below your means, seeking wise counsel, and making money work for you through prudent investments.',
   keyTopics: ['Personal Finance', 'Wealth Building', 'Saving Habits', 'Financial Independence', 'Money Management', 'Ancient Wisdom'],
   notesForHealing: 'Financial stress compounds grief and loss. These ancient principles offer a foundation for rebuilding security: start small by saving even 10% of income, seek guidance from those who\'ve succeeded, avoid get-rich schemes during vulnerable times. Financial stability creates space for emotional healing—one mindful decision at a time restores both material and psychological wellbeing.'
+},
+{
+  title: 'Das polygame Geschlecht',
+  author: 'Esther Ville',
+  description: 'A new perspective on postmodern feminism and men\'s mental health, exploring the complexities of gender dynamics in modern society.',
+  rating: 4.5,
+  category: 'Social Issues',
+  pages: 133,
+  published: '1974',
+  isbn: '978-3957511454',
+  summary: 'Esther Ville challenges traditional views on gender and relationships, offering fresh insights into men\'s mental health and postmodern feminist thought. This book examines how societal expectations impact both men and women, providing a nuanced understanding of contemporary gender dynamics.',
+  keyTopics: ['Men\'s Mental Health', 'Postmodern Feminism', 'Gender Dynamics', 'Social Perspectives', 'Modern Relationships'],
+  notesForHealing: 'For those exploring identity and societal roles during times of change, this book offers new frameworks for understanding personal and collective healing in the context of evolving gender norms.'
+},
+{
+  title: 'Female Choice',
+  author: 'Meike Stoverock',
+  description: 'A scientific exploration of female mate choice and its evolutionary, biological, and social dimensions, challenging long-held assumptions about gender roles in reproduction and society.',
+  rating: 4.6,
+  category: 'Social Issues',
+  pages: 351,
+  published: '2021',
+  isbn: '978-3-608-50480-4',
+  summary: 'Biologist Meike Stoverock draws on evolutionary biology, anthropology, and psychology to argue that female choice is a powerful, often underestimated force in human evolution and contemporary life. The book examines how women\'s preferences and decisions shape relationships, social structures, and even cultural norms—inviting readers to reconsider assumptions about passivity and agency in gender dynamics.',
+  keyTopics: ['Female\'s Mental Health', 'Evolutionary Biology', 'Female Agency', 'Gender Dynamics', 'Reproductive Choice', 'Social Norms'],
+  notesForHealing: 'For women navigating loss of autonomy, identity shifts, or relationship grief, this book affirms that female choice and agency are deeply rooted and biologically significant. Reconnecting with your own preferences and values can be a powerful act of self-reclamation during healing.'
+},
+{
+  title: 'Dein Crashkurs fürs Leben',
+  author: 'Lorenzo Wienecke, Anna Wienecke, Juri Galkin',
+  description: 'Everything you need to know about finances, insurance, taxes, and rent — a practical guide for navigating adult life.',
+  rating: 4.7,
+  category: 'Financial Wisdom',
+  pages: 240,
+  published: '2024',
+  isbn: '978-3959727617',
+  summary: 'Lorenzo Wienecke, Anna Wienecke, and Juri Galkin deliver a compact and accessible guide to the most important real-life topics that school never taught: how taxes work, which insurance policies you actually need, how to find an apartment, and how to manage your personal finances. Written in plain language without jargon, this book equips young adults with the practical knowledge they need to navigate adult life with confidence.',
+  keyTopics: ['Persönliche Finanzen', 'Steuern', 'Versicherungen', 'Miete & Wohnen', 'Finanzielle Unabhängigkeit', 'Alltagswissen'],
+  notesForHealing: 'Financial uncertainty can significantly amplify grief and stress. This book provides practical, actionable knowledge that restores a sense of orientation and control — a small but concrete step toward stability that can offer grounding even in the most difficult chapters of life.'
 }
   ];
 
   // Available categories for the filter dropdown.
-  const categories = ['all', 'Memoir', 'Self-Help', 'Spiritual', 'Psychology', 'Health', 'Family', 'Pet Loss', 'Resilience','Financial Health'];
+  const categories = ['all', 'Memoir', 'Self-Help', 'Spiritual', 'Psychology', 'Health', 'Family', 'Pet Loss', 'Resilience','Financial Health', 'Social Issues'];
 
   // -----------------------------
   // 2.3) Persistence effects
@@ -582,13 +621,13 @@ export function BooksPage() {
       )}
 
       {/* Disclaimer */}
-      <Card className="bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800">
+      <Card className="bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-700">
         <CardContent className="pt-6">
           <div className="flex items-start space-x-3">
-            <div className="text-amber-600 text-xl" aria-hidden="true">📚</div>
+            <div className="text-amber-600 dark:text-amber-400 text-xl flex-shrink-0" aria-hidden="true">📚</div>
             <div>
-              <h3 className="font-medium text-amber-800 dark:text-amber-200 mb-2">Book Recommendations Disclaimer</h3>
-              <p className="text-sm text-amber-700 dark:text-amber-300">
+              <h3 className="font-semibold text-amber-800 dark:text-amber-100 mb-2">Book Recommendations Disclaimer</h3>
+              <p className="text-sm text-amber-700 dark:text-amber-200 leading-relaxed">
                 These book recommendations are curated for educational purposes. We are not affiliated with publishers or authors.
                 Please purchase books through your preferred retailer. Reading suggestions should complement, not replace,
                 professional grief counseling when needed.

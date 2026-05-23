@@ -1,28 +1,57 @@
 // Hugging Face API Service - FREE Alternative to Claude
-// Uses free inference API with various LLMs
+// Uses the new Router API with OpenAI-compatible Chat Completions format
+// Updated January 2026 for new HF Inference API
 
 interface HuggingFaceMessage {
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system';
   content: string;
+}
+
+interface ChatCompletionResponse {
+  id: string;
+  object: string;
+  created: number;
+  model: string;
+  choices: Array<{
+    index: number;
+    message: {
+      role: string;
+      content: string;
+    };
+    finish_reason: string;
+  }>;
+  usage: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
 }
 
 export class HuggingFaceService {
   private apiKey: string;
-  private baseUrl = 'https://api-inference.huggingface.co/models';
+  // New Router API endpoint (replaces deprecated api-inference.huggingface.co)
+  private baseUrl = 'https://router.huggingface.co/v1/chat/completions';
   // Using Meta's Llama 3.1 - Free and powerful
-  private model = 'meta-llama/Meta-Llama-3.1-8B-Instruct';
+  private model = 'meta-llama/Llama-3.1-8B-Instruct';
+  private useBackendProxy: boolean;
   
   constructor() {
-    // Free API key from huggingface.co
+    // Default to backend proxy for security (no key in the browser)
+    this.useBackendProxy = (import.meta.env.VITE_USE_BACKEND_AI_PROXY ?? 'true') === 'true';
+    // Free API key from huggingface.co (only needed if proxy disabled)
     this.apiKey = import.meta.env.VITE_HUGGINGFACE_API_KEY || '';
+
+    if (!this.useBackendProxy && !this.apiKey) {
+      console.warn('⚠️ Hugging Face not configured: set VITE_HUGGINGFACE_API_KEY (or enable backend proxy)');
+    }
   }
 
   isConfigured(): boolean {
-    return this.apiKey.length > 0;
+    return this.useBackendProxy || this.apiKey.length > 0;
   }
 
   async generateResponse(
-    messages: HuggingFaceMessage[],
+    messages: Array<{ role: 'user' | 'assistant'; content: string }>,
     context: {
       topics: string[];
       sentiment: string;
@@ -34,41 +63,60 @@ export class HuggingFaceService {
     }
 
     const systemPrompt = this.buildSystemPrompt(context);
-    const formattedPrompt = this.formatMessages(systemPrompt, messages);
+    
+    // Build messages array with system prompt
+    const apiMessages: HuggingFaceMessage[] = [
+      { role: 'system', content: systemPrompt },
+      ...messages.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }))
+    ];
 
     try {
-      const response = await fetch(`${this.baseUrl}/${this.model}`, {
+      const response = await fetch(this.useBackendProxy ? '/api/ai/huggingface' : this.baseUrl, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          inputs: formattedPrompt,
-          parameters: {
-            max_new_tokens: 512,
-            temperature: 0.7,
-            top_p: 0.9,
-            return_full_text: false,
-          },
-        }),
+        headers: this.useBackendProxy
+          ? { 'Content-Type': 'application/json' }
+          : {
+              'Authorization': `Bearer ${this.apiKey}`,
+              'Content-Type': 'application/json',
+            },
+        body: JSON.stringify(
+          this.useBackendProxy
+            ? {
+                messages,
+                systemPrompt,
+                model: this.model,
+              }
+            : {
+                model: this.model,
+                messages: apiMessages,
+                max_tokens: 512,
+                temperature: 0.7,
+                top_p: 0.9,
+              }
+        ),
       });
 
       if (!response.ok) {
         const error = await response.json();
         console.error('Hugging Face API error:', error);
-        throw new Error(`Hugging Face API error: ${response.status}`);
+        throw new Error(`Hugging Face API error: ${response.status} - ${error.error || 'Unknown error'}`);
       }
 
-      const data = await response.json();
-      
-      // Handle different response formats
-      if (Array.isArray(data)) {
-        return data[0]?.generated_text || this.getFallbackResponse();
-      } else if (data.generated_text) {
-        return data.generated_text;
-      } else if (data[0]?.generated_text) {
-        return data[0].generated_text;
+      const data: any = await response.json();
+
+      if (this.useBackendProxy) {
+        const text = typeof data?.text === 'string' ? data.text.trim() : '';
+        if (text) return text;
+        return this.getFallbackResponse();
+      }
+
+      const typed: ChatCompletionResponse = data;
+      // Extract response from OpenAI-compatible format
+      if (typed.choices && typed.choices.length > 0) {
+        const content = typed.choices[0].message?.content;
+        if (content) {
+          return content.trim();
+        }
       }
       
       return this.getFallbackResponse();
@@ -76,19 +124,6 @@ export class HuggingFaceService {
       console.error('Failed to get Hugging Face response:', error);
       throw error;
     }
-  }
-
-  private formatMessages(systemPrompt: string, messages: HuggingFaceMessage[]): string {
-    // Format for Llama 3.1 instruction format
-    let prompt = `<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n${systemPrompt}<|eot_id|>`;
-    
-    messages.forEach(msg => {
-      prompt += `<|start_header_id|>${msg.role}<|end_header_id|>\n\n${msg.content}<|eot_id|>`;
-    });
-    
-    prompt += `<|start_header_id|>assistant<|end_header_id|>\n\n`;
-    
-    return prompt;
   }
 
   private buildSystemPrompt(context: {

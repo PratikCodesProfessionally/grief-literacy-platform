@@ -12,6 +12,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { Wifi, WifiOff, Cloud, HardDrive, RefreshCw } from 'lucide-react';
 import { storageProvider } from '@/services/StorageProvider';
+import auth from 'server/middleware/auth';
 
 interface VoiceRecording {
   id: number;
@@ -19,6 +20,16 @@ interface VoiceRecording {
   blob: Blob;
   url: string;
   duration: number;
+}
+
+interface HealingPoem {
+  id: number;
+  title: string;
+  author: string;
+  content: string;
+  category: string;
+  readTime: string;
+  audioSrc?: string;
 }
 
 export function PoetryTherapyPage() {
@@ -282,7 +293,7 @@ export function PoetryTherapyPage() {
     </div>
   );
   
-  const healingPoems = [
+  const healingPoems: HealingPoem[] = [
     {
       id: 1,
       title: "Grief Speaks",
@@ -314,6 +325,50 @@ export function PoetryTherapyPage() {
       content: "What I remember\nis how we loved\nthe world, and I think\nthat must be\nwhat the world\nwas for.",
       category: "Love",
       readTime: "30 sec"
+    },
+    {
+      id: 13,
+      title: "Our Paths May Cross Again",
+      author: "Unknown",
+      content: `Our paths may cross again 
+But this time I will be without those red roses 
+Hearts coarsened by battles of life 
+Feet hardened by walking through trenches and mosses
+May not remember the teeny tiny sparkle of fire 
+that gave rise to the emotions on pyre 
+of innocence of our youth 
+
+Our paths may cross again 
+But this time I will be without those pink tulips 
+The well of hope might have dried ages ago
+And the thirsted lips 
+have been cracked in the deserted deserts eons ago
+Lost in the mirage of a false oasis
+of reunion of our souls
+
+Our paths may cross again 
+But this time I will be without those white lilies
+Feelings squeezed between buildings of cities
+where once our paths trodded a common story
+Between the skyscrapers of our ambitions
+Hammered by the forces of responsibilities
+carried on the shoulders 
+of battle-worn soldiers 
+of forgotten dreams
+
+Our paths may cross again 
+But this time I will be without those lotus petals
+and warm hugs that once calmed you to settle
+Turned cold by the humanity's blindness
+Turned sour by the life's unkindness 
+in the sober evening
+where once we pledged to love the unloveable 
+by the oceanside believing 
+the eternity of our love's ephemerality
+
+Our paths may cross again...`,
+      category: "Love",
+      readTime: "3 min"
     },
     {
       id: 5,
@@ -689,7 +744,7 @@ An unparched love letter
 A blank note 
 A dark nothing 
 A white nothing 
-A colorness nothing 
+A colorless nothing 
 A poem not written
 
 Bears no name
@@ -717,48 +772,496 @@ A poem not written`,
   readTime: "2 min"
 },
 {
-  id: 13,
-  title: "Our Paths May Cross Again",
+  id: 14,
+  title: "After the love's blaze",
   author: "Unknown",
-  content: `Our paths may cross again 
-But this time I will be without those red roses 
-Hearts coarsened by battles of life 
-Feet hardened by walking through trenches and mosses
-May not remember the teeny tiny sparkle of fire 
-that gave rise to the emotions on pyre 
-of innocence of our youth 
+  content: `After the love's blaze
+Allow yourself to be hurt
+For when has a horseman
+Not fallen a hundred times?
+When has a swordsman
+Not been cut a thousand times?
 
-Our paths may cross again 
-But this time I will be without those pink tulips 
-The well of hope might have dried ages ago
-And the thirsted lips 
-have been cracked in the deserted deserts eons ago
-Lost in the mirage of a false oasis
-of reunion of our souls
+We have learned
+It's not the bullet that kills
+It's the hope
 
-Our paths may cross again 
-But this time I will be without those white lilies
-Feelings squeezed between buildings of cities
-where once our paths trodded a common story
-Between the skyscrapers of our ambitions
-Hammered by the forces of responsibilities
-carried on the shoulders 
-of battle-worn soldiers 
-of forgotten dreams
+And this wisdom?
+They'll print it on T-shirts
+Red letters on white cotton
+Worn by people who've never bled
+Who mistake slogans for scars
 
-Our paths may cross again 
-But this time I will be without those lotus petals
-and warm hugs that once calmed you to settle
-Turned cold by the humanity's blindness
-Turned soured by the life unkindness 
-where once we pledged to love the unloveable
-in the sober evening 
-by the oceanside believing 
-the eternity of our love's ephemerality
+"The girl/boy you love unconditionally
+Will teach you never to love unconditionally again" `,
+  category: "Resilience",
+  readTime: "1 min"
+},
+{
+      id: 15,
+      title: "Only love God unconditionally",
+      author: "Claude AI",
+      content: `I gave that endless, boundless love
+To a human being
+Who could not carry it
+Who was never meant to
 
-Our paths may cross again...`,
+They broke under the weight
+Of my devotion
+Or I broke under the weight
+Of their humanity
+I still don't know which
+
+I turned them into my religion
+Built altars in my chest
+Prayed to the shape of their smile
+Made rituals of their routines
+And when they failed to answer
+I called it abandonment
+When they were simply
+Being human
+
+Human beings are not gods
+Though I crowned them deity
+Kissed their feet like sacred ground
+Forgave sins I should have questioned
+Ignored red flags I called holy mysteries
+
+Human beings are not perfect
+They will be late
+And you'll wait in the rain
+Wondering if your love means nothing
+
+They will be selfish
+Choose their comfort over your pain
+Their growth over your stability
+Their freedom over your security
+They will choose themselves
+On a Tuesday afternoon
+Without warning
+Without ceremony
+As casually as choosing coffee over tea
+
+And you will call it betrayal
+Scream it into pillows
+Carve it into journal pages
+Wear it like a second skin
+
+When it's simply limitation
+The human inability
+To be everything
+For anyone
+Forever
+
+I wanted them to be infinite
+When they were only borrowed time
+I wanted them to be constant
+When they were only passing through
+I wanted them to save me
+When they were drowning too
+
+Reserve unconditional love
+For the divine
+For the one who cannot disappoint
+Because they promised nothing
+But eternity
+
+Love humans conditionally
+Not because they deserve less
+But because you deserve
+To survive their inevitable
+Humanity
+
+Love them with boundaries
+Like a garden with a fence—
+Still beautiful
+Still growing
+But protected
+
+With compassion for their flaws
+The same flaws you hide in your own mirror
+The same selfishness you practice
+When you think no one is watching
+The same limitations you carry
+In your own breakable heart
+
+Including your own
+Especially your own
+
+Because if you cannot forgive yourself
+For being human
+How can you truly forgive them?
+
+And maybe that's the real wisdom:
+We're all just humans
+Trying to love other humans
+With hearts that were built
+To worship the divine
+
+No wonder we keep breaking
+No wonder it keeps hurting
+No wonder we mistake
+Every deep connection
+For salvation
+
+When really
+It's just two imperfect people
+Doing their imperfect best
+In an imperfect world
+
+And sometimes
+That's beautiful
+
+And sometimes
+That's not enough
+
+And both things
+Can be true
+At once`,
+      category: "Self-Love",
+      readTime: "3 min"
+},
+{
+  id: 16,
+  title: "You don't need healing or do you?",
+  author: "unknown",
+  content:`You arenot punctured 
+You are in human society 
+
+You are not thatched
+You are in human society, mate
+
+You are not blistered 
+You are in human society 
+
+But are you not human?
+
+Where should one go?
+When blisters are about to burst
+Where should one let the steam blow?
+When wounds are bust 
+When hearts have grown coarse and robust?
+
+When temples sell their preachings?
+The salvation, the one above 
+Taboos- ovulation, the one below
+'donation, donation? In this peaceful world mellow'
+Brothels are the new temples
+'Oh hellow!'
+
+When psychologist sell their teachings
+Sothat the market can do more leachings
+your financial piggy bank is leaking
+When the peace is taken away while you are sitting 
+While you try to prevent your mental peace from sipping 
+Keep your sanity from slipping
+
+And you get hit by ads while ducking 
+'You are a sitting duck '
+Ain't you mate or are you dodging?
+Weaving between the bullets
+Of self-help gurus
+And wellness brands
+And productivity hacks
+And mindfulness apps
+(Only $9.99/month)
+
+It's not standup comedy 
+It's poetry, mate
+It is standup comedy 
+It's human society, mate
+
+When poets are comedians
+Comedians are poets 
+You give them the punchline
+They wait for it to hurt less
+
+Welcome to human society, mate!!!
+
+Poetry is the joke you tell 
+When you've forgotten to laugh
+Society is the audience 
+that forgot how to listen enough 
+
+So we stand up mate
+perform
+pretend
+make 'em laugh 
+till the very end `,
+  category: "wholescale comedy",
+  readTime: "2 min"
+},
+{
+  id: 17,
+  title: "Words Are Windows (or They're Walls)",
+  author: "Ruth Bebermeyer",
+  content: `I feel so sentenced by your words,
+I feel so judged and sent away,
+Before I go I've got to know,
+Is that what you mean to say?
+
+Before I rise to my defense,
+Before I speak in hurt or fear,
+Before I build that wall of words,
+Tell me, did I really hear?
+
+Words are windows, or they're walls,
+They sentence us, or set us free.
+When I speak and when I hear,
+Let the love light shine through me.
+
+There are things I need to say,
+Things that mean so much to me,
+If my words don't make me clear,
+Will you help me to be free?
+
+If I seemed to put you down,
+If you felt I didn't care,
+Try to listen through my words,
+To the feelings that we share.`,
+  category: "Communication",
+  readTime: "2 min"
+},
+{
+   id: 18,
+  title: "A Radiosignal from 21st Century",
+  author: "Unknown",
+  content: `Tumulting hitherto in the eerie cold space
+in an unfathomable pace
+between the rogue meteorites
+and the burning fire and cold ice
+One loop around the galaxy
+Back to this blue speck, see
+
+It's not that big of a deal 
+Speed of light, for me is a daily meal
+My belly is full of messages and reel
+You can call me a real deal 
+Messages that you can hear and feel
+Don't miss a line or a beat 
+Don't be a lazy seal
+Read the following with fervour and zeal
+Messages etched in stardust
+Let me reveal
+
+Human Suffering hasnot changed
+Human hasnot changed his lane
+He still plays the dirty games
+Backstabbing his colleagues
+And does the victim blame
+
+Beware of humans 
+Otherwise you may get burnt 
+Like the Amazon rain forest 
+Mammals' carcasses and rest 
+choking on smoke
+devoid of hopeful sun
+Gasping amidst the brunt
+of human pleasures and grunt
+
+Beware of humans 
+Otherwise you may get gunned 
+Like the protestors of tyranny 
+in you-know-which-square
+Or the courageos journalists 
+Or the innocent civilians 
+In the billionaires' hitlists
+the ethnic cleansing is a thought nihilist
+Children killed in the name of protection
+Simply because they were born
+On the wrong side of a line
+Drawn by someone else's grandfather
+
+You may be made to believe 
+There are no empires
+No Kings or no queens or no kingdoms
+No slavery or no chains
+But you can get your ego fixed surgically 
+Or annihilated if you are a nuclear scientist 
+on the wrong side of the border
+if you choose a wrong flag
+Democracy exists in spectrum 
+So does hypocrisy 
+
+Beauty is something seen 
+Something felt 
+Something smelled 
+Something touched 
+Something tasted 
+But not something eloquently possessed 
+like a kind heart 
+or a gentle breeze 
+of thoughts 
+that helps the endless human ache to cease
+so skyscrapers have been bludgeoned 
+in the woods of cement 
+
+Humans have become slaves of their senses
+Clouding their motives through noble lenses
+Through cloaks of ethical premises and pretenses
+
+secretly, he visits brothels 
+heinously, catcalls women 
+While championing women's empowerment 
+publicly
+
+And what goes around comes around too
+emotionally, oppressed
+legally, suppressed
+And so rises
+Menimism as a counter to feminism 
+
+never learned to see their counterparts as humans first 
+
+One loop around the galaxy
+Back to this blue speck, see
+The transmission continues 
+The warning repeats 
+The pattern persists
+End of message
+Coordinates logged
+Moving on to the next dying world`,
+  category: "Transmission",
+  readTime: "2 min"
+},
+{
+  id: 19,
+  title: "Love (Inspired by Haldar Nag)",
+  author: "Unknown",
+  content: `Love is not silk
+nor the language of palaces.
+Love is the cracked heel of a woman
+walking to the well before sunrise.
+
+Love is rice shared
+when the pot is almost empty.
+It is a torn shawl
+still wrapped around another's cold.
+
+I did not learn love from books.
+I learned it from the soil
+that feeds even the feet
+that trample it.
+
+If you ask me where love lives
+it sleeps in the village dust,
+wakes with the rooster,
+and speaks in the voice of the poor.`,
   category: "Love",
-  readTime: "3 min"
+  readTime: "1 min"
+},
+{
+  id: 20,
+  title: "Loveism",
+  author: "unknown",
+  content: `Only love can stop bloodsheds and wars 
+Only love can heal ancient mars
+Only love can heal ancient scars 
+
+Love sparks poetry 
+Only love can paint emptiness rosary 
+brew you healing potions of rosemary 
+
+Love makes cold winters warm
+Love propels old foes to join their arms
+Love reaches out with alms 
+
+Love has no room for atom bombs
+Love has no room for ballistics and guns
+Love has no room for lidar, laser and drones
+
+Only love can make you full and peach
+Love has no room for sanctions and siege
+Only love can build the bridge
+
+Love has no room for bombardments and flood
+Love has no room for smeared flags in mud
+Love has no room for borders drawn in cold blood
+
+Love has no room for vengeance sworn
+Love has no room for children torn 
+Love has no room for apathy and thorns
+
+Only love can see beyond the fear 
+Only love can hold the stranger near
+Only love can hold astranged dear
+
+Love has no room for hatred's fire 
+Love has no room for funeral pyre 
+Love has no room for barbed wire 
+
+Only love can lift us higher 
+Only love can end the mire 
+Only love is what we require.`,
+ category: "Love",
+ readTime: "2 min"
+},
+{
+  id: 21,
+  title: "To a Woman in Her Natural State",
+  author: "Unknown",
+  content: `I like your wrinkles of time
+that have gathered wisdom of ages
+I like the twinkle in your eyes
+that have photographed the periwinkle of sages
+
+The dark circles of your deep dive
+like a cyclic ester dimer in the curie's lab of lactide
+The freckles you hide
+like rosalind franklin's X-Ray Diffraction to ignite
+the double helix Model of DNA Nucleotide
+
+The lines around your chin
+dark patches in your unmasked skin
+like dark matter of Vera Rubin
+whose universe kept spinning 
+past every doubt they pinned
+The courage you carry to unmask 
+the messages etched in stardust's past
+like Midnight's shadows in the telescope of Gaposchkin 
+
+Your 6 am face
+like the first algorithm written by Ada Lovelace
+
+I know
+you have been conditioned to be a natural shopper
+But flow gently Oh woman
+like the first compiler developed by Grace Hopper 
+
+The pain of your innocent tears
+that violate the symmetry of devil-may-care
+society 
+that boos
+the disapproving Chien-Shiung Wus
+
+Your self doubt like a stumbling block
+for Jumping genes of Barbara McClintock
+
+The billion dollar beauty industry
+like the creamy product of mountain gorillas
+for Dian Fossey 
+Human and gorillas
+they are not different say jane goodalls
+
+You simple face 
+is the living proof of rebellion
+for uncanny Dorothy Vaughan
+
+The silve hair of your stress
+like the non-reflective glass of Blodgett
+
+The uneven skin tone 
+The dark circles 
+The flecks
+The patches and specks
+the ridges and the wrecks
+the sabotage in your neck
+like the geometric preface
+of Karen Uhlenbeck`,
+  category: "Open Letter",
+  readTime: "3 min",
+  audioSrc: "/audio/ToAWomanInHerNaturalState.mp3"
+
 }
   ];
 
@@ -805,7 +1308,6 @@ Our paths may cross again...`,
     }
   ];
 
-  // Recording timer effect
   React.useEffect(() => {
     let interval: NodeJS.Timeout;
     if (isRecording) {
@@ -829,22 +1331,71 @@ Our paths may cross again...`,
   const readAloud = (poemId: number) => {
     if (isReading === poemId) {
       setIsReading(null);
+      if (audioPlayerRef.current) {
+        audioPlayerRef.current.pause();
+        audioPlayerRef.current.currentTime = 0;
+        audioPlayerRef.current = null;
+      }
       // Stop speech synthesis
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
       }
     } else {
       setIsReading(poemId);
-      // Start speech synthesis
+      const poem = healingPoems.find(p => p.id === poemId);
+      if (!poem) return;
+
+      // If a dedicated audio file exists, play it first.
+      if (poem.audioSrc) {
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+        }
+
+        if (audioPlayerRef.current) {
+          audioPlayerRef.current.pause();
+        }
+
+        const audio = new Audio(poem.audioSrc);
+        audioPlayerRef.current = audio;
+        audio.onended = () => {
+          setIsReading(null);
+          audioPlayerRef.current = null;
+        };
+        audio.onerror = () => {
+          setIsReading(null);
+          audioPlayerRef.current = null;
+          toast({
+            title: "Fehler",
+            description: "Audio konnte nicht abgespielt werden",
+            variant: "destructive",
+          });
+        };
+
+        audio.play().catch(() => {
+          setIsReading(null);
+          audioPlayerRef.current = null;
+          toast({
+            title: "Fehler",
+            description: "Audio konnte nicht abgespielt werden",
+            variant: "destructive",
+          });
+        });
+        return;
+      }
+
+      // Fallback to speech synthesis.
       if ('speechSynthesis' in window) {
-        const poem = healingPoems.find(p => p.id === poemId);
-        if (poem) {
+        if (audioPlayerRef.current) {
+          audioPlayerRef.current.pause();
+          audioPlayerRef.current.currentTime = 0;
+          audioPlayerRef.current = null;
+        }
+
           const utterance = new SpeechSynthesisUtterance(poem.content);
           utterance.rate = 0.8;
           utterance.pitch = 1;
           utterance.onend = () => setIsReading(null);
           window.speechSynthesis.speak(utterance);
-        }
       }
     }
   };
@@ -1033,7 +1584,7 @@ Our paths may cross again...`,
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
         <div className="space-y-6">
           {/* Storage Controls vor den Healing Poems */}
           <Card className="hover-lift">
@@ -1041,32 +1592,32 @@ Our paths may cross again...`,
           </Card>
           <Card className="hover-lift">
             <CardHeader>
-              <CardTitle className="text-2xl">Healing Poems</CardTitle>
-              <CardDescription className="text-base">
+              <CardTitle className="text-xl sm:text-2xl">Healing Poems</CardTitle>
+              <CardDescription className="text-sm sm:text-base">
                Read poems that bring light to the healing journey
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4 max-h-96 overflow-y-auto">
+            <CardContent className="space-y-4 max-h-[32rem] sm:max-h-96 overflow-y-auto">
               {healingPoems.map((poem) => (
                 <Card key={poem.id} className="hover:shadow-soft-lg transition-all duration-300 border-2 hover:border-accent/30">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-2">
-                        <h3 className="font-semibold text-lg">{poem.title}</h3>
-                        <p className="text-sm text-muted-foreground">by {poem.author}</p>
-                        <div className="flex items-center space-x-2">
-                          <Badge className={`${getCategoryColor(poem.category)} rounded-full px-3 py-1`}>
+                  <CardHeader className="pb-3 px-3 sm:px-6">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                      <div className="space-y-2 min-w-0">
+                        <h3 className="font-semibold text-base sm:text-lg break-words">{poem.title}</h3>
+                        <p className="text-xs sm:text-sm text-muted-foreground">by {poem.author}</p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge className={`${getCategoryColor(poem.category)} rounded-full px-2 sm:px-3 py-1 text-xs`}>
                             {poem.category}
                           </Badge>
                           <span className="text-xs text-muted-foreground">{poem.readTime}</span>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-1">
+                      <div className="flex items-center space-x-1 flex-shrink-0">
                         <Button
                           size="sm"
                           variant="ghost"
                           onClick={() => toggleFavorite(poem.id)}
-                          className="rounded-full hover:bg-accent/20 transition-all duration-300"
+                          className="rounded-full hover:bg-accent/20 transition-all duration-300 h-8 w-8 p-0"
                         >
                           <Heart 
                             className={`h-4 w-4 transition-all duration-300 ${favoritePoems.has(poem.id) ? 'fill-red-400 text-red-400 scale-110' : ''}`}
@@ -1076,22 +1627,22 @@ Our paths may cross again...`,
                           size="sm"
                           variant="ghost"
                           onClick={() => readAloud(poem.id)}
-                          className="rounded-full hover:bg-accent/20 transition-all duration-300"
+                          className="rounded-full hover:bg-accent/20 transition-all duration-300 h-8 w-8 p-0"
                         >
                           <Volume2 className={`h-4 w-4 transition-all duration-300 ${isReading === poem.id ? 'text-primary scale-110' : ''}`} />
                         </Button>
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="pt-0">
-                    <p className="text-sm whitespace-pre-line italic leading-relaxed text-foreground/80">
+                  <CardContent className="pt-0 px-3 sm:px-6">
+                    <p className="text-xs sm:text-sm whitespace-pre-line italic leading-relaxed text-foreground/80 break-words">
                       {poem.content}
                     </p>
-                    <div className="flex items-center space-x-2 mt-4">
+                    <div className="flex flex-wrap items-center gap-2 mt-4">
                       <Button 
                         size="sm" 
                         variant="outline" 
-                        className="rounded-full hover:bg-accent/20 transition-all duration-300"
+                        className="rounded-full hover:bg-accent/20 transition-all duration-300 text-xs sm:text-sm h-8"
                         onClick={() => sharePoem(poem)}
                       >
                         <Share className="h-3 w-3 mr-1" />
@@ -1100,7 +1651,7 @@ Our paths may cross again...`,
                       <Button 
                         size="sm" 
                         variant="outline" 
-                        className="rounded-full hover:bg-accent/20 transition-all duration-300"
+                        className="rounded-full hover:bg-accent/20 transition-all duration-300 text-xs sm:text-sm h-8"
                         onClick={() => saveHealingPoem(poem.id, poem.title)}
                       >
                         {savedHealingPoems.has(poem.id) ? (

@@ -5,28 +5,17 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Calendar, Download, Trash2, Save, Smile, Meh, Frown, Star, StarOff, Search, BarChart3, Settings, Tag, Plus, X } from 'lucide-react';
+import { ArrowLeft, Calendar, Download, Trash2, Save, Smile, Meh, Frown, Star, StarOff, Search, BarChart3, Settings, Tag, Plus, X, Cloud, CloudOff, RefreshCw, Loader2 } from 'lucide-react';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { journalStorage, type StorageType } from '@/services/JournalStorageService';
+import { journalStorage, type StorageType, type JournalEntry } from '@/services/JournalStorageService';
 import { StorageSelector } from '@/components/StorageSelector';
-
-interface JournalEntry {
-  id: string;
-  date: string;
-  timestamp: number;
-  content: string;
-  prompt?: string;
-  mood?: 'positive' | 'neutral' | 'difficult';
-  wordCount: number;
-  isFavorite?: boolean;
-  tags?: string[];
-  charCount?: number;
-}
+import { useAuth } from '@/contexts/AuthContext';
 
 export function JournalingPage() {
+  const { user, isAuthenticated } = useAuth();
   const [selectedPrompt, setSelectedPrompt] = React.useState('');
   const [journalEntry, setJournalEntry] = React.useState('');
-  const [entries, setEntries] = useLocalStorage<JournalEntry[]>('grief-journal-entries', []);
+  const [entries, setEntries] = React.useState<JournalEntry[]>([]);
   const [selectedMood, setSelectedMood] = React.useState<'positive' | 'neutral' | 'difficult' | null>(null);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [showAnalytics, setShowAnalytics] = React.useState(false);
@@ -35,6 +24,48 @@ export function JournalingPage() {
   const [currentTags, setCurrentTags] = React.useState<string[]>([]);
   const [newTag, setNewTag] = React.useState('');
   const [expandedEntries, setExpandedEntries] = React.useState<Set<string>>(new Set());
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [isSyncing, setIsSyncing] = React.useState(false);
+  const [syncStatus, setSyncStatus] = React.useState<{ pending: number; synced: number; lastSync: Date | null }>({
+    pending: 0,
+    synced: 0,
+    lastSync: null,
+  });
+
+  // Load entries from IndexedDB on mount
+  React.useEffect(() => {
+    async function loadEntries() {
+      try {
+        setIsLoading(true);
+        const storedEntries = await journalStorage.getAllEntries();
+        setEntries(storedEntries.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)));
+        
+        // Load sync status
+        const status = await journalStorage.getSyncStatus();
+        setSyncStatus({
+          pending: status.pending,
+          synced: status.synced,
+          lastSync: status.lastSync,
+        });
+      } catch (error) {
+        console.error('Failed to load entries:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadEntries();
+  }, []);
+
+  // Set user context for cloud sync when authenticated
+  React.useEffect(() => {
+    if (isAuthenticated && user?.id) {
+      // In production, get encryption password from user input or secure storage
+      const encryptionPassword = sessionStorage.getItem('grief-platform-encryption-password');
+      if (encryptionPassword) {
+        journalStorage.setUserContext(user.id, encryptionPassword);
+      }
+    }
+  }, [isAuthenticated, user?.id]);
 
   const journalPrompts = [
     "How are you feeling today? Don't judge it, just notice it.",
@@ -50,13 +81,12 @@ export function JournalingPage() {
     "What would they want you to know about how you're doing?",
   ];
 
-  const saveEntry = () => {
+  const saveEntry = async () => {
     if (!journalEntry.trim()) return;
 
     const newEntry: JournalEntry = {
-      id: Date.now().toString(),
-      date: new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
-      timestamp: Date.now(),
+      id: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
       content: journalEntry,
       prompt: selectedPrompt || undefined,
       mood: selectedMood || undefined,
@@ -64,13 +94,43 @@ export function JournalingPage() {
       charCount: journalEntry.length,
       tags: currentTags.length > 0 ? currentTags : undefined,
       isFavorite: false,
+      // Legacy fields
+      date: new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+      timestamp: Date.now(),
     };
 
-    setEntries([newEntry, ...entries]);
-    setJournalEntry('');
-    setSelectedPrompt('');
-    setSelectedMood(null);
-    setCurrentTags([]);
+    try {
+      await journalStorage.saveEntry(newEntry);
+      setEntries([newEntry, ...entries]);
+      setJournalEntry('');
+      setSelectedPrompt('');
+      setSelectedMood(null);
+      setCurrentTags([]);
+      
+      // Update sync status
+      const status = await journalStorage.getSyncStatus();
+      setSyncStatus({ pending: status.pending, synced: status.synced, lastSync: status.lastSync });
+    } catch (error) {
+      console.error('Failed to save entry:', error);
+    }
+  };
+
+  const syncNow = async () => {
+    if (storageType === 'local') return;
+    
+    setIsSyncing(true);
+    try {
+      await journalStorage.forceSync();
+      const storedEntries = await journalStorage.getAllEntries();
+      setEntries(storedEntries.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)));
+      
+      const status = await journalStorage.getSyncStatus();
+      setSyncStatus({ pending: status.pending, synced: status.synced, lastSync: new Date() });
+    } catch (error) {
+      console.error('Sync failed:', error);
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   const addTag = () => {
@@ -113,26 +173,39 @@ export function JournalingPage() {
 
   React.useEffect(() => {
     const hasSeenStorageSelector = localStorage.getItem('journal-storage-selected');
-    if (!hasSeenStorageSelector && entries.length === 0) {
+    if (!hasSeenStorageSelector && entries.length === 0 && !isLoading) {
       setShowStorageSelector(true);
     }
-  }, [entries.length]);
+  }, [entries.length, isLoading]);
 
-  const handleStorageSelection = (type: StorageType) => {
+  const handleStorageSelection = async (type: StorageType) => {
     setStorageType(type);
     localStorage.setItem('journal-storage-selected', 'true');
     journalStorage.updateSettings({ storageType: type });
     setShowStorageSelector(false);
+    
+    // Migrate existing entries if switching to cloud
+    if (type === 'cloud' || type === 'hybrid') {
+      await journalStorage.migrateStorage(type);
+    }
   };
 
-  const deleteEntry = (id: string) => {
-    setEntries(entries.filter(e => e.id !== id));
+  const deleteEntry = async (id: string) => {
+    try {
+      await journalStorage.deleteEntry(id);
+      setEntries(entries.filter(e => e.id !== id));
+    } catch (error) {
+      console.error('Failed to delete entry:', error);
+    }
   };
 
-  const toggleFavorite = (id: string) => {
-    setEntries(entries.map(e => 
-      e.id === id ? { ...e, isFavorite: !e.isFavorite } : e
-    ));
+  const toggleFavorite = async (id: string) => {
+    const entry = entries.find(e => e.id === id);
+    if (entry) {
+      const updated = { ...entry, isFavorite: !entry.isFavorite };
+      await journalStorage.saveEntry(updated);
+      setEntries(entries.map(e => e.id === id ? updated : e));
+    }
   };
 
   const toggleExpand = (id: string) => {
@@ -177,19 +250,45 @@ export function JournalingPage() {
         </div>
       )}
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Link to="/tools">
-            <Button variant="outline" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Tools
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+          <Link to="/tools" className="flex-shrink-0">
+            <Button variant="outline" size="sm" className="h-8 w-8 p-0 sm:h-9 sm:w-auto sm:px-3">
+              <ArrowLeft className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Back to Tools</span>
             </Button>
           </Link>
-          <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800 dark:text-white truncate">
             📔 Grief Journaling
           </h1>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Sync Status & Button */}
+          {storageType !== 'local' && (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={syncNow}
+                disabled={isSyncing || !navigator.onLine}
+                className="flex items-center gap-1"
+              >
+                {isSyncing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : navigator.onLine ? (
+                  <Cloud className="h-4 w-4 text-green-500" />
+                ) : (
+                  <CloudOff className="h-4 w-4 text-gray-400" />
+                )}
+                {isSyncing ? 'Syncing...' : 'Sync'}
+              </Button>
+              {syncStatus.pending > 0 && (
+                <Badge variant="secondary" className="text-xs">
+                  {syncStatus.pending} pending
+                </Badge>
+              )}
+            </div>
+          )}
           <Button 
             variant="outline" 
             size="sm" 
@@ -224,63 +323,63 @@ export function JournalingPage() {
               Journal Analytics
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <CardContent className="px-4 sm:px-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
               <div className="text-center">
-                <div className="text-3xl font-bold text-purple-700 dark:text-purple-300">{analytics.totalEntries}</div>
-                <div className="text-sm text-gray-900 dark:text-gray-100 font-medium">Total Entries</div>
+                <div className="text-2xl sm:text-3xl font-bold text-purple-700 dark:text-purple-300">{analytics.totalEntries}</div>
+                <div className="text-xs sm:text-sm text-gray-900 dark:text-gray-100 font-medium">Total Entries</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-indigo-700 dark:text-indigo-300">{analytics.totalWords}</div>
-                <div className="text-sm text-gray-900 dark:text-gray-100 font-medium">Total Words</div>
+                <div className="text-2xl sm:text-3xl font-bold text-indigo-700 dark:text-indigo-300">{analytics.totalWords}</div>
+                <div className="text-xs sm:text-sm text-gray-900 dark:text-gray-100 font-medium">Total Words</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-blue-700 dark:text-blue-300">{analytics.avgWordsPerEntry}</div>
-                <div className="text-sm text-gray-900 dark:text-gray-100 font-medium">Avg Words/Entry</div>
+                <div className="text-2xl sm:text-3xl font-bold text-blue-700 dark:text-blue-300">{analytics.avgWordsPerEntry}</div>
+                <div className="text-xs sm:text-sm text-gray-900 dark:text-gray-100 font-medium">Avg Words/Entry</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-amber-700 dark:text-amber-300">{analytics.favoriteCount}</div>
-                <div className="text-sm text-gray-900 dark:text-gray-100 font-medium">Favorites</div>
+                <div className="text-2xl sm:text-3xl font-bold text-amber-700 dark:text-amber-300">{analytics.favoriteCount}</div>
+                <div className="text-xs sm:text-sm text-gray-900 dark:text-gray-100 font-medium">Favorites</div>
               </div>
-              <div className="text-center">
-                <div className="flex justify-center gap-2 mb-1">
-                  <span className="text-lg" title="Positive">😊 {analytics.moodCounts.positive || 0}</span>
-                  <span className="text-lg" title="Neutral">😐 {analytics.moodCounts.neutral || 0}</span>
-                  <span className="text-lg" title="Difficult">☹️ {analytics.moodCounts.difficult || 0}</span>
+              <div className="text-center col-span-2 sm:col-span-1">
+                <div className="flex justify-center gap-1 sm:gap-2 mb-1">
+                  <span className="text-base sm:text-lg" title="Positive">😊 {analytics.moodCounts.positive || 0}</span>
+                  <span className="text-base sm:text-lg" title="Neutral">😐 {analytics.moodCounts.neutral || 0}</span>
+                  <span className="text-base sm:text-lg" title="Difficult">☹️ {analytics.moodCounts.difficult || 0}</span>
                 </div>
-                <div className="text-sm text-gray-900 dark:text-gray-100 font-medium">Mood Distribution</div>
+                <div className="text-xs sm:text-sm text-gray-900 dark:text-gray-100 font-medium">Mood Distribution</div>
               </div>
             </div>
           </CardContent>
         </Card>
       )}
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Journal Prompts</CardTitle>
-            <CardDescription>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+        <Card className="hover-lift">
+          <CardHeader className="px-4 sm:px-6">
+            <CardTitle className="text-lg sm:text-xl">Journal Prompts</CardTitle>
+            <CardDescription className="text-sm sm:text-base">
               Choose a prompt to guide your writing today
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="space-y-2 px-4 sm:px-6 max-h-[24rem] sm:max-h-[28rem] overflow-y-auto">
             {journalPrompts.map((prompt, index) => (
               <Button
                 key={index}
                 variant={selectedPrompt === prompt ? "default" : "outline"}
-                className="w-full text-left justify-start h-auto p-3 text-sm"
+                className="w-full text-left justify-start h-auto p-2 sm:p-3 text-xs sm:text-sm rounded-xl transition-all duration-300 hover:scale-[1.01]"
                 onClick={() => setSelectedPrompt(prompt)}
               >
-                {prompt}
+                <span className="break-words whitespace-normal">{prompt}</span>
               </Button>
             ))}
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Today's Entry</CardTitle>
-            <CardDescription>
+        <Card className="lg:col-span-2 hover-lift">
+          <CardHeader className="px-4 sm:px-6">
+            <CardTitle className="text-lg sm:text-xl">Today's Entry</CardTitle>
+            <CardDescription className="text-sm sm:text-base break-words">
               {selectedPrompt || "Select a prompt or write freely about what's on your heart"}
             </CardDescription>
           </CardHeader>
@@ -330,36 +429,36 @@ export function JournalingPage() {
 
             {/* Mood Selector */}
             <div className="mt-4 space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
                 How are you feeling?
               </label>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button
                   variant={selectedMood === 'positive' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setSelectedMood('positive')}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm h-8"
                 >
-                  <Smile className="h-4 w-4" />
-                  Positive
+                  <Smile className="h-4 w-4 flex-shrink-0" />
+                  <span className="hidden xs:inline sm:inline">Positive</span>
                 </Button>
                 <Button
                   variant={selectedMood === 'neutral' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setSelectedMood('neutral')}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm h-8"
                 >
-                  <Meh className="h-4 w-4" />
-                  Neutral
+                  <Meh className="h-4 w-4 flex-shrink-0" />
+                  <span className="hidden xs:inline sm:inline">Neutral</span>
                 </Button>
                 <Button
                   variant={selectedMood === 'difficult' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setSelectedMood('difficult')}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm h-8"
                 >
-                  <Frown className="h-4 w-4" />
-                  Difficult
+                  <Frown className="h-4 w-4 flex-shrink-0" />
+                  <span className="hidden xs:inline sm:inline">Difficult</span>
                 </Button>
               </div>
             </div>
@@ -418,20 +517,20 @@ export function JournalingPage() {
                 
                 return (
                   <div key={entry.id} className="border rounded-lg hover:shadow-md transition-shadow">
-                    <div className="flex items-center justify-between p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between p-3 sm:p-4 gap-3">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="font-medium text-sm">{entry.date}</div>
+                        <div className="flex flex-wrap flex-wrap items-center gap-2 mb-2">
+                          <div className="font-medium text-xs sm:text-sm">{entry.date}</div>
                           {entry.mood && (
-                            <Badge variant={entry.mood === 'positive' ? 'default' : entry.mood === 'difficult' ? 'destructive' : 'secondary'}>
+                            <Badge variant={entry.mood === 'positive' ? 'default' : entry.mood === 'difficult' ? 'destructive' : 'secondary'} className="text-xs">
                               {entry.mood === 'positive' && <Smile className="h-3 w-3 mr-1" />}
                               {entry.mood === 'neutral' && <Meh className="h-3 w-3 mr-1" />}
                               {entry.mood === 'difficult' && <Frown className="h-3 w-3 mr-1" />}
-                              {entry.mood}
+                              <span className="hidden sm:inline">{entry.mood}</span>
                             </Badge>
                           )}
                           <span className="text-xs text-gray-500">
-                            {entry.wordCount} words {entry.charCount && `· ${entry.charCount} chars`}
+                            {entry.wordCount}w{entry.charCount && <span className="hidden sm:inline"> · {entry.charCount} chars</span>}
                           </span>
                         </div>
                         {entry.prompt && (
@@ -491,12 +590,13 @@ export function JournalingPage() {
                           </div>
                         )}
                       </div>
-                      <div className="flex items-center gap-2 ml-4 self-start">
+                      <div className="flex items-center gap-1 sm:gap-2 sm:ml-4 self-end sm:self-start flex-shrink-0">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => toggleFavorite(entry.id)}
                           title={entry.isFavorite ? "Remove from favorites" : "Add to favorites"}
+                          className="h-8 w-8 p-0"
                         >
                           {entry.isFavorite ? (
                             <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
@@ -509,6 +609,7 @@ export function JournalingPage() {
                           size="sm"
                           onClick={() => deleteEntry(entry.id)}
                           title="Delete entry"
+                          className="h-8 w-8 p-0"
                         >
                           <Trash2 className="h-4 w-4 text-red-500" />
                         </Button>

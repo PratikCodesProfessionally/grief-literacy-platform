@@ -1,6 +1,10 @@
 import winston from 'winston';
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Logs-Verzeichnis erstellen falls nicht vorhanden
 const logDir = path.join(__dirname, '../../logs');

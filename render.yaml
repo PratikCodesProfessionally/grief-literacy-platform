@@ -1,0 +1,31 @@
+# Render Blueprint - Infrastructure as Code
+# https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: grief-literacy-platform
+    env: node
+    region: frankfurt # EU Region
+    plan: free # oder 'starter' für bessere Performance
+    buildCommand: npm install && npm run build
+    startCommand: node dist/server/index.mjs
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 8080
+      # Diese Werte müssen im Render Dashboard gesetzt werden (sync: false)
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false
+      - key: VITE_APP_URL
+        sync: false
+      # Server-side AI keys (used by /api/ai/* proxy)
+      - key: HUGGINGFACE_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false

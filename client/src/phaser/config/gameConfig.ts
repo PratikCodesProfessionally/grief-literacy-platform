@@ -23,7 +23,7 @@ export const createGameConfig = (parent: string): Phaser.Types.Core.GameConfig =
   },
   scene: [BootScene, HealingWorldScene],
   render: {
-    antialias: true,
+    antialias: !/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
     pixelArt: false,
     roundPixels: true
   },
@@ -35,16 +35,17 @@ export const createGameConfig = (parent: string): Phaser.Types.Core.GameConfig =
     createContainer: true
   },
   input: {
+    keyboard: true,
     touch: {
-      capture: true,
+      capture: false,  // CHANGED: Don't capture events
       target: parent
     },
-    activePointers: 3, // Allow multiple touches
+    activePointers: 10,  // INCREASED: Allow more touches
     mouse: {
       preventDefaultWheel: false,
-      preventDefaultDown: true,
-      preventDefaultUp: true,
-      preventDefaultMove: true
+      preventDefaultDown: false,  // CHANGED: Don't prevent default
+      preventDefaultUp: false,    // CHANGED: Don't prevent default
+      preventDefaultMove: false   // CHANGED: Don't prevent default
     }
   }
 });

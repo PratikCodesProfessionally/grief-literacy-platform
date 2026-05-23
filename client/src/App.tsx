@@ -8,6 +8,7 @@ import { ToolsPage } from '@/pages/tools/ToolsPage';
 import { ResourcesPage } from '@/pages/resources/ResourcesPage';
 import { PhaserGame } from '@/components/PhaserGame';
 import { ToastProvider } from '@/components/ui/use-toast';
+import { AuthCallback } from '@/pages/auth/AuthCallback';
 
 function App() {
   return (
@@ -16,6 +17,9 @@ function App() {
         <Routes>
           {/* Full-screen Phaser Game Route (no header/container) */}
           <Route path="/journey" element={<PhaserGame />} />
+          
+          {/* Auth callback route (no header) */}
+          <Route path="/auth/callback" element={<AuthCallback />} />
           
           {/* Standard App Routes with Header */}
           <Route path="*" element={

@@ -67,9 +67,10 @@ export function MeditationPage() {
     },
     {
       title: 'Gratitude in Grief',
-      duration: '10 min',
+      duration: '15 min',
       description: 'Finding moments of gratitude even in the midst of loss',
       category: 'Gratitude',
+      src: '/videos/GratitudeInGrief.mp4' // (add when you have it)
     },
     {
       title: 'Connecting with Memories',

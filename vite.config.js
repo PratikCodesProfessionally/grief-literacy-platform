@@ -40,7 +40,7 @@ export default defineConfig(({ mode }) => {
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
-          maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB
+          maximumFileSizeToCacheInBytes: 12 * 1024 * 1024, // 12 MB (erhöht für große Icons/Infografiken)
           runtimeCaching: [
             {
               urlPattern: /^https:\/\/api\./i,
@@ -81,7 +81,7 @@ export default defineConfig(({ mode }) => {
           ]
         },
         devOptions: {
-          enabled: true,
+          enabled: false, // Deaktiviert in Dev wegen GitHub Codespaces Tunnel-Problemen
           type: 'module'
         }
       }),
@@ -134,20 +134,36 @@ export default defineConfig(({ mode }) => {
         '@': path.resolve(__dirname, './client/src'),
       },
     },
+    // Optimize dependencies
+    optimizeDeps: {
+      include: ['pdfjs-dist'],
+    },
     root: path.join(process.cwd(), 'client'),
     build: {
       outDir: path.join(process.cwd(), 'dist'),
       emptyOutDir: true,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            pdfjs: ['pdfjs-dist'],
+          },
+        },
+      },
     },
     clearScreen: false,
     server: {
       hmr: {
         overlay: false,
+        // Für GitHub Codespaces: WebSocket über HTTPS
+        protocol: 'wss',
+        clientPort: 443,
       },
       host: true,
       port: vitePort,
       allowedHosts: true,
       cors: true, // Enable CORS in the dev server
+      // Wichtig für Codespaces
+      strictPort: true,
       proxy: {
         '/api': {
           target: 'http://localhost:3001',

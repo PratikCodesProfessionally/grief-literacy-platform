@@ -8,7 +8,7 @@ async function startDev() {
   await startServer(3001);
 
   // Then start Vite in dev mode
-  const viteServer = await createServer({
+  viteServer = await createServer({
     configFile: './vite.config.js',
   });
 

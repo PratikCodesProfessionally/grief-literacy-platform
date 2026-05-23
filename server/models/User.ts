@@ -17,6 +17,10 @@ import bcrypt from 'bcryptjs';
 type UserRole = 'user' | 'admin' | 'moderator';
 
 export interface IUser extends Document {
+  // Mongoose identifiers
+  _id: mongoose.Types.ObjectId;
+  // Mongoose provides a virtual string getter `id` in runtime; include for TS consumers.
+  id: string;
   email: string;
   password: string;
   name: string;
@@ -133,29 +137,24 @@ const UserSchema: Schema = new Schema({
 /**
  * Indices für Performance-Optimierung
  */
-UserSchema.index({ email: 1 });
 UserSchema.index({ isActive: 1 });
 
 /**
  * Middleware: Password Hashing
  */
-UserSchema.pre('save', async function(next) {
+UserSchema.pre('save', async function() {
   const user = this as unknown as IUser;
 
   // Nur neu hashen, wenn das Passwort geändert wurde
   if (!user.isModified('password')) {
-    return next();
+    return;
   }
 
-  try {
-    // Generiere Salt und Hash
-    const salt = await bcrypt.genSalt(12);
-    user.password = await bcrypt.hash(user.password, salt);
-    next();
-  } catch (error) {
-    next(error as Error);
-  }
+  // Generiere Salt und Hash
+  const salt = await bcrypt.genSalt(12);
+  user.password = await bcrypt.hash(user.password, salt);
 });
+
 
 /**
  * Methode zum Passwort-Vergleich

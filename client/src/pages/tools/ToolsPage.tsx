@@ -1,10 +1,11 @@
 import * as React from 'react';
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
-import { BookMarked, Heart, Flower2, Brain, AlertCircle, Wind } from 'lucide-react';
+import { BookMarked, Heart, Flower2, Brain, AlertCircle, Wind, Sprout } from 'lucide-react';
 import { JournalingPage } from './JournalingPage';
 import { MeditationPage } from './MeditationPage';
 import MemoryGardenPage from './MemoryGardenPage';
 import { LettersPage } from './LettersPage';
+import { PlantsHealingPage } from './PlantsHealingPage';
 
 export function ToolsPage() {
   const location = useLocation();
@@ -22,7 +23,7 @@ export function ToolsPage() {
       description: 'Guided prompts for daily reflection and processing',
       icon: BookMarked,
       path: '/tools/journaling',
-      gradient: 'from-purple-100/70 to-pink-100/70',
+      gradient: 'from-purple-100/70 to-pink-100/70 dark:from-purple-800/60 dark:to-pink-800/60',
     },
     {
       id: 'letters',
@@ -30,7 +31,7 @@ export function ToolsPage() {
       description: 'Write messages to those you\'ve lost',
       icon: Heart,
       path: '/tools/letters',
-      gradient: 'from-rose-100/70 to-orange-100/70',
+      gradient: 'from-rose-100/70 to-orange-100/70 dark:from-rose-800/60 dark:to-orange-800/60',
     },
     {
       id: 'memory',
@@ -38,7 +39,7 @@ export function ToolsPage() {
       description: 'Create a digital space to honor memories',
       icon: Flower2,
       path: '/tools/memory-garden',
-      gradient: 'from-green-100/70 to-teal-100/70',
+      gradient: 'from-green-100/70 to-teal-100/70 dark:from-green-800/60 dark:to-teal-800/60',
     },
     {
       id: 'meditation',
@@ -46,7 +47,7 @@ export function ToolsPage() {
       description: 'Mindfulness and healing meditation sessions',
       icon: Brain,
       path: '/tools/meditation',
-      gradient: 'from-blue-100/70 to-cyan-100/70',
+      gradient: 'from-blue-100/70 to-cyan-100/70 dark:from-blue-800/60 dark:to-cyan-800/60',
     },
     {
       id: 'emergency',
@@ -54,7 +55,7 @@ export function ToolsPage() {
       description: 'Quick access to calming resources when overwhelmed',
       icon: AlertCircle,
       path: '/tools/emergency',
-      gradient: 'from-amber-100/70 to-yellow-100/70',
+      gradient: 'from-amber-100/70 to-yellow-100/70 dark:from-amber-800/60 dark:to-yellow-800/60',
     },
     {
       id: 'breathing',
@@ -62,7 +63,15 @@ export function ToolsPage() {
       description: 'Simple techniques for managing difficult moments',
       icon: Wind,
       path: '/tools/breathing',
-      gradient: 'from-cyan-100/70 to-blue-100/70',
+      gradient: 'from-cyan-100/70 to-blue-100/70 dark:from-cyan-800/60 dark:to-blue-800/60',
+    },
+    {
+      id: 'plants-healing',
+      name: 'Plants for Healing',
+      description: 'Learn nurturing plant care rituals that support emotional healing',
+      icon: Sprout,
+      path: '/tools/plants-healing',
+      gradient: 'from-lime-100/70 to-emerald-100/70 dark:from-lime-800/60 dark:to-emerald-800/60',
     },
   ];
 
@@ -147,12 +156,12 @@ export function ToolsPage() {
 
   if (isMainPage) {
     return (
-      <div className="relative min-h-screen bg-gradient-to-b from-green-50 via-teal-50 to-cyan-100 -mx-4 -my-8 overflow-hidden">
+      <div className="relative min-h-screen bg-gradient-to-b from-green-50 via-teal-50 to-cyan-100 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950 -mx-4 -my-8 overflow-hidden">
         <header className="relative z-30 text-center pt-12 md:pt-16 pb-6 md:pb-8 px-4">
-          <h1 className="text-4xl md:text-5xl font-serif font-light text-gray-800 mb-3 md:mb-4 tracking-wide animate-fade-in">
+          <h1 className="text-4xl md:text-5xl font-serif font-light text-gray-800 dark:text-emerald-50 mb-3 md:mb-4 tracking-wide animate-fade-in">
             Healing Tools
           </h1>
-          <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-lg md:text-xl text-gray-600 dark:text-emerald-100 max-w-2xl mx-auto leading-relaxed">
             Practical tools and resources to support you through your grief journey
           </p>
         </header>
@@ -182,16 +191,16 @@ export function ToolsPage() {
                     relative w-56 h-56 md:w-64 md:h-64 lg:w-72 lg:h-72
                     rounded-full
                     bg-gradient-to-br ${tool.gradient}
-                    backdrop-blur-sm border-2 border-green-200/40
+                    backdrop-blur-sm border-2 border-green-200/40 dark:border-emerald-300/25
                     flex flex-col items-center justify-center gap-3 md:gap-4 p-8
-                    shadow-lg shadow-green-200/50
+                    shadow-lg shadow-green-200/50 dark:shadow-emerald-950/70
                     transition-all duration-700 ease-out
                     cursor-pointer
                     ${isActive 
                       ? 'scale-100 opacity-100 z-20' 
                       : 'scale-90 opacity-70'
                     }
-                    hover:scale-102 hover:opacity-100 hover:shadow-xl hover:shadow-green-300/50
+                    hover:scale-102 hover:opacity-100 hover:shadow-xl hover:shadow-green-300/50 dark:hover:shadow-emerald-900/80
                   `}
                   onMouseEnter={() => {
                     setIsPaused(true);
@@ -203,21 +212,21 @@ export function ToolsPage() {
                   aria-label={`${tool.name}: ${tool.description}`}
                   aria-current={isActive ? 'true' : 'false'}
                 >
-                  <div className={`absolute inset-0 rounded-full bg-white/30 transition-opacity duration-700 ${isActive ? 'opacity-40' : 'opacity-20'}`} />
+                  <div className={`absolute inset-0 rounded-full bg-white/30 dark:bg-black/25 transition-opacity duration-700 ${isActive ? 'opacity-40' : 'opacity-20'}`} />
                   
                   <div className="relative z-10 flex flex-col items-center gap-3 md:gap-4 px-6">
-                    <tool.icon className="w-14 h-14 md:w-16 md:h-16 text-gray-700 drop-shadow-sm" />
-                    <h3 className="text-xl md:text-2xl font-normal text-gray-800 text-center leading-tight">
+                    <tool.icon className="w-14 h-14 md:w-16 md:h-16 text-gray-700 dark:text-emerald-50 drop-shadow-sm" />
+                    <h3 className="text-xl md:text-2xl font-normal text-gray-800 dark:text-emerald-50 text-center leading-tight">
                       {tool.name}
                     </h3>
                     {isActive && (
-                      <p className="text-xs md:text-sm text-gray-600 text-center animate-fade-in">
+                      <p className="text-xs md:text-sm text-gray-600 dark:text-emerald-100 text-center animate-fade-in">
                         {tool.description}
                       </p>
                     )}
                   </div>
 
-                  <div className="absolute inset-0 rounded-full bg-white/20 opacity-0 hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+                  <div className="absolute inset-0 rounded-full bg-white/20 dark:bg-black/20 opacity-0 hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
                   
                   {isActive && (
                     <div className="absolute inset-0 rounded-full animate-gentle-float pointer-events-none" />
@@ -239,8 +248,8 @@ export function ToolsPage() {
               className={`
                 rounded-full transition-all duration-500
                 ${activeBubble === index 
-                  ? 'w-2.5 h-2.5 bg-green-400 shadow-sm' 
-                  : 'w-2 h-2 bg-green-200 hover:bg-green-300'
+                  ? 'w-2.5 h-2.5 bg-green-400 dark:bg-emerald-300 shadow-sm' 
+                  : 'w-2 h-2 bg-green-200 dark:bg-emerald-700 hover:bg-green-300 dark:hover:bg-emerald-500'
                 }
               `}
               aria-label={`Go to ${tool.name}`}
@@ -250,7 +259,7 @@ export function ToolsPage() {
         </div>
 
         <div className="fixed bottom-8 md:bottom-6 left-1/2 transform -translate-x-1/2 z-30">
-          <p className="text-gray-500 text-xs md:text-sm text-center animate-fade-in">
+          <p className="text-gray-500 dark:text-emerald-100 text-xs md:text-sm text-center animate-fade-in">
             Click a tool to begin • Use arrow keys to navigate
           </p>
         </div>
@@ -288,6 +297,7 @@ export function ToolsPage() {
       <Route path="/meditation" element={<MeditationPage />} />
       <Route path="/memory-garden" element={<MemoryGardenPage />} />
       <Route path="/letters" element={<LettersPage />} />
+      <Route path="/plants-healing" element={<PlantsHealingPage />} />
     </Routes>
   );
 }

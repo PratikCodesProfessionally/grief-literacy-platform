@@ -492,7 +492,7 @@ export function GrandmaSue() {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full shadow-2xl hover:shadow-purple-500/50 transition-all hover:scale-110 flex items-center justify-center text-3xl z-50 animate-bounce"
+          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full shadow-2xl hover:shadow-purple-500/50 transition-all hover:scale-110 flex items-center justify-center text-2xl sm:text-3xl z-50 animate-bounce"
           aria-label="Open Grandma Sue chat"
         >
           👵
@@ -501,9 +501,15 @@ export function GrandmaSue() {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 w-96 z-50 shadow-2xl">
-          <Card className="border-2 border-purple-200">
-            <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 pb-3">
+        <div
+          className="fixed inset-x-3 top-3 bottom-3 sm:inset-auto sm:bottom-6 sm:right-6 sm:w-96 sm:max-w-[calc(100vw-3rem)] z-50 shadow-2xl sm:shadow-2xl"
+          style={{
+            paddingLeft: 'max(env(safe-area-inset-left, 0px), 12px)',
+            paddingRight: 'max(env(safe-area-inset-right, 0px), 12px)',
+          }}
+        >
+          <Card className="border-0 sm:border-2 border-purple-200 h-full sm:h-auto flex flex-col rounded-2xl sm:rounded-xl">
+            <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 pb-3 shrink-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-2xl shadow-md">
@@ -537,16 +543,16 @@ export function GrandmaSue() {
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="p-4">
-              <ScrollArea className="h-[400px] pr-2 mb-3" ref={scrollRef}>
-                <div className="space-y-3">
+            <CardContent className="px-4 py-3 sm:p-4 flex-1 flex flex-col overflow-hidden min-h-0">
+              <ScrollArea className="flex-1 mb-3 px-2" ref={scrollRef}>
+                <div className="space-y-3 pr-1">
                   {messages.map((message) => (
                     <div key={message.id}>
                       <div
                         className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                       >
                         <div
-                          className={`max-w-[85%] rounded-lg p-3 ${
+                          className={`max-w-[88%] sm:max-w-[85%] rounded-lg px-4 py-3 ${
                             message.role === 'user'
                               ? 'bg-purple-500 text-white'
                               : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
@@ -558,7 +564,7 @@ export function GrandmaSue() {
                               <span>Voice message</span>
                             </div>
                           )}
-                          <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</p>
+                          <p className="whitespace-pre-wrap text-sm leading-relaxed break-words overflow-wrap-anywhere">{message.content}</p>
                           <p className="text-xs mt-1 opacity-70">
                             {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </p>
@@ -640,7 +646,7 @@ export function GrandmaSue() {
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyPress}
                     placeholder={voiceEnabled ? "Speak or type what's on your mind..." : "Share what is on your mind..."}
-                    className="min-h-[80px] resize-none text-sm flex-1"
+                    className="min-h-[60px] sm:min-h-[80px] resize-none text-sm flex-1"
                     disabled={isTyping || isListening}
                   />
                   

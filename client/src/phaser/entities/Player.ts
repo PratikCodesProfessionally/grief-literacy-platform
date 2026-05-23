@@ -81,6 +81,7 @@ export class Player extends Phaser.GameObjects.Container {
   
   private setupInput(scene: Phaser.Scene): void {
     if (scene.input.keyboard) {
+      console.log('[PLAYER] Setting up keyboard input');
       // Arrow keys
       this.cursors = scene.input.keyboard.createCursorKeys();
       
@@ -93,6 +94,10 @@ export class Player extends Phaser.GameObjects.Container {
         space: Phaser.Input.Keyboard.KeyCodes.SPACE,
         enter: Phaser.Input.Keyboard.KeyCodes.ENTER
       });
+      
+      console.log('[PLAYER] Keyboard input ready:', !!this.cursors, !!this.wasdKeys);
+    } else {
+      console.warn('[PLAYER] No keyboard input available!');
     }
   }
   
@@ -157,12 +162,16 @@ export class Player extends Phaser.GameObjects.Container {
         this.facingDirection = 'right';
       }
       
-      // Check interact
-      this.interactPressed = 
+      // Check interact (merge with existing mobile presses instead of overwriting)
+      const keyboardInteract =
         Phaser.Input.Keyboard.JustDown(this.cursors.up!) ||
         Phaser.Input.Keyboard.JustDown(this.cursors.space!) ||
         Phaser.Input.Keyboard.JustDown(this.wasdKeys.space) ||
         Phaser.Input.Keyboard.JustDown(this.wasdKeys.enter);
+
+      if (keyboardInteract) {
+        this.interactPressed = true;
+      }
     }
     
     // Joystick input (mobile)
@@ -193,9 +202,9 @@ export class Player extends Phaser.GameObjects.Container {
   
   public setMobileInteract(pressed: boolean): void {
     if (pressed && this.interactCooldown <= 0) {
-      console.log('[PLAYER] ✅ setMobileInteract(true) - interactPressed flag SET with 500ms cooldown');
+      console.log('[PLAYER] ✅ setMobileInteract(true) - interactPressed flag SET with 200ms cooldown');
       this.interactPressed = true;
-      this.interactCooldown = 500; // 500ms cooldown to prevent double-triggers
+      this.interactCooldown = 200; // Reduced to 200ms for more responsive tablet interaction
     } else if (pressed && this.interactCooldown > 0) {
       console.log('[PLAYER] ⏳ setMobileInteract ignored - cooldown active:', this.interactCooldown);
     }

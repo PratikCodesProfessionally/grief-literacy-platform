@@ -9,13 +9,22 @@ import { FallenLeaves } from '../entities/FallenLeaves';
 import { SnowLayer } from '../entities/SnowLayer';
 import { Fountain } from '../entities/InteractiveObjects';
 import { ParallaxBackground } from '../systems/ParallaxBackground';
+import { CameraController } from '../systems/CameraController';
+import { AmbientSoundManager } from '../systems/AmbientSoundManager';
+import { DayNightCycle } from '../systems/DayNightCycle';
 import { MobileControls } from '../ui/MobileControls';
+import { Minimap } from '../ui/Minimap';
+import { ZonePreviewCard } from '../ui/ZonePreviewCard';
+import { ProgressTracker } from '../ui/ProgressTracker';
+import { GuidedTutorial } from '../ui/GuidedTutorial';
 import { SeasonManager, Season } from '../systems/SeasonManager';
 import { GAME_CONSTANTS, STATION_POSITIONS, NPC_CONFIGS, BENCH_QUOTES } from '../config/constants';
 
 export class HealingWorldScene extends Phaser.Scene {
   private player!: Player;
   private parallaxBg!: ParallaxBackground;
+  private cameraController?: CameraController;
+  private ambientSoundManager?: AmbientSoundManager;
   private interactionZones: InteractionZone[] = [];
   private npcs: NPC[] = [];
   private butterflies: Butterfly[] = [];
@@ -25,6 +34,11 @@ export class HealingWorldScene extends Phaser.Scene {
   private fallenLeaves?: FallenLeaves;
   private snowLayer?: SnowLayer;
   private mobileControls?: MobileControls;
+  private minimap?: Minimap;
+  private zonePreviewCard?: ZonePreviewCard;
+  private progressTracker?: ProgressTracker;
+  private guidedTutorial?: GuidedTutorial;
+  private dayNightCycle?: DayNightCycle;
   private currentPrompt?: Phaser.GameObjects.Container;
   private currentNPCDialogue?: Phaser.GameObjects.Container;
   private currentTreeQuote?: Phaser.GameObjects.Container;
@@ -58,7 +72,23 @@ export class HealingWorldScene extends Phaser.Scene {
                     this.sys.game.device.os.iOS ||
                     this.sys.game.device.os.iPad ||
                     this.sys.game.device.os.iPhone ||
-                    ('ontouchstart' in window);
+                    ('ontouchstart' in window) ||
+                    this.isTablet; // Include tablets as mobile for controls
+    
+    console.log('[INIT] Device detection:', {
+      userAgent: userAgent.substring(0, 50) + '...',
+      isTablet: this.isTablet,
+      isMobile: this.isMobile,
+      width: window.innerWidth,
+      height: window.innerHeight,
+      hasTouch: 'ontouchstart' in window,
+      deviceOS: {
+        android: this.sys.game.device.os.android,
+        iOS: this.sys.game.device.os.iOS,
+        iPad: this.sys.game.device.os.iPad,
+        iPhone: this.sys.game.device.os.iPhone
+      }
+    });
     
     // Set world bounds with scaled dimensions
     const worldWidth = GAME_CONSTANTS.WORLD_WIDTH;
@@ -80,7 +110,10 @@ export class HealingWorldScene extends Phaser.Scene {
     
     // Mobile controls
     if (this.isMobile) {
+      console.log('[INIT] Device detected as mobile, creating mobile controls');
       this.createMobileControls();
+    } else {
+      console.log('[INIT] Device detected as desktop, skipping mobile controls');
     }
     
     // Create season UI
@@ -212,7 +245,7 @@ export class HealingWorldScene extends Phaser.Scene {
       icon.setOrigin(0.5);
       icon.setDepth(8);
       
-      // Add station name on sign
+      // Add station name text
       const nameText = this.add.text(
         signX,
         signY + 15,
@@ -220,13 +253,107 @@ export class HealingWorldScene extends Phaser.Scene {
         {
           fontFamily: 'Arial',
           fontSize: '14px',
-          color: '#78350f', // amber-900
-          align: 'center',
-          fontStyle: 'bold'
+          color: '#92400e',
+          align: 'center'
         }
       );
       nameText.setOrigin(0.5);
       nameText.setDepth(8);
+      
+      // Make sign board interactive for direct touch
+      signBoard.setInteractive({
+        useHandCursor: true,
+        hitArea: new Phaser.Geom.Rectangle(
+          signX - 80,
+          signY - 50,
+          160,
+          100
+        ),
+        hitAreaCallback: Phaser.Geom.Rectangle.Contains
+      });
+      
+      // Enhanced touch handling for sign
+      let signTouchStartX = 0;
+      let signTouchStartY = 0;
+      let signIsValidTap = false;
+      const SIGN_TOUCH_TOLERANCE = 10;
+      
+      signBoard.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+        signTouchStartX = pointer.x;
+        signTouchStartY = pointer.y;
+        signIsValidTap = true;
+        
+        // Visual feedback
+        signBoard.setScale(1.05);
+        signBoard.setFillStyle(Phaser.Display.Color.GetColor(254, 243, 199)); // lighter amber
+        
+        pointer.event.preventDefault();
+        pointer.event.stopPropagation();
+        
+        if (navigator.vibrate) {
+          navigator.vibrate(10);
+        }
+        
+        console.log(`[SIGN] 🎯 Touch start on ${station.name} sign`);
+      });
+      
+      signBoard.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+        const deltaX = Math.abs(pointer.x - signTouchStartX);
+        const deltaY = Math.abs(pointer.y - signTouchStartY);
+        
+        if (deltaX > SIGN_TOUCH_TOLERANCE || deltaY > SIGN_TOUCH_TOLERANCE) {
+          signIsValidTap = false;
+          signBoard.setScale(1);
+          signBoard.setFillStyle(Phaser.Display.Color.GetColor(254, 243, 199)); // reset
+        }
+      });
+      
+      signBoard.on('pointerup', (pointer: Phaser.Input.Pointer) => {
+        signBoard.setScale(1);
+        signBoard.setFillStyle(Phaser.Display.Color.GetColor(254, 243, 199)); // reset
+        
+        if (!signIsValidTap) return;
+        
+        const deltaX = Math.abs(pointer.x - signTouchStartX);
+        const deltaY = Math.abs(pointer.y - signTouchStartY);
+        
+        if (deltaX <= SIGN_TOUCH_TOLERANCE && deltaY <= SIGN_TOUCH_TOLERANCE) {
+          console.log(`[SIGN] ✅ Valid tap on ${station.name} sign, navigating`);
+          
+          if (navigator.vibrate) {
+            navigator.vibrate(50);
+          }
+          
+          this.handleStationInteraction(station.route);
+        }
+        
+        signIsValidTap = false;
+      });
+      
+      signBoard.on('pointerout', () => {
+        signIsValidTap = false;
+        signBoard.setScale(1);
+        signBoard.setFillStyle(Phaser.Display.Color.GetColor(254, 243, 199));
+        
+        // Hide preview card on desktop
+        if (!this.isMobile && this.zonePreviewCard) {
+          this.zonePreviewCard.hide();
+        }
+      });
+      
+      signBoard.on('pointercancel', () => {
+        signIsValidTap = false;
+        signBoard.setScale(1);
+        signBoard.setFillStyle(Phaser.Display.Color.GetColor(254, 243, 199));
+      });
+      
+      // Desktop hover preview (only for non-touch devices)
+      signBoard.on('pointerover', () => {
+        if (!this.isMobile && this.zonePreviewCard) {
+          // Show preview card above the sign
+          this.zonePreviewCard.show(station, signX, signY - 50);
+        }
+      });
       
       // Create interaction zone around sign
       const zone = new InteractionZone(
@@ -310,6 +437,14 @@ export class HealingWorldScene extends Phaser.Scene {
       GAME_CONSTANTS.CAMERA_DEADZONE_WIDTH,
       GAME_CONSTANTS.CAMERA_DEADZONE_HEIGHT
     );
+    
+    // Initialize camera controller with enhanced controls
+    this.cameraController = new CameraController(this, {
+      minZoom: 0.6,
+      maxZoom: 1.4,
+      smoothFollow: 0.1
+    });
+    this.cameraController.setFollowTarget(this.player);
   }
   
   private createUI(): void {
@@ -335,7 +470,9 @@ export class HealingWorldScene extends Phaser.Scene {
     this.helpText = this.add.text(
       this.scale.width / 2,
       this.scale.height - 30,
-      this.isMobile ? 'Use joystick to move, press ↑ button to enter stations' : 'Use Arrow Keys or WASD to move • Press SPACE or ↑ to enter stations',
+      this.isMobile 
+        ? 'Move with joystick • Tap ↑ button when near stations to enter' 
+        : 'Use Arrow Keys or WASD to move • Press SPACE or ↑ to enter stations',
       {
         fontFamily: 'Arial',
         fontSize: '16px',
@@ -348,11 +485,114 @@ export class HealingWorldScene extends Phaser.Scene {
     this.helpText.setAlpha(0.9);
     this.helpText.setScrollFactor(0);
     this.helpText.setDepth(99);
+    
+    // Create minimap
+    this.createMinimap();
+  }
+  
+  private createMinimap(): void {
+    // Adjust size based on device
+    const minimapConfig = this.isMobile 
+      ? { width: 120, height: 70, margin: 10 }
+      : { width: 180, height: 100, margin: 16 };
+    
+    this.minimap = new Minimap(this, minimapConfig);
+    
+    // Set initial zone statuses (could be loaded from localStorage)
+    STATION_POSITIONS.forEach((station, index) => {
+      // For demo: first station recommended, rest new
+      if (index === 0) {
+        this.minimap?.setZoneStatus(station.id, 'recommended');
+      } else {
+        this.minimap?.setZoneStatus(station.id, 'new');
+      }
+    });
+    
+    // Create zone preview card (for hover previews)
+    this.zonePreviewCard = new ZonePreviewCard(this);
+    
+    // Create ambient sound manager for immersive audio
+    this.ambientSoundManager = new AmbientSoundManager(this);
+    
+    // Create progress tracker for journey visualization
+    this.progressTracker = new ProgressTracker(this);
+    
+    // Create guided tutorial for new users
+    this.guidedTutorial = new GuidedTutorial(this, () => {
+      console.log('[TUTORIAL] Tutorial completed!');
+    });
+    
+    // Create day/night cycle (syncs with real time)
+    this.dayNightCycle = new DayNightCycle(this, true);
+    
+    // Tutorial is now started via React prompt, not auto-started here
+    // The React component will show a prompt asking if user wants tutorial
   }
   
   private createMobileControls(): void {
-    this.mobileControls = new MobileControls(this);
+    console.log('[MOBILE] Creating mobile controls...');
+    
+    // Create callback that handles mobile interactions the same way as touch
+    const onMobileInteract = () => {
+      console.log('[MOBILE] Mobile interact callback triggered');
+      console.log(`[MOBILE] Player position: x=${this.player.x.toFixed(0)}, y=${this.player.y.toFixed(0)}`);
+      console.log(`[MOBILE] Checking ${this.interactionZones.length} interaction zones...`);
+      
+      // Find nearest station in range and interact with it
+      for (const zone of this.interactionZones) {
+        console.log(`[MOBILE] Checking zone: ${zone.displayName} at x=${zone.x}, y=${zone.y}`);
+        if (zone.isPlayerInRange(this.player)) {
+          console.log(`[MOBILE] ✅ Found station in range: ${zone.displayName}, triggering interaction`);
+          
+          // Visual feedback
+          zone.highlight(true);
+          
+          // Haptic feedback
+          if (navigator.vibrate) {
+            navigator.vibrate(50);
+          }
+          
+          // Track station visit for progress
+          const stationId = zone.displayName.toLowerCase().replace(/\s+/g, '-');
+          this.progressTracker?.visitStation(stationId);
+          
+          // Trigger interaction
+          zone.interact();
+          
+          // Reset highlight after a moment
+          this.time.delayedCall(200, () => {
+            zone.highlight(false);
+          });
+          
+          return; // Only interact with the first station found
+        }
+      }
+      
+      // No station in range - show feedback
+      console.log('[MOBILE] ❌ No station in range for mobile interaction');
+      
+      // Visual feedback for failed interaction
+      if (navigator.vibrate) {
+        navigator.vibrate([10, 50, 10]); // Double vibration for "not available"
+      }
+      
+      // Show temporary message
+      this.showInteractionPrompt({
+        x: this.player.x,
+        y: this.player.y - 100,
+        displayName: 'No station nearby',
+        interact: () => {} // Dummy function
+      } as any);
+      
+      // Hide message after 1 second
+      this.time.delayedCall(1000, () => {
+        this.hideInteractionPrompt();
+      });
+    };
+    
+    this.mobileControls = new MobileControls(this, onMobileInteract);
     this.mobileControls.show();
+    console.log('[MOBILE] Mobile controls created and shown');
   }
   
   private addAmbientEffects(): void {
@@ -461,11 +701,42 @@ export class HealingWorldScene extends Phaser.Scene {
   }
   
   update(time: number, delta: number): void {
+    // Update player cooldown
+    if (this.player) {
+      // Update interact cooldown
+      (this.player as any).interactCooldown = Math.max(0, (this.player as any).interactCooldown - delta);
+    }
+    
     // Update player
     this.player.update(delta);
     
     // Update parallax
     this.parallaxBg.update(this.cameras.main);
+    
+    // Update camera controller
+    if (this.cameraController) {
+      this.cameraController.update(delta);
+    }
+    
+    // Update minimap
+    if (this.minimap) {
+      this.minimap.update(this.player.x, this.player.y);
+    }
+    
+    // Update ambient sound based on player position
+    if (this.ambientSoundManager) {
+      this.ambientSoundManager.update(this.player.x, this.player.y);
+    }
+    
+    // Update day/night cycle
+    if (this.dayNightCycle) {
+      this.dayNightCycle.update(delta);
+    }
+    
+    // Update mobile controls FIRST (handles direct interactions)
+    if (this.mobileControls) {
+      this.mobileControls.update(this.player);
+    }
     
     // Update NPCs
     this.npcs.forEach(npc => npc.update(delta));
@@ -476,7 +747,7 @@ export class HealingWorldScene extends Phaser.Scene {
     // Check interactions in priority order (only one will consume the press)
     const interactPressed = this.player.peekInteractPressed();
     
-    // Priority 1: Stations (most important)
+    // Priority 1: Stations (most important) - fallback for keyboard/other inputs
     if (interactPressed) {
       const consumed = this.checkInteractions();
       if (consumed) {
@@ -503,11 +774,6 @@ export class HealingWorldScene extends Phaser.Scene {
     
     // Always check for passive tree display
     this.checkPassiveTreeDisplay();
-    
-    // Update mobile controls
-    if (this.mobileControls) {
-      this.mobileControls.update(this.player);
-    }
   }
   
   private checkInteractions(): boolean {
@@ -537,6 +803,11 @@ export class HealingWorldScene extends Phaser.Scene {
       console.log('[SCENE] 🚀🚀🚀 TRIGGERING INTERACTION FOR:', nearStation.displayName);
       console.log('[SCENE] Zone position:', nearStation.x, nearStation.y);
       console.log('[SCENE] Player position:', this.player.x, this.player.y);
+      
+      // Track station visit for progress
+      const stationId = nearStation.displayName.toLowerCase().replace(/\s+/g, '-');
+      this.progressTracker?.visitStation(stationId);
+      
       nearStation.interact();
       return true; // Consumed
     }
