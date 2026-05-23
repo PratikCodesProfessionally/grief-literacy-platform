@@ -12,7 +12,6 @@ import { useToast } from '@/components/ui/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { Wifi, WifiOff, Cloud, HardDrive, RefreshCw } from 'lucide-react';
 import { storageProvider } from '@/services/StorageProvider';
-import auth from 'server/middleware/auth';
 
 interface VoiceRecording {
   id: number;
