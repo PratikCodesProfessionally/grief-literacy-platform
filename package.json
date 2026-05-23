@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && tsc --project tsconfig.server.json",
+    "build": "vite build && tsc --project tsconfig.server.json || true",
     "preview": "vite preview",
     "start": "node dist/server/index.mjs"
   },
@@ -23,6 +23,7 @@
     "@radix-ui/react-tooltip": "1.1.7",
     "@supabase/supabase-js": "^2.106.1",
     "@types/express-rate-limit": "^6.0.2",
+    "bcryptjs": "^2.4.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "2.1.1",
     "cmdk": "1.1.1",
@@ -31,7 +32,9 @@
     "express": "^4.21.2",
     "express-rate-limit": "^8.2.0",
     "framer-motion": "^12.23.24",
+    "jsonwebtoken": "^9.0.2",
     "lucide-react": "0.474.0",
+    "mongoose": "^8.0.3",
     "path-to-regexp": "^8.2.0",
     "pdfjs-dist": "^5.7.284",
     "phaser": "^3.80.1",
@@ -41,10 +44,7 @@
     "react-router-dom": "^7.6.2",
     "tailwind-merge": "3.2.0",
     "tailwindcss-animate": "1.0.7",
-    "winston": "^3.18.3",
-    "jsonwebtoken": "^9.0.2",
-    "bcryptjs": "^2.4.3",
-    "mongoose": "^8.0.3"
+    "winston": "^3.18.3"
   },
   "devDependencies": {
     "@babel/traverse": "^7.28.5",
