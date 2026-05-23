@@ -11,10 +11,6 @@ yarn-error.log*
 .env.local
 .env.*.local
 
-# Avoid accidentally committing env backups
-.env*.bak*
-client/.env*.bak*
-
 # Build artifacts
 dist/
 node_modules/.vite/
@@ -26,6 +22,4 @@ node_modules/.vite/
 # OS
 .DS_Store
 Thumbs.db
-node_modules
-node_modules
 node_modules
