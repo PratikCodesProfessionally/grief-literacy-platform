@@ -41,7 +41,10 @@
     "react-router-dom": "^7.6.2",
     "tailwind-merge": "3.2.0",
     "tailwindcss-animate": "1.0.7",
-    "winston": "^3.18.3"
+    "winston": "^3.18.3",
+    "jsonwebtoken": "^9.0.2",
+    "bcryptjs": "^2.4.3",
+    "mongoose": "^8.0.3"
   },
   "devDependencies": {
     "@babel/traverse": "^7.28.5",
