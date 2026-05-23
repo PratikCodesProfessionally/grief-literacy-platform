@@ -144,22 +144,6 @@ export function BooksPage() {
         'Great when “just move on” advice hurts. Offers language to defend your pace and boundaries, and invites supporters to be present—not prescriptive.'
     },
     {
-      title: 'The Changing World Order: Why Nations Succeed and Fail',
-      author: 'Ray Dalio',
-      description:
-        'Dalio decodes long-term economic and political cycles, tracing the rise and fall of empires and the patterns that repeat across history and modern nations.',
-      rating: 4.2,
-      category: 'Financial Wisdom',
-      pages: 560,
-      published: '2021',
-      isbn: '978-0735211292',
-      summary:
-        'Ray Dalio analyses historical empires and modern nations to reveal recurring cycles of rise, dominance, and decline driven by debt, innovation, and geopolitical conflict. He compares ancient and modern powers, arguing similar patterns repeat and can signal future shifts in the world order.',
-      keyTopics: ['Economic Cycles', 'History of Empires', 'Geopolitical Risk', 'Debt Crises', 'Macro Strategy'],
-      notesForHealing:
-        'Requires deep reflection and strategic thinking — use the book as a framework for systems thinking. It invites group brainstorming to escape collective-action traps (prisoner\'s dilemma) and imagine cooperative strategies; may inspire strategic action and policy-minded healing.'
-    },
-    {
       title: 'The Wild Edge of Sorrow',
       author: 'Francis Weller',
       description: 'Rituals of renewal and the sacred work of grief. Indigenous wisdom meets modern psychology.',
@@ -324,11 +308,66 @@ export function BooksPage() {
   summary: 'Through engaging tales of merchants, tradesmen, and citizens of ancient Babylon, George S. Clason distills fundamental principles of personal finance into memorable stories. The book teaches that wealth is built through consistent habits: paying yourself first, living below your means, seeking wise counsel, and making money work for you through prudent investments.',
   keyTopics: ['Personal Finance', 'Wealth Building', 'Saving Habits', 'Financial Independence', 'Money Management', 'Ancient Wisdom'],
   notesForHealing: 'Financial stress compounds grief and loss. These ancient principles offer a foundation for rebuilding security: start small by saving even 10% of income, seek guidance from those who\'ve succeeded, avoid get-rich schemes during vulnerable times. Financial stability creates space for emotional healing—one mindful decision at a time restores both material and psychological wellbeing.'
+},
+{
+  title: 'Das polygame Geschlecht',
+  author: 'Esther Ville',
+  description: 'A new perspective on postmodern feminism and men\'s mental health, exploring the complexities of gender dynamics in modern society.',
+  rating: 4.5,
+  category: 'Social Issues',
+  pages: 133,
+  published: '1974',
+  isbn: '978-3957511454',
+  summary: 'Esther Ville challenges traditional views on gender and relationships, offering fresh insights into men\'s mental health and postmodern feminist thought. This book examines how societal expectations impact both men and women, providing a nuanced understanding of contemporary gender dynamics.',
+  keyTopics: ['Men\'s Mental Health', 'Postmodern Feminism', 'Gender Dynamics', 'Social Perspectives', 'Modern Relationships'],
+  notesForHealing: 'For those exploring identity and societal roles during times of change, this book offers new frameworks for understanding personal and collective healing in the context of evolving gender norms.'
+},
+{
+  title: 'Female Choice',
+  author: 'Meike Stoverock',
+  description: 'A scientific exploration of female mate choice and its evolutionary, biological, and social dimensions, challenging long-held assumptions about gender roles in reproduction and society.',
+  rating: 4.6,
+  category: 'Social Issues',
+  pages: 351,
+  published: '2021',
+  isbn: '978-3-608-50480-4',
+  summary: 'Biologist Meike Stoverock draws on evolutionary biology, anthropology, and psychology to argue that female choice is a powerful, often underestimated force in human evolution and contemporary life. The book examines how women\'s preferences and decisions shape relationships, social structures, and even cultural norms—inviting readers to reconsider assumptions about passivity and agency in gender dynamics.',
+  keyTopics: ['Female\'s Mental Health', 'Evolutionary Biology', 'Female Agency', 'Gender Dynamics', 'Reproductive Choice', 'Social Norms'],
+  notesForHealing: 'For women navigating loss of autonomy, identity shifts, or relationship grief, this book affirms that female choice and agency are deeply rooted and biologically significant. Reconnecting with your own preferences and values can be a powerful act of self-reclamation during healing.'
+},
+{
+  title: 'Dein Crashkurs fürs Leben',
+  author: 'Lorenzo Wienecke, Anna Wienecke, Juri Galkin',
+  description: 'Everything you need to know about finances, insurance, taxes, and rent — a practical guide for navigating adult life.',
+  rating: 4.7,
+  category: 'Financial Wisdom',
+  pages: 240,
+  published: '2024',
+  isbn: '978-3959727617',
+  summary: 'Lorenzo Wienecke, Anna Wienecke, and Juri Galkin deliver a compact and accessible guide to the most important real-life topics that school never taught: how taxes work, which insurance policies you actually need, how to find an apartment, and how to manage your personal finances. Written in plain language without jargon, this book equips young adults with the practical knowledge they need to navigate adult life with confidence.',
+  keyTopics: ['Persönliche Finanzen', 'Steuern', 'Versicherungen', 'Miete & Wohnen', 'Finanzielle Unabhängigkeit', 'Alltagswissen'],
+  notesForHealing: 'Financial uncertainty can significantly amplify grief and stress. This book provides practical, actionable knowledge that restores a sense of orientation and control — a small but concrete step toward stability that can offer grounding even in the most difficult chapters of life.'
+},
+{
+  title: 'The Changing World Order: Why Nations Succeed and Fail',
+  author: 'Ray Dalio',
+  description:
+    'Dalio decodes long-term economic and political cycles, tracing the rise and fall of empires and the patterns that repeat across history and modern nations.',
+  rating: 4.2,
+  category: 'Financial Wisdom',
+  pages: 576,
+  published: '2021',
+  isbn: '978-1982160272',
+  summary:
+    'Ray Dalio analyses historical empires and modern nations to reveal recurring cycles of rise, dominance, and decline driven by debt, innovation, and geopolitical conflict. He compares ancient and modern powers, arguing similar patterns repeat and can signal future shifts in the world order.',
+  keyTopics: ['Economic Cycles', 'History of Empires', 'Geopolitical Risk', 'Debt Crises', 'Macro Strategy'],
+  notesForHealing:
+    'Requires deep reflection and strategic thinking — use the book as a framework for systems thinking. It invites group brainstorming to escape collective-action traps (prisoner\'s dilemma) and imagine cooperative strategies; may inspire strategic action and policy-minded healing.'
 }
   ];
 
   // Available categories for the filter dropdown.
-  const categories = ['all', 'Memoir', 'Self-Help', 'Spiritual', 'Psychology', 'Health', 'Family', 'Pet Loss', 'Resilience', 'Financial Wisdom'];
+  const categories = ['all', 'Memoir', 'Self-Help', 'Spiritual', 'Psychology', 'Health', 'Family', 'Pet Loss', 'Resilience', 'Financial Wisdom', 'Social Issues'];
 
   // -----------------------------
   // 2.3) Persistence effects
@@ -424,6 +463,7 @@ export function BooksPage() {
       'Pet Loss': 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200',
       'Resilience': 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200',
       'Financial Wisdom': 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
+      'Social Issues': 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200',
     };
     return colors[category] || 'bg-gray-100 text-gray-800';
   };
