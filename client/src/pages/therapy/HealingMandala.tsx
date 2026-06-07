@@ -52,12 +52,23 @@ export const HealingMandala: React.FC<HealingMandalaProps> = ({
   
   const [lineColor, setLineColor] = React.useState('#2D3436');
   const [selectedColor, setSelectedColor] = React.useState('#FF8E53');
-  const [mode, setMode] = React.useState<'paint' | 'erase' | 'eyedropper' | 'fill'>('paint');
+  const [mode, setMode] = React.useState<'paint' | 'erase' | 'eyedropper' | 'fill' | 'javascript'>('paint');
   const [activePalette, setActivePalette] = React.useState<'warmEarth' | 'coolBlues' | 'natureGreen' | 'sunset' | 'zen'>('sunset');
+  
+  // JavaScript mode state
+  const [jsCode, setJsCode] = React.useState('');
+  const [jsError, setJsError] = React.useState<string | null>(null);
+  const [showJsEditor, setShowJsEditor] = React.useState(false);
 
   const [seed, setSeed] = React.useState(1);
-  const [sessionStartTime] = React.useState(Date.now());
+  const [sessionStartTime, setSessionStartTime] = React.useState(Date.now());
   const [colorsUsed, setColorsUsed] = React.useState<Set<string>>(new Set());
+  
+  // ── Session Persistence State ─────────────────────────────────────────────────
+  const [sessionId] = React.useState(mood + '-' + Date.now());
+  const [lastSaveTime, setLastSaveTime] = React.useState(Date.now());
+  const [hasActiveSession, setHasActiveSession] = React.useState(false);
+  const [showSessionRestorePrompt, setShowSessionRestorePrompt] = React.useState(false);
   
   // ── Responsive state ──────────────────────────────────────────────────────────
   const [viewportSize, setViewportSize] = React.useState({ width: 0, height: 0 });
@@ -107,7 +118,7 @@ export const HealingMandala: React.FC<HealingMandalaProps> = ({
       setCanvasSize(newCanvasSize);
     };
     
-    updateViewport();
+    updateViewport();   
     window.addEventListener('resize', updateViewport);
     window.addEventListener('orientationchange', updateViewport);
     
@@ -176,6 +187,9 @@ export const HealingMandala: React.FC<HealingMandalaProps> = ({
   const modalRef = React.useRef<HTMLDivElement | null>(null);
   const [undoStack, setUndoStack] = React.useState<string[]>([]);
   const [redoStack, setRedoStack] = React.useState<string[]>([]);
+  const pendingRestoreRef = React.useRef<string | null>(null);
+  const completedRef = React.useRef(false);
+  const [renderNonce, setRenderNonce] = React.useState(0);
 
   // ── Premium Therapeutic Color Palettes ────────────────────────────────────────
   const palettes = {
@@ -202,6 +216,246 @@ export const HealingMandala: React.FC<HealingMandalaProps> = ({
   };
 
   const palette = palettes[activePalette].colors;
+
+  // ── JavaScript Execution API for filling petals ──────────────────────────────────
+  const getMandalaAPI = () => {
+    return {
+      petals,
+      rings,
+      totalPetals: petals,
+      totalRings: rings,
+      fill: (elementSelector: string | number[], color: string) => {
+        if (!svgRef.current) return;
+        let elements:  Element[] = [];
+        
+        if (typeof elementSelector === 'string') {
+          // CSS selector like "petal-0", "ring-2", "*"
+          elements =Array.from(svgRef.current.querySelectorAll(`[data-part="${elementSelector}"]`));
+        } else if (Array.isArray(elementSelector)) {
+          // Array of indices: [0, 1, 2]
+          elementSelector.forEach(idx => {
+            const el = svgRef.current?.querySelector(`[data-part*="-${idx}"]`);
+            if (el) elements.push(el);
+          });
+        }
+        
+        (elements as any[]).forEach((el: PaintableEl) => {
+          el.setAttribute('fill', color);
+        });
+      },
+      fillPetal: (index: number, color: string) => {
+        if (!svgRef.current) return;
+        // Fill all parts of a petal by finding parts that contain the index
+        const elements = svgRef.current.querySelectorAll(`[data-part$="-${index}"]`);
+        elements.forEach((el: Element) => {
+          (el as PaintableEl).setAttribute('fill', color);
+        });
+      },
+      fillRing: (ringIndex: number, color: string) => {
+        if (!svgRef.current) return;
+        const elements = svgRef.current.querySelectorAll(`[data-ring="${ringIndex}"]`);
+        elements.forEach((el: Element) => {
+          (el as PaintableEl).setAttribute('fill', color);
+        });
+      },
+      getColor: () => selectedColor,
+      getPalette: () => palette,
+      random: () => Math.random(),
+    };
+  };
+
+  const executeJavaScript = () => {
+    if (!jsCode.trim()) return;
+    
+    setJsError(null);
+    snapshot();
+    setRedoStack([]);
+    
+    try {
+      const mandala = getMandalaAPI();
+      // Create a function from the code and execute it with mandala API
+      // eslint-disable-next-line no-new-func
+      const userFunc = new Function('mandala', jsCode);
+      userFunc(mandala);
+      
+      // Track colors used
+      palette.forEach(c => {
+        if (!colorsUsed.has(c)) {
+          setColorsUsed(new Set([...colorsUsed, c]));
+        }
+      });
+      
+      // Auto-save after JavaScript execution
+      setTimeout(() => {
+        if (svgRef.current) {
+          const sessionData = {
+            id: sessionId,
+            mood,
+            template,
+            petals,
+            rings,
+            stroke,
+            lineColor,
+            selectedColor,
+            activePalette,
+            svgContent: svgRef.current.outerHTML,
+            colorsUsed: Array.from(colorsUsed),
+            sessionStartTime,
+            lastSaveTime: Date.now(),
+            timestamp: new Date().toISOString(),
+          };
+          
+          try {
+            const activeSessionKey = `mandala-active-session-${mood}`;
+            localStorage.setItem(activeSessionKey, JSON.stringify(sessionData));
+          } catch (error) {
+            console.warn('Failed to save session:', error);
+          }
+        }
+      }, 100);
+    } catch (error) {
+      setJsError(error instanceof Error ? error.message : 'Unknown error');
+    }
+  };
+
+  // ── Session Persistence (Auto-save & Restoration) ──────────────────────────────
+  const saveSessionToStorage = React.useCallback(() => {
+    if (!svgRef.current) return;
+    
+    const sessionData = {
+      id: sessionId,
+      mood,
+      template,
+      petals,
+      rings,
+      stroke,
+      lineColor,
+      selectedColor,
+      activePalette,
+      svgContent: svgRef.current.outerHTML,
+      colorsUsed: Array.from(colorsUsed),
+      sessionStartTime,
+      lastSaveTime: Date.now(),
+      timestamp: new Date().toISOString(),
+    };
+    
+    try {
+      // Save to localStorage (persists across browser sessions)
+      const activeSessionKey = `mandala-active-session-${mood}`;
+      localStorage.setItem(activeSessionKey, JSON.stringify(sessionData));
+      setLastSaveTime(Date.now());
+    } catch (error) {
+      console.warn('Failed to save session:', error);
+    }
+  }, [sessionId, mood, template, petals, rings, stroke, lineColor, selectedColor, activePalette, colorsUsed, sessionStartTime]);
+
+  const getSessionFromStorage = React.useCallback(() => {
+    try {
+      // Load from localStorage (persists across browser sessions)
+      const activeSessionKey = `mandala-active-session-${mood}`;
+      const saved = localStorage.getItem(activeSessionKey);
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  }, [mood]);
+
+  const loadSession = React.useCallback((sessionData: any) => {
+    pendingRestoreRef.current = sessionData.svgContent || null;
+    setTemplate(sessionData.template);
+    setPetals(sessionData.petals);
+    setRings(sessionData.rings);
+    setStroke(sessionData.stroke);
+    setLineColor(sessionData.lineColor);
+    setSelectedColor(sessionData.selectedColor);
+    setActivePalette(sessionData.activePalette);
+    setColorsUsed(new Set(sessionData.colorsUsed));
+    setSessionStartTime(sessionData.sessionStartTime);
+    setRenderNonce((n) => n + 1); // force the render effect to run and inject the artwork
+  }, []);
+
+  const completeAndArchiveSession = React.useCallback(async () => {
+    if (!svgRef.current) return;
+    completedRef.current = true;
+
+    const sessionDuration = Date.now() - sessionStartTime;
+    const completionData = {
+      id: sessionId,
+      mood,
+      template,
+      colorsUsed: Array.from(colorsUsed),
+      percentComplete: 100,
+      duration: sessionDuration,
+      completedAt: new Date().toISOString(),
+      svgContent: svgRef.current.outerHTML,
+    };
+    
+    try {
+      // Get existing history
+      const historyKey = 'mandala-history';
+      const historyJson = localStorage.getItem(historyKey) || '[]';
+      const history = JSON.parse(historyJson);
+      
+      // Add new completed session
+      history.push(completionData);
+      
+      // Keep only last 50 sessions
+      if (history.length > 50) {
+        history.shift();
+      }
+      
+      localStorage.setItem(historyKey, JSON.stringify(history));
+      
+      // Clear active session from localStorage
+      const activeSessionKey = `mandala-active-session-${mood}`;
+      localStorage.removeItem(activeSessionKey);
+      setHasActiveSession(false);
+      
+      // Call onComplete callback
+      if (onComplete) {
+        const svgAsBlob = new Blob([svgRef.current.outerHTML], { type: 'image/svg+xml' });
+        onComplete({
+          imageBlob: svgAsBlob,
+          sessionDuration,
+          colorsUsed: Array.from(colorsUsed),
+          percentComplete: 100,
+        });
+      }
+    } catch (error) {
+      console.warn('Failed to archive session:', error);
+    }
+  }, [sessionId, mood, template, colorsUsed, sessionStartTime, onComplete]);
+
+  const clearUnsavedSession = React.useCallback(() => {
+    // Clear from localStorage
+    const activeSessionKey = `mandala-active-session-${mood}`;
+    localStorage.removeItem(activeSessionKey);
+    setHasActiveSession(false);
+    setShowSessionRestorePrompt(false);
+  }, [mood]);
+
+  const handleClose = React.useCallback(() => {  
+    if (!completedRef.current) saveSessionToStorage();
+    onClose();
+  }, [saveSessionToStorage, onClose]);
+
+  // Auto-save every 30 seconds
+  React.useEffect(() => {
+    const autoSaveInterval = setInterval(() => {
+      saveSessionToStorage();
+    }, 30000);
+    
+    return () => clearInterval(autoSaveInterval);
+  }, [saveSessionToStorage]);
+
+  // Check for existing session on mount
+  React.useEffect(() => {
+    const existingSession = getSessionFromStorage();
+    if (existingSession && existingSession.mood === mood) {
+      setHasActiveSession(true);
+      setShowSessionRestorePrompt(true);
+    }
+  }, [mood, getSessionFromStorage]);
 
   // ── Simple deterministic RNG for procedural variety ───────────────────────────
   const prng = React.useMemo(() => {
@@ -637,15 +891,15 @@ export const HealingMandala: React.FC<HealingMandalaProps> = ({
     attachPaintHandlers();
     snapshot();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [template, petals, rings, stroke, lineColor, seed]);
+  }, [template, petals, rings, stroke, lineColor, seed, renderNonce]);
 
   // ── Attach click/touch handlers to paint segments ─────────────────────────────
-  const handlePaint = (e: MouseEvent | TouchEvent) => {
+  const handlePaint = React.useCallback((e: MouseEvent | TouchEvent) => {
     // Prevent default to avoid scroll conflicts on touch
     e.preventDefault();
     
-    // Skip if this was a drag gesture
-    if (isDragging) return;
+    // Skip if this was a drag gesture or in JavaScript mode
+    if (isDragging || mode === 'javascript') return;
     
     const target = e.target as Element;
     if (!svgRef.current) return;
@@ -703,7 +957,10 @@ export const HealingMandala: React.FC<HealingMandalaProps> = ({
     if (!colorsUsed.has(selectedColor)) {
       setColorsUsed(new Set([...colorsUsed, selectedColor]));
     }
-  };
+    
+    // Auto-save after paint action
+    setTimeout(() => saveSessionToStorage(), 100);
+  }, [selectedColor, mode, isDragging, petals, symmetryMode, colorsUsed, saveSessionToStorage]);
 
   const attachPaintHandlers = () => {
     if (!svgRef.current) return;
@@ -729,6 +986,21 @@ export const HealingMandala: React.FC<HealingMandalaProps> = ({
       svgRef.current?.removeEventListener('touchend', handleTouchEnd);
     };
   }, [renderTemplate]);
+
+  // Re-attach paint handler when selectedColor or mode changes (fixes stale closure bug)
+  React.useEffect(() => {
+    if (!svgRef.current) return;
+    
+    // Remove old listener to avoid duplicates
+    svgRef.current.removeEventListener('click', handlePaint);
+    
+    // Attach new listener with current selectedColor and mode in closure
+    svgRef.current.addEventListener('click', handlePaint);
+    
+    return () => {
+      svgRef.current?.removeEventListener('click', handlePaint);
+    };
+  }, [selectedColor, mode, handlePaint]);
 
   // If stroke color/width change, update current SVG strokes
   React.useEffect(() => {
@@ -795,6 +1067,8 @@ export const HealingMandala: React.FC<HealingMandalaProps> = ({
     svgRef.current.querySelectorAll<PaintableEl>('path, polygon, rect, circle').forEach(el => {
       el.setAttribute('fill', '#FCFCFC');
     });
+    // Save session after clearing
+    setTimeout(() => saveSessionToStorage(), 100);
   };
 
   const canComplete = true;
@@ -974,6 +1248,41 @@ export const HealingMandala: React.FC<HealingMandalaProps> = ({
   );
 
   return (
+    <>
+      {/* Session Restore Prompt */}
+      {showSessionRestorePrompt && (
+        <div className="fixed inset-0 z-[60] bg-black/70 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl p-6 max-w-md w-full animate-in fade-in-0 zoom-in-95 duration-300">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Restore Previous Session?</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+              We found an unsaved mandala session from your last visit. Would you like to continue where you left off?
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  const sessionData = getSessionFromStorage();
+                  if (sessionData) {
+                    loadSession(sessionData);
+                  }
+                  setShowSessionRestorePrompt(false);
+                }}
+                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+              >
+                Restore
+              </button>
+              <button
+                onClick={() => {
+                  clearUnsavedSession();
+                }}
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                Start Fresh
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     <div 
       ref={modalRef}
       className={`
@@ -1025,7 +1334,7 @@ export const HealingMandala: React.FC<HealingMandalaProps> = ({
             <Button 
               size="sm" 
               variant="ghost" 
-              onClick={onClose} 
+              onClick={handleClose} 
               className="hover:bg-gray-100 dark:hover:bg-gray-800"
             >
               ✕
@@ -1188,11 +1497,82 @@ export const HealingMandala: React.FC<HealingMandalaProps> = ({
                       <Droplet className="w-4 h-4 mr-2" />
                       Pick Color
                     </Button>
+                    <Button 
+                      size="sm" 
+                      variant={mode === 'javascript' ? 'default' : 'outline'}
+                      onClick={() => {
+                        setMode('javascript');
+                        setShowJsEditor(!showJsEditor);
+                      }}
+                      className="justify-start transition-all duration-200"
+                      title="Fill using JavaScript"
+                    >
+                      <code className="w-4 h-4 mr-2">{'</>'}</code>
+                      Learn & Code
+                    </Button>
                   </div>
                 </section>
 
+                {/* JavaScript Editor Section */}
+                {mode === 'javascript' && showJsEditor && (
+                  <section className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800 space-y-3">
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-100">JavaScript Code Editor</h3>
+                      <p className="text-xs text-blue-700 dark:text-blue-300">
+                        Write JavaScript to fill your mandala. Use the <code className="bg-white dark:bg-gray-900 px-1 rounded">mandala</code> object to interact.
+                      </p>
+                    </div>
+                    
+                    {/* Code Examples */}
+                    <div className="bg-white dark:bg-gray-900 p-3 rounded text-xs font-mono text-gray-700 dark:text-gray-300 space-y-2 max-h-40 overflow-y-auto border border-blue-200 dark:border-blue-800">
+                      <div className="text-blue-600 dark:text-blue-400 font-semibold">Examples:</div>
+                      <div className="text-gray-500">// Fill all petals with the selected color</div>
+                      <div>for(let i=0; i&lt;mandala.petals; i++) mandala.fillPetal(i, mandala.getColor());</div>
+                      <div className="text-gray-500 pt-2">// Fill rings with palette colors</div>
+                      <div>const p = mandala.getPalette();</div>
+                      <div>for(let i=0; i&lt;mandala.rings; i++) mandala.fillRing(i, p[i % p.length]);</div>
+                      <div className="text-gray-500 pt-2">// Rainbow effect</div>
+                      <div>for(let i=0; i&lt;mandala.petals; i++) mandala.fillPetal(i, mandala.getPalette()[i % 10]);</div>
+                    </div>
+
+                    {/* Code Input */}
+                    <textarea
+                      value={jsCode}
+                      onChange={(e) => setJsCode(e.target.value)}
+                      placeholder="// Enter your JavaScript code here\n// Example: for(let i=0; i<mandala.petals; i++) mandala.fillPetal(i, mandala.getColor());"
+                      className="w-full h-32 p-3 font-mono text-sm border border-blue-200 dark:border-blue-800 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                    />
+
+                    {/* API Documentation */}
+                    <div className="bg-white dark:bg-gray-900 p-3 rounded text-xs text-gray-700 dark:text-gray-300 space-y-1 max-h-32 overflow-y-auto border border-blue-200 dark:border-blue-800">
+                      <div className="font-semibold text-blue-600 dark:text-blue-400">Available Methods:</div>
+                      <div><span className="font-mono text-green-600 dark:text-green-400">fillPetal(index, color)</span> - Fill petal at index</div>
+                      <div><span className="font-mono text-green-600 dark:text-green-400">fillRing(ringIndex, color)</span> - Fill entire ring</div>
+                      <div><span className="font-mono text-green-600 dark:text-green-400">getColor()</span> - Get selected color</div>
+                      <div><span className="font-mono text-green-600 dark:text-green-400">getPalette()</span> - Get color array</div>
+                      <div><span className="font-mono text-green-600 dark:text-green-400">random()</span> - Get random number 0-1</div>
+                    </div>
+
+                    {/* Error Display */}
+                    {jsError && (
+                      <div className="p-3 bg-red-100 dark:bg-red-950 border border-red-300 dark:border-red-800 rounded">
+                        <p className="text-xs font-semibold text-red-800 dark:text-red-200">Error:</p>
+                        <p className="text-xs text-red-700 dark:text-red-300 font-mono">{jsError}</p>
+                      </div>
+                    )}
+
+                    {/* Execute Button */}
+                    <Button
+                      onClick={executeJavaScript}
+                      className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white"
+                    >
+                      Run Code
+                    </Button>
+                  </section>
+                )}
+
                 {/* Actions */}
-                <section className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                <section className="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
                   <h3 className="text-xs font-medium uppercase tracking-wide text-gray-500 mb-3">Actions</h3>
                   <div className="flex flex-col gap-2">
                     <Button size="sm" variant="outline" onClick={undo} disabled={!undoStack.length} className="justify-start">
@@ -1207,6 +1587,27 @@ export const HealingMandala: React.FC<HealingMandalaProps> = ({
                       <RotateCcw className="w-4 h-4 mr-2" />
                       Clear All
                     </Button>
+                  </div>
+                  
+                  {/* Complete Session Button */}
+                  <Button 
+                    size="sm"
+                    className="w-full bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 text-white justify-start"
+                    onClick={completeAndArchiveSession}
+                  >
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Complete & Save
+                  </Button>
+                  
+                  {/* Auto-save Status */}
+                  <div className="text-xs text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center gap-1">
+                      <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                      Auto-saving every 30 seconds
+                    </div>
+                    <div className="text-xs text-gray-400 mt-1">
+                      Last saved: {new Date(lastSaveTime).toLocaleTimeString()}
+                    </div>
                   </div>
                 </section>
               </div>
@@ -1462,7 +1863,7 @@ export const HealingMandala: React.FC<HealingMandalaProps> = ({
                       <input 
                         type="color" 
                         value={selectedColor} 
-                        onChange={(e) => setLineColor(e.target.value)} 
+                        onChange={(e) => setSelectedColor(e.target.value)} 
                         className="w-10 h-10 rounded cursor-pointer"
                       />
                     </div>
@@ -1592,5 +1993,6 @@ export const HealingMandala: React.FC<HealingMandalaProps> = ({
         )}
       </div>
     </div>
+    </>
   );
 };
