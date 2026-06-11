@@ -15,6 +15,7 @@ import {
   Minus,
   Sparkles
 } from 'lucide-react';
+import { addArtwork, downscale } from '@/lib/canvassence';
 
 interface AdvancedDigitalStudioProps {
   mood?: string;
@@ -32,6 +33,26 @@ interface Layer {
 
 type Tool = 'brush' | 'eraser' | 'bucket' | 'line' | 'circle' | 'rectangle';
 type BrushType = 'round' | 'spray' | 'calligraphy' | 'watercolor';
+
+interface StudioSessionLayer {
+  id: string;
+  name: string;
+  visible: boolean;
+  opacity: number;
+  dataUrl: string; // PNG of the layer's canvas at physical pixels
+}
+
+interface StudioSession {
+  mood: string;
+  createdAt: string;
+  activeLayerIndex: number;
+  tool: Tool;
+  brushType: BrushType;
+  color: string;
+  brushSize: number;
+  opacity: number;
+  layers: StudioSessionLayer[];
+}
 
 export const AdvancedDigitalStudio: React.FC<AdvancedDigitalStudioProps> = ({ 
   mood = 'creative', 
@@ -61,6 +82,11 @@ export const AdvancedDigitalStudio: React.FC<AdvancedDigitalStudioProps> = ({
   const [history, setHistory] = React.useState<ImageData[]>([]);
   const [historyIndex, setHistoryIndex] = React.useState(-1);
   const [hasDrawn, setHasDrawn] = React.useState(false);
+
+  // Session persistence ("continue where I left off")
+  const sessionKey = `digital-studio-session-${mood}`;
+  const [showRestorePrompt, setShowRestorePrompt] = React.useState(false);
+  const pendingSessionRef = React.useRef<StudioSession | null>(null);
 
   // Color palette
   const colorPalette = [
@@ -117,19 +143,19 @@ export const AdvancedDigitalStudio: React.FC<AdvancedDigitalStudioProps> = ({
     };
   };
 
-  const compositeAllLayers = () => {
-    if (!compositeCanvasRef.current || layers.length === 0) return;
-    
+  const compositeAllLayers = (layersToUse: Layer[] = layers) => {
+    if (!compositeCanvasRef.current || layersToUse.length === 0) return;
+
     const canvas = compositeCanvasRef.current;
     const ctx = canvas.getContext('2d')!;
     const rect = canvas.getBoundingClientRect();
-    
+
     // Clear composite canvas
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, rect.width, rect.height);
-    
+
     // Draw all visible layers
-    layers.forEach((layer) => {
+    layersToUse.forEach((layer) => {
       if (layer.visible) {
         ctx.globalAlpha = layer.opacity;
         ctx.drawImage(layer.canvas, 0, 0, rect.width, rect.height);
@@ -324,6 +350,7 @@ export const AdvancedDigitalStudio: React.FC<AdvancedDigitalStudioProps> = ({
     setLastPos(null);
     setStartPos(null);
     saveToHistory();
+    persistSession();
   };
 
 const floodFill = (ctx: CanvasRenderingContext2D, x: number, y: number, fillColor: string) => {
@@ -410,6 +437,7 @@ const colorsMatch = (c1: number[], c2: number[], tolerance: number = 10) => {
       ctx.clearRect(0, 0, rect.width, rect.height);
       compositeAllLayers();
       saveToHistory();
+      persistSession();
     }
   };
 
@@ -417,6 +445,7 @@ const colorsMatch = (c1: number[], c2: number[], tolerance: number = 10) => {
     const newLayer = createLayer(`Layer ${layers.length + 1}`);
     setLayers(prev => [...prev, newLayer]);
     setActiveLayerIndex(layers.length);
+    persistSession();
   };
 
   const exportPNG = () => {
@@ -432,8 +461,179 @@ const colorsMatch = (c1: number[], c2: number[], tolerance: number = 10) => {
     });
   };
 
+  const handleComplete = async () => {
+    const canvas = compositeCanvasRef.current;
+    if (canvas) {
+      try {
+        const image = await downscale(canvas.toDataURL('image/png'));
+        addArtwork({ activity: 'digital-studio', mood, image });
+      } catch {
+        /* non-fatal: still mark complete */
+      }
+    }
+    clearSession(); // finishing ends the in-progress session
+    onComplete?.();
+  };
+
+  // ── Session persistence ────────────────────────────────────────────────────
+  const clearSession = () => {
+    try {
+      localStorage.removeItem(sessionKey);
+    } catch {
+      /* ignore */
+    }
+  };
+
+  // Save every layer's pixels + metadata to localStorage so work can be resumed.
+  const persistSession = React.useCallback(() => {
+    // Don't overwrite the saved session while the restore prompt is still open
+    // (the canvas is showing a blank default layer at this point).
+    if (showRestorePrompt || layers.length === 0) return;
+    const session: StudioSession = {
+      mood,
+      createdAt: new Date().toISOString(),
+      activeLayerIndex,
+      tool,
+      brushType,
+      color,
+      brushSize: brushSize[0],
+      opacity: opacity[0],
+      layers: layers.map((l) => ({
+        id: l.id,
+        name: l.name,
+        visible: l.visible,
+        opacity: l.opacity,
+        dataUrl: l.canvas.toDataURL('image/png'),
+      })),
+    };
+    try {
+      localStorage.setItem(sessionKey, JSON.stringify(session));
+    } catch {
+      // Quota fallback: store just the flattened composite as a single layer.
+      if (!compositeCanvasRef.current) return;
+      const flattened: StudioSession = {
+        ...session,
+        activeLayerIndex: 0,
+        layers: [
+          {
+            id: 'flattened',
+            name: 'Artwork',
+            visible: true,
+            opacity: 1,
+            dataUrl: compositeCanvasRef.current.toDataURL('image/png'),
+          },
+        ],
+      };
+      try {
+        localStorage.setItem(sessionKey, JSON.stringify(flattened));
+      } catch {
+        /* give up silently */
+      }
+    }
+  }, [showRestorePrompt, layers, activeLayerIndex, tool, brushType, color, brushSize, opacity, mood, sessionKey]);
+
+  const loadImage = (src: string) =>
+    new Promise<HTMLImageElement>((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = src;
+    });
+
+  const restoreSession = async () => {
+    const session = pendingSessionRef.current;
+    if (!session || session.layers.length === 0) {
+      setShowRestorePrompt(false);
+      return;
+    }
+    const dpr = window.devicePixelRatio || 1;
+    const restored: Layer[] = [];
+    for (const sl of session.layers) {
+      const layer = createLayer(sl.name);
+      layer.id = sl.id;
+      layer.visible = sl.visible;
+      layer.opacity = sl.opacity;
+      try {
+        const img = await loadImage(sl.dataUrl);
+        const ctx = layer.canvas.getContext('2d')!;
+        // Draw the saved pixels 1:1 (identity transform), then restore dpr scale
+        // so subsequent drawing keeps using logical coordinates.
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.drawImage(img, 0, 0, layer.canvas.width, layer.canvas.height);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      } catch {
+        /* skip a layer that fails to load */
+      }
+      restored.push(layer);
+    }
+
+    setTool(session.tool);
+    setBrushType(session.brushType);
+    setColor(session.color);
+    setBrushSize([session.brushSize]);
+    setOpacity([session.opacity]);
+    setLayers(restored);
+    setActiveLayerIndex(Math.min(session.activeLayerIndex, restored.length - 1));
+    setHasDrawn(true);
+    compositeAllLayers(restored);
+
+    pendingSessionRef.current = null;
+    setShowRestorePrompt(false);
+  };
+
+  // Detect a saved session on mount and offer to restore it.
+  React.useEffect(() => {
+    try {
+      const raw = localStorage.getItem(sessionKey);
+      if (!raw) return;
+      const session = JSON.parse(raw) as StudioSession;
+      if (session && Array.isArray(session.layers) && session.layers.length > 0) {
+        pendingSessionRef.current = session;
+        setShowRestorePrompt(true);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [sessionKey]);
+
+  // Backup autosave every 10s (drawing actions also persist on pointer-up).
+  React.useEffect(() => {
+    const id = setInterval(() => persistSession(), 10000);
+    return () => clearInterval(id);
+  }, [persistSession]);
+
   return (
     <div className="fixed inset-0 z-50 bg-gradient-to-br from-purple-900/95 via-pink-900/95 to-orange-900/95 backdrop-blur-sm flex items-center justify-center p-4">
+      {/* Session Restore Prompt */}
+      {showRestorePrompt && (
+        <div className="absolute inset-0 z-[60] bg-black/70 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 max-w-md w-full">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Continue your artwork?</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+              We found an unfinished Digital Studio session. Would you like to pick up where you left off?
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={restoreSession}
+                className="flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
+              >
+                Restore
+              </button>
+              <button
+                onClick={() => {
+                  setShowRestorePrompt(false);
+                  pendingSessionRef.current = null;
+                  clearSession();
+                }}
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                Start Fresh
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-7xl h-[90vh] flex flex-col overflow-hidden border-4 border-purple-300">
         {/* Header */}
         <div className="bg-gradient-to-r from-purple-600 via-pink-600 to-orange-600 p-4 flex items-center justify-between">
@@ -574,7 +774,7 @@ const colorsMatch = (c1: number[], c2: number[], tolerance: number = 10) => {
                   Export
                 </Button>
                 {onComplete && (
-                  <Button size="sm" onClick={onComplete} disabled={!hasDrawn} variant="default" className="bg-green-600 hover:bg-green-700">
+                  <Button size="sm" onClick={handleComplete} disabled={!hasDrawn} variant="default" className="bg-green-600 hover:bg-green-700">
                     Complete
                   </Button>
                 )}

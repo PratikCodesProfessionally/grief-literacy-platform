@@ -14,6 +14,7 @@ import { MemoryCollage } from './MemoryCollage';
 import { SymbolicDrawing } from './SymbolicDrawing';
 import { HealingMandala } from './HealingMandala';
 import { AdvancedDigitalStudio } from './AdvancedDigitalStudio';
+import { Canvassence } from './Canvassence';
 
 interface ActivityProgress {
   [key: string]: 'not-started' | 'in-progress' | 'completed';
@@ -23,6 +24,7 @@ export function ArtTherapyPage() {
   const [showMoodSelector, setShowMoodSelector] = React.useState(false);
   const [selectedActivity, setSelectedActivity] = React.useState<string | null>(null);
   const [currentMood, setCurrentMood] = React.useState<string>('');
+  const [showGallery, setShowGallery] = React.useState(false);
 
   const [modals, setModals] = React.useState({
     emotion: false,
@@ -267,6 +269,9 @@ export function ArtTherapyPage() {
           />
         )}
 
+        {/* Personal gallery */}
+        <Canvassence open={showGallery} onClose={() => setShowGallery(false)} />
+
         {/* Art Activities Carousel */}
         <div className="space-y-3">
           <div className="flex items-center justify-between px-1">
@@ -317,8 +322,11 @@ export function ArtTherapyPage() {
                   type="button"
                   className="relative w-full h-[340px] md:h-[420px] focus:outline-none focus-visible:ring-4 focus-visible:ring-purple-400/60"
                   onClick={() => handleActivityStart(activity.id)}
-                  disabled={activityProgress[activity.id] === 'completed'}
-                  aria-label={activity.title}
+                  aria-label={
+                    activityProgress[activity.id] === 'completed'
+                      ? `${activity.title} (completed — start a new session)`
+                      : activity.title
+                  }
                 >
                   <img
                     src={activity.imageSrc}
@@ -327,6 +335,11 @@ export function ArtTherapyPage() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-black/10" />
                   <div className="absolute top-3 right-3">{getProgressIcon(activityProgress[activity.id])}</div>
+                  {activityProgress[activity.id] === 'completed' && (
+                    <span className="absolute bottom-3 left-1/2 -translate-x-1/2 text-xs font-semibold px-3 py-1 rounded-full bg-white/90 text-purple-700 shadow">
+                      ✓ Completed · Tap to start new
+                    </span>
+                  )}
                 </button>
               </Card>
             ))}
@@ -379,10 +392,9 @@ export function ArtTherapyPage() {
             <Button
               className="w-full h-12 text-base font-semibold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-700 hover:via-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
               onClick={() => handleActivityStart('digital-studio')}
-              disabled={activityProgress['digital-studio'] === 'completed'}
             >
               {activityProgress['digital-studio'] === 'completed'
-                ? '✓ Completed'
+                ? '✓ Completed · Start New'
                 : activityProgress['digital-studio'] === 'in-progress'
                 ? '🎨 Continue Creating'
                 : '🚀 Launch Studio'}
@@ -395,19 +407,23 @@ export function ArtTherapyPage() {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2 text-green-900 dark:text-green-100" style={{ WebkitFontSmoothing: 'antialiased', fontWeight: 600 }}>
                 <Users className="h-5 w-5 text-green-700 dark:text-green-300" />
-                <span>Community Gallery</span>
+                <span>Your Canvassence Gallery</span>
               </CardTitle>
               <CardDescription className="text-gray-800 dark:text-gray-200 font-medium" style={{ WebkitFontSmoothing: 'antialiased' }}>
-                See inspiring artwork from others on their healing journey (anonymous)
+                Every creation you complete is saved here automatically
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-center py-6">
                 <div className="text-3xl mb-3">🖼️</div>
                 <p className="text-sm text-gray-900 dark:text-gray-100 mb-4 font-medium" style={{ WebkitFontSmoothing: 'antialiased', lineHeight: '1.7' }}>
-                  A safe space to share and be inspired by others' creative expressions
+                  Revisit, download, and reflect on the artwork from your healing journey
                 </p>
-                <Button variant="outline" className="border-green-400 text-green-900 dark:text-green-100 dark:border-green-600 hover:bg-green-100 dark:hover:bg-green-900/50 font-semibold btn-clear-state">
+                <Button
+                  variant="outline"
+                  className="border-green-400 text-green-900 dark:text-green-100 dark:border-green-600 hover:bg-green-100 dark:hover:bg-green-900/50 font-semibold btn-clear-state"
+                  onClick={() => setShowGallery(true)}
+                >
                   Explore Gallery
                 </Button>
               </div>

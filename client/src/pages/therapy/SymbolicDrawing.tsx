@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
+import { addArtwork, downscale } from '@/lib/canvassence';
 
 interface SymbolicDrawingProps {
   mood: string;
@@ -68,6 +69,19 @@ export const SymbolicDrawing: React.FC<SymbolicDrawingProps> = ({ mood, onClose,
     setHasStroke(false);
   };
 
+  const handleComplete = async () => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      try {
+        const image = await downscale(canvas.toDataURL('image/png'));
+        addArtwork({ activity: 'symbolic-drawing', mood, image });
+      } catch {
+        /* non-fatal: still mark complete */
+      }
+    }
+    onComplete?.();
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
       <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg w-full max-w-3xl p-6 space-y-4">
@@ -93,7 +107,7 @@ export const SymbolicDrawing: React.FC<SymbolicDrawingProps> = ({ mood, onClose,
           />
           <Button size="sm" variant="outline" onClick={clear}>Clear</Button>
           {onComplete && (
-            <Button size="sm" onClick={onComplete} disabled={!hasStroke}>Mark as Completed</Button>
+            <Button size="sm" onClick={handleComplete} disabled={!hasStroke}>Mark as Completed</Button>
           )}
         </div>
 

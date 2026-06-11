@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Paintbrush, Eraser, Droplet, Sparkles, Download, Undo2, Redo2, RotateCcw, ChevronDown, ChevronUp, Palette, ZoomIn, ZoomOut } from 'lucide-react';
+import { addArtwork, svgToDataUrl } from '@/lib/canvassence';
 
 interface HealingMandalaProps {
   mood: string;
@@ -405,7 +406,14 @@ export const HealingMandala: React.FC<HealingMandalaProps> = ({
       }
       
       localStorage.setItem(historyKey, JSON.stringify(history));
-      
+
+      // Also save to the unified Canvassence gallery for display.
+      addArtwork({
+        activity: 'healing-mandala',
+        mood,
+        image: svgToDataUrl(svgRef.current.outerHTML),
+      });
+
       // Clear active session from localStorage
       const activeSessionKey = `mandala-active-session-${mood}`;
       localStorage.removeItem(activeSessionKey);
@@ -867,6 +875,23 @@ export const HealingMandala: React.FC<HealingMandalaProps> = ({
     if (!c) return;
 
     c.innerHTML = '';
+
+    // Restoring a saved session: inject the previously painted SVG instead of
+    // building a fresh blank template. loadSession() stores the artwork here and
+    // bumps renderNonce to trigger this effect. (Without this, Restore showed a
+    // blank template because the saved artwork was never injected.)
+    const pending = pendingRestoreRef.current;
+    if (pending) {
+      pendingRestoreRef.current = null;
+      const doc = new DOMParser().parseFromString(pending, 'image/svg+xml');
+      const restoredSvg = doc.documentElement as unknown as SVGSVGElement;
+      c.appendChild(restoredSvg);
+      svgRef.current = restoredSvg;
+      attachPaintHandlers();
+      snapshot();
+      return;
+    }
+
     let svgEl: SVGSVGElement | null = null;
 
     switch (template) {
@@ -1749,37 +1774,9 @@ export const HealingMandala: React.FC<HealingMandalaProps> = ({
                         </Button>
                       </div>
                       {onComplete && (
-                        <Button 
+                        <Button
                           size="default"
-                          onClick={() => {
-                            const canvas = document.createElement('canvas');
-                            canvas.width = 500;
-                            canvas.height = 500;
-                            const ctx = canvas.getContext('2d');
-                            if (ctx && svgRef.current) {
-                              const svgData = new XMLSerializer().serializeToString(svgRef.current);
-                              const img = new Image();
-                              img.onload = () => {
-                                ctx.drawImage(img, 0, 0);
-                                canvas.toBlob((blob) => {
-                                  if (blob) {
-                                    const sessionDuration = Math.floor((Date.now() - sessionStartTime) / 1000);
-                                    const totalSegments = svgRef.current?.querySelectorAll('[data-part]').length || 0;
-                                    const paintedSegments = Array.from(svgRef.current?.querySelectorAll('[data-part]') || [])
-                                      .filter(el => el.getAttribute('fill') !== '#FCFCFC').length;
-                                    
-                                    onComplete({
-                                      imageBlob: blob,
-                                      sessionDuration,
-                                      colorsUsed: Array.from(colorsUsed),
-                                      percentComplete: totalSegments > 0 ? (paintedSegments / totalSegments) * 100 : 0
-                                    });
-                                  }
-                                });
-                              };
-                              img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
-                            }
-                          }} 
+                          onClick={completeAndArchiveSession}
                           disabled={!canComplete}
                           className="bg-indigo-600 hover:bg-indigo-700 text-white"
                         >

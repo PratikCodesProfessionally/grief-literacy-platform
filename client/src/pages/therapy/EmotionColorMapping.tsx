@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
+import { addArtwork, gridToPng } from '@/lib/canvassence';
 
 interface EmotionColorMappingProps {
   mood: string;
@@ -27,6 +28,16 @@ export const EmotionColorMapping: React.FC<EmotionColorMappingProps> = ({ mood, 
 
   // Optional: require at least one non-white cell before allowing completion
   const canComplete = React.useMemo(() => cells.some((c) => c !== '#fff'), [cells]);
+
+  const handleComplete = () => {
+    try {
+      const image = gridToPng(cells);
+      if (image) addArtwork({ activity: 'emotion-color', mood, image });
+    } catch {
+      /* non-fatal: still mark complete */
+    }
+    onComplete?.();
+  };
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
@@ -71,7 +82,7 @@ export const EmotionColorMapping: React.FC<EmotionColorMappingProps> = ({ mood, 
           {onComplete && (
             <Button
               size="sm"
-              onClick={onComplete}
+              onClick={handleComplete}
               disabled={!canComplete}
               title={canComplete ? 'Mark as completed' : 'Bitte mindestens ein Cell färben'}
             >

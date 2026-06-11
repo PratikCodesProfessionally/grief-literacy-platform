@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
+import { addArtwork, collageToPng } from '@/lib/canvassence';
 
 interface MemoryCollageProps {
   mood: string;
@@ -25,22 +26,27 @@ export const MemoryCollage: React.FC<MemoryCollageProps> = ({ mood, onClose, onC
   const handleAddImage: React.ChangeEventHandler<HTMLInputElement> = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const src = URL.createObjectURL(file);
-    setItems((prev) => [...prev, { type: 'image', src }]);
-    // revoke when modal closes
+    // Read as a data URL (not a blob: object URL) so the image persists into the
+    // composed gallery PNG and survives a reload.
+    const reader = new FileReader();
+    reader.onload = () => {
+      const src = reader.result as string;
+      setItems((prev) => [...prev, { type: 'image', src }]);
+    };
+    reader.readAsDataURL(file);
   };
 
   const canComplete = items.length > 0;
 
-  React.useEffect(() => {
-    return () => {
-      // revoke any created object URLs
-      items.forEach((it) => {
-        if (it.type === 'image') URL.revokeObjectURL(it.src);
-      });
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const handleComplete = async () => {
+    try {
+      const image = await collageToPng(items);
+      if (image) addArtwork({ activity: 'memory-collage', mood, image });
+    } catch {
+      /* non-fatal: still mark complete */
+    }
+    onComplete?.();
+  };
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
@@ -80,7 +86,7 @@ export const MemoryCollage: React.FC<MemoryCollageProps> = ({ mood, onClose, onC
           </div>
 
           {onComplete && (
-            <Button size="sm" className="ml-auto" onClick={onComplete} disabled={!canComplete}>
+            <Button size="sm" className="ml-auto" onClick={handleComplete} disabled={!canComplete}>
               Mark as Completed
             </Button>
           )}

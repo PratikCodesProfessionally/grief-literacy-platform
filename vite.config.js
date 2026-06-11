@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import { VitePWA } from 'vite-plugin-pwa';
 
-export const vitePort = 5173;
+export const vitePort = 5174;
 
 export default defineConfig(({ mode }) => {
   return {
@@ -154,15 +154,13 @@ export default defineConfig(({ mode }) => {
     server: {
       hmr: {
         overlay: false,
-        // Für GitHub Codespaces: WebSocket über HTTPS
-        protocol: 'wss',
-        clientPort: 443,
+        protocol: 'ws',
+        port: vitePort,
       },
       host: true,
       port: vitePort,
       allowedHosts: true,
       cors: true, // Enable CORS in the dev server
-      // Wichtig für Codespaces
       strictPort: true,
       proxy: {
         '/api': {
