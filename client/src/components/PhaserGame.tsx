@@ -248,7 +248,23 @@ export function PhaserGame() {
         <ArrowLeft className="w-4 h-4" />
         <span>Back</span>
       </button>
-      
+
+      {/* Switch to the 3D driving version */}
+      <button
+        onClick={() => navigate('/journey/drive')}
+        className="absolute top-4 left-32 z-50
+                   flex items-center gap-2
+                   px-4 py-2
+                   bg-white/80 backdrop-blur-sm
+                   text-stone-600 font-medium text-sm
+                   rounded-full shadow-sm
+                   hover:bg-white hover:shadow-md
+                   transition-all duration-300
+                   focus:outline-none focus:ring-2 focus:ring-stone-300/50"
+      >
+        <span>🚗 Drive instead</span>
+      </button>
+
       {/* Debug: Reset Tutorial Button */}
       <button
         onClick={() => {

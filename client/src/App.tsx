@@ -10,6 +10,9 @@ import { PhaserGame } from '@/components/PhaserGame';
 import { ToastProvider } from '@/components/ui/use-toast';
 import { AuthCallback } from '@/pages/auth/AuthCallback';
 
+// Lazy-loaded so Three.js only ships when the driving journey is opened.
+const DrivingJourney = React.lazy(() => import('@/journey3d/DrivingJourney'));
+
 function App() {
   return (
     <ToastProvider>
@@ -17,6 +20,22 @@ function App() {
         <Routes>
           {/* Full-screen Phaser Game Route (no header/container) */}
           <Route path="/journey" element={<PhaserGame />} />
+
+          {/* 3D driving version of the journey (no header) */}
+          <Route
+            path="/journey/drive"
+            element={
+              <React.Suspense
+                fallback={
+                  <div className="fixed inset-0 grid place-items-center bg-sky-200 text-stone-600">
+                    Preparing your drive…
+                  </div>
+                }
+              >
+                <DrivingJourney />
+              </React.Suspense>
+            }
+          />
           
           {/* Auth callback route (no header) */}
           <Route path="/auth/callback" element={<AuthCallback />} />
