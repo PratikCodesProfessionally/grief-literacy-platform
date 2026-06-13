@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { JourneyAssets } from './assets';
-import { WorldBounds } from './Car';
+import { WorldBounds, Collider } from './Car';
 import { STATION_POSITIONS, BENCH_QUOTES, StationConfig } from '../../phaser/config/constants';
 
 export interface TreeInstance {
@@ -21,8 +21,11 @@ export interface World {
   bounds: WorldBounds;
   trees: TreeInstance[];
   garages: GarageInstance[];
+  treeColliders: Collider[]; // for impact detection (all trees)
   carStart: { x: number; z: number; heading: number };
 }
+
+const TREE_COLLIDER_RADIUS = 1.6;
 
 const ROAD_HALF = 6; // road is 12 wide, centered on x=0
 const HOUSE_OFFSET = 15; // houses sit this far off the road center
@@ -80,13 +83,15 @@ export function buildWorld(assets: JourneyAssets): World {
     house.rotation.y = rightSide ? Math.PI / 2 : -Math.PI / 2;
     group.add(house);
 
-    // Garage trigger sits just off the road edge in front of the bay.
-    const triggerX = rightSide ? HOUSE_OFFSET - 8 : -(HOUSE_OFFSET - 8);
+    // Garage trigger sits right at the garage mouth (~the house's road-facing
+    // wall), and is small — you only enter when you actually pull in, not when
+    // merely driving past on the road.
+    const triggerX = rightSide ? HOUSE_OFFSET - 4 : -(HOUSE_OFFSET - 4);
     garages.push({
       station,
       triggerX,
       triggerZ: z,
-      triggerHalf: 6,
+      triggerHalf: 2.6,
       signPosition: new THREE.Vector3(houseX, 6, z),
     });
   });
@@ -94,6 +99,7 @@ export function buildWorld(assets: JourneyAssets): World {
   // Trees: one per positive quote, alternating roadside between the stations,
   // plus decorative trees with no quote.
   const trees: TreeInstance[] = [];
+  const treeColliders: Collider[] = [];
   BENCH_QUOTES.forEach((quote, i) => {
     const z = STATION_START_Z - i * STATION_SPACING + STATION_SPACING / 2;
     const rightSide = i % 2 === 1;
@@ -102,6 +108,7 @@ export function buildWorld(assets: JourneyAssets): World {
     treeObj.position.set(x, 0, z);
     group.add(treeObj);
     trees.push({ quote, position: new THREE.Vector3(x, 0, z) });
+    treeColliders.push({ x, z, radius: TREE_COLLIDER_RADIUS });
   });
 
   // Decorative (quote-less) trees scattered farther out.
@@ -109,10 +116,12 @@ export function buildWorld(assets: JourneyAssets): World {
     const side = i % 2 === 0 ? 1 : -1;
     const x = side * (HOUSE_OFFSET + 6 + Math.random() * 20);
     const z = -Math.random() * (Math.abs(roadEndZ) + 40);
+    const scale = 0.8 + Math.random() * 0.6;
     const treeObj = assets.tree();
     treeObj.position.set(x, 0, z);
-    treeObj.scale.setScalar(0.8 + Math.random() * 0.6);
+    treeObj.scale.setScalar(scale);
     group.add(treeObj);
+    treeColliders.push({ x, z, radius: TREE_COLLIDER_RADIUS * scale });
   }
 
   return {
@@ -120,6 +129,7 @@ export function buildWorld(assets: JourneyAssets): World {
     bounds: { minX: -45, maxX: 45, minZ: roadEndZ - 10, maxZ: 20 },
     trees,
     garages,
+    treeColliders,
     carStart: { x: 0, z: 10, heading: 0 },
   };
 }

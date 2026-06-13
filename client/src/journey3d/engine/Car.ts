@@ -8,12 +8,22 @@ export interface WorldBounds {
   maxZ: number;
 }
 
+export interface Collider {
+  x: number;
+  z: number;
+  radius: number;
+}
+
+const CAR_RADIUS = 1.4;
+
 // Light arcade car: kinematic steering on the ground plane (no real physics).
 // The model is assumed to face -Z forward (matches the procedural fallback).
 export class Car {
   readonly object: THREE.Object3D;
   private heading = 0; // radians around +Y; 0 = facing -Z
   private speed = 0; // units/sec (positive = forward)
+  private braking = false;
+  private lastHitIndex = -1; // debounces repeated impacts with the same tree
 
   // Tuning (calm cruising, not racing)
   private readonly maxForward = 22;
@@ -43,6 +53,50 @@ export class Car {
     return Math.min(1, Math.abs(this.speed) / this.maxForward);
   }
 
+  /** True while actively braking and still rolling forward (for skid fx). */
+  get isBraking(): boolean {
+    return this.braking;
+  }
+
+  getForward(target: THREE.Vector3): THREE.Vector3 {
+    return target.set(-Math.sin(this.heading), 0, -Math.cos(this.heading));
+  }
+
+  /**
+   * Resolve collisions against tree colliders: push the car out and bounce it
+   * back. Returns true on a NEW impact (debounced so holding against one tree
+   * only fires once until the car leaves it).
+   */
+  collide(colliders: Collider[]): boolean {
+    const p = this.object.position;
+    let hitIndex = -1;
+    for (let i = 0; i < colliders.length; i++) {
+      const c = colliders[i];
+      const dx = p.x - c.x;
+      const dz = p.z - c.z;
+      const minDist = c.radius + CAR_RADIUS;
+      const d = Math.hypot(dx, dz);
+      if (d < minDist) {
+        const nx = d > 1e-4 ? dx / d : 1;
+        const nz = d > 1e-4 ? dz / d : 0;
+        p.x = c.x + nx * minDist;
+        p.z = c.z + nz * minDist;
+        // Gentle bounce: shed most speed, nudge slightly backward.
+        const back = Math.min(Math.abs(this.speed) * 0.25, 3);
+        this.speed = (this.speed >= 0 ? -1 : 1) * back;
+        hitIndex = i;
+        break;
+      }
+    }
+    if (hitIndex === -1) {
+      this.lastHitIndex = -1;
+      return false;
+    }
+    const isNew = hitIndex !== this.lastHitIndex;
+    this.lastHitIndex = hitIndex;
+    return isNew;
+  }
+
   update(dt: number, controls: Controls, bounds: WorldBounds, camera: THREE.PerspectiveCamera): void {
     const throttle = controls.throttle;
     const steer = controls.steer;
@@ -59,6 +113,9 @@ export class Car {
       else if (this.speed < 0) this.speed = Math.min(0, this.speed + drag);
     }
     this.speed = THREE.MathUtils.clamp(this.speed, -this.maxReverse, this.maxForward);
+
+    // Braking = pressing reverse while still rolling forward at speed.
+    this.braking = throttle < -0.1 && this.speed > 3;
 
     // Steering scales with how fast we're going (can't pivot when parked).
     const speedFactor = THREE.MathUtils.clamp(Math.abs(this.speed) / this.maxForward, 0, 1);

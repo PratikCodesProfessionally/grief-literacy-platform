@@ -3,13 +3,14 @@ import { loadJourneyAssets } from './assets';
 import { Car } from './Car';
 import { Controls } from './Controls';
 import { buildWorld, World } from './world';
-import { EngineSound } from './Audio';
+import { JourneySound } from './Audio';
 import { StationConfig } from '../../phaser/config/constants';
 
 export interface GameCallbacks {
   onQuote: (quote: string | null) => void;
   onNearGarage: (station: StationConfig | null) => void;
   onEnterGarage: (station: StationConfig) => void;
+  onImpact: () => void;
 }
 
 const QUOTE_RADIUS = 14;
@@ -27,8 +28,14 @@ export class Game {
   private controls!: Controls;
   private car!: Car;
   private world!: World;
-  private audio = new EngineSound();
+  private audio = new JourneySound();
   private muted = false;
+
+  // Skid marks (a reused pool of dark dabs dropped while braking)
+  private skidMarks: THREE.Mesh[] = [];
+  private skidIndex = 0;
+  private readonly fwdTmp = new THREE.Vector3();
+  private readonly rightTmp = new THREE.Vector3();
 
   private currentQuote: string | null = null;
   private currentNearGarage: StationConfig | null = null;
@@ -86,6 +93,7 @@ export class Game {
     // Keep the sun shadow following the car a bit.
     sun.target = this.car.object;
 
+    this.createSkidMarks();
     this.controls = new Controls();
     this.car.snapCamera(this.camera);
 
@@ -114,9 +122,51 @@ export class Game {
     const dt = Math.min(this.clock.getDelta(), 0.05);
     this.car.update(dt, this.controls, this.world.bounds, this.camera);
     this.audio.setSpeed(this.car.speed01);
+
+    // Skid: sound + tire marks while braking.
+    const braking = this.car.isBraking;
+    this.audio.setSkidding(braking);
+    if (braking) this.dropSkidMark();
+
+    // Impact: bounce off trees, play sound + fire the apology message.
+    if (!this.entered && this.car.collide(this.world.treeColliders)) {
+      this.audio.playImpact();
+      this.callbacks.onImpact();
+    }
+
     this.checkProximity();
     this.renderer.render(this.scene, this.camera);
   };
+
+  private createSkidMarks(): void {
+    const geo = new THREE.CircleGeometry(0.35, 8);
+    const mat = new THREE.MeshBasicMaterial({
+      color: 0x1a1a1a,
+      transparent: true,
+      opacity: 0.35,
+      depthWrite: false,
+    });
+    for (let i = 0; i < 160; i++) {
+      const m = new THREE.Mesh(geo, mat);
+      m.rotation.x = -Math.PI / 2; // lie flat on the road
+      m.position.set(0, -100, 0);
+      m.visible = false;
+      this.scene.add(m);
+      this.skidMarks.push(m);
+    }
+  }
+
+  private dropSkidMark(): void {
+    const fwd = this.car.getForward(this.fwdTmp);
+    const right = this.rightTmp.set(-fwd.z, 0, fwd.x); // forward × up
+    const p = this.car.position;
+    for (const side of [-0.7, 0.7]) {
+      const m = this.skidMarks[this.skidIndex];
+      this.skidIndex = (this.skidIndex + 1) % this.skidMarks.length;
+      m.position.set(p.x - fwd.x * 1.2 + right.x * side, 0.03, p.z - fwd.z * 1.2 + right.z * side);
+      m.visible = true;
+    }
+  }
 
   /** Toggle engine audio; returns the new muted state. */
   toggleMute(): boolean {
