@@ -21,6 +21,9 @@ function App() {
           {/* Full-screen Phaser Game Route (no header/container) */}
           <Route path="/journey" element={<PhaserGame />} />
 
+          {/* Section-specific 2D walking world, entered from a 3D garage */}
+          <Route path="/journey/walk/:section" element={<PhaserGame />} />
+
           {/* 3D driving version of the journey (no header) */}
           <Route
             path="/journey/drive"

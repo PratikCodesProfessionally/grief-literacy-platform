@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import { Player } from '../entities/Player';
 import { InteractionZone } from '../entities/InteractionZone';
+import { getActiveStations } from '../../journey/walkSections';
+import { StationConfig } from '../config/constants';
 import { NPC } from '../entities/NPC';
 import { Butterfly } from '../entities/Butterfly';
 import { Tree } from '../entities/Tree';
@@ -51,7 +53,11 @@ export class HealingWorldScene extends Phaser.Scene {
   
   // Navigation callback (set from React)
   public onNavigate?: (route: string) => void;
-  
+
+  // Billboards to render: section-specific list (set by PhaserGame before boot)
+  // or the default top-level stations.
+  private stations: StationConfig[] = getActiveStations() ?? STATION_POSITIONS;
+
   constructor() {
     super({ key: 'HealingWorldScene' });
   }
@@ -192,7 +198,7 @@ export class HealingWorldScene extends Phaser.Scene {
   }
   
   private createStations(): void {
-    STATION_POSITIONS.forEach((station, index) => {
+    this.stations.forEach((station, index) => {
       const groundY = this.scale.height - 180;
       const signX = station.x;
       const signY = groundY - 80; // Position sign above ground
@@ -499,7 +505,7 @@ export class HealingWorldScene extends Phaser.Scene {
     this.minimap = new Minimap(this, minimapConfig);
     
     // Set initial zone statuses (could be loaded from localStorage)
-    STATION_POSITIONS.forEach((station, index) => {
+    this.stations.forEach((station, index) => {
       // For demo: first station recommended, rest new
       if (index === 0) {
         this.minimap?.setZoneStatus(station.id, 'recommended');
@@ -878,10 +884,8 @@ export class HealingWorldScene extends Phaser.Scene {
   }
   
   private handleStationInteraction(route: string): void {
-    // Fade out camera
+    // Each billboard is a leaf page — fade out and navigate straight there.
     this.cameras.main.fadeOut(GAME_CONSTANTS.SCENE_TRANSITION_DURATION, 224, 242, 254);
-    
-    // Navigate after fade
     this.time.delayedCall(GAME_CONSTANTS.SCENE_TRANSITION_DURATION, () => {
       if (this.onNavigate) {
         this.onNavigate(route);

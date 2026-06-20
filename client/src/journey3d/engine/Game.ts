@@ -14,8 +14,10 @@ export interface GameCallbacks {
 }
 
 const QUOTE_RADIUS = 14;
-const GARAGE_NEAR_X = 9;
-const GARAGE_NEAR_Z = 11;
+// "Near" radius for the hint prompt — wide enough that it shows while driving
+// down the road past a house (decoupled from the tight entry trigger).
+const GARAGE_NEAR_X = 14;
+const GARAGE_NEAR_Z = 12;
 
 export class Game {
   private container: HTMLElement;
@@ -40,6 +42,7 @@ export class Game {
   private currentQuote: string | null = null;
   private currentNearGarage: StationConfig | null = null;
   private entered = false;
+  private paused = false;
   private disposed = false;
 
   constructor(container: HTMLElement, callbacks: GameCallbacks) {
@@ -120,6 +123,15 @@ export class Game {
 
   private loop = (): void => {
     const dt = Math.min(this.clock.getDelta(), 0.05);
+
+    // While a section menu is open the world is frozen behind it.
+    if (this.paused) {
+      this.audio.setSpeed(0);
+      this.audio.setSkidding(false);
+      this.renderer.render(this.scene, this.camera);
+      return;
+    }
+
     this.car.update(dt, this.controls, this.world.bounds, this.camera);
     this.audio.setSpeed(this.car.speed01);
 
@@ -137,6 +149,7 @@ export class Game {
     this.checkProximity();
     this.renderer.render(this.scene, this.camera);
   };
+
 
   private createSkidMarks(): void {
     const geo = new THREE.CircleGeometry(0.35, 8);
@@ -203,6 +216,7 @@ export class Game {
       const dz = Math.abs(p.z - g.triggerZ);
       if (dx < g.triggerHalf && dz < g.triggerHalf) {
         this.entered = true;
+        this.paused = true; // freeze the world while the section menu is open
         this.callbacks.onEnterGarage(g.station);
         return;
       }

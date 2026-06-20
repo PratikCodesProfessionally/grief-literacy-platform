@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, Save, FileText, Clock, CheckCircle, Mic, MicOff, Cloud, HardDrive } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ArrowLeft, Save, FileText, Clock, CheckCircle, Mic, MicOff, Cloud, HardDrive, X } from 'lucide-react';
 import { StorageProviderFactory } from '@/services/StorageService';
 import type { IStorageProvider, Story } from '@/services/StorageService';
 
@@ -21,6 +22,21 @@ export function StoryTherapyPage() {
   const [storageType, setStorageType] = React.useState<'local' | 'cloud'>('local');
   const [storageProvider, setStorageProvider] = React.useState<IStorageProvider | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [selectedStoryForReading, setSelectedStoryForReading] = React.useState<Story | null>(null);
+  const [activeTab, setActiveTab] = React.useState<'stories' | 'divine-comedy'>('stories');
+
+  // Divine Comedy Chapters - Chapter-by-chapter philosophical interpretation inspired by Predictive History
+  const divineComedyChapters = [
+    {
+      number: 1,
+      cantica: "Inferno",
+      title: "The Dark Forest: Recognizing the Abyss Within",
+      theme: "Self-Awareness & Crisis",
+      interpretation: `Dante's journey begins in a dark forest, lost and confused. In the context of grief and spiritual crisis, this represents the moment when we can no longer ignore our pain. The forest symbolizes how grief disorients us. We lose our way, surrounded by familiar yet frightening terrain.\n\nThe philosophical meaning: Before transformation can occur, we must acknowledge that we are lost. The "dark forest" is not a punishment but an awakening. Dante's fear and confusion are the catalysts for change. Similarly, in grief, the initial darkness is often the moment when we stop pretending and face reality.\n\nPredictive History's insight: History shows that civilizations and individuals only advance when they confront their deepest crises. The forest represents the crisis point. Denial ends and the journey toward healing begins.`,
+      reflection: "When did you realize you were 'lost' in your grief? What did that moment of clarity feel like?",
+      keywords: ["Crisis", "Awakening", "Dark night of the soul", "Self-recognition"]
+    }
+  ];
 
   const storyPrompts = [
     {
@@ -97,6 +113,17 @@ export function StoryTherapyPage() {
         setIsLoading(false);
       } catch (error) {
         console.error('Failed to initialize storage:', error);
+        // Fallback to local storage if initialization fails
+        try {
+          const fallbackProvider = StorageProviderFactory.createProvider('local', 'story-therapy-stories', undefined);
+          setStorageProvider(fallbackProvider);
+          const stories = await fallbackProvider.list<Story>();
+          setSavedStories(stories);
+          const completed = new Set(stories.map(s => s.prompt));
+          setCompletedPrompts(completed);
+        } catch (fallbackError) {
+          console.error('Fallback storage initialization also failed:', fallbackError);
+        }
         setIsLoading(false);
       }
     };
@@ -160,28 +187,40 @@ export function StoryTherapyPage() {
   };
 
   const handleSaveStory = async () => {
-    if (story.trim() && selectedPrompt && storageProvider) {
-      try {
-        const newStory: Omit<Story, 'id' | 'createdAt' | 'updatedAt'> = {
-          prompt: selectedPrompt,
-          content: story,
-          wordCount: story.trim().split(/\s+/).length,
-          timeSpent: writingTimer,
-          savedAt: new Date().toLocaleDateString(),
-          category: storyPrompts.find(p => p.text === selectedPrompt)?.category || 'Unknown'
-        };
-        
-        const savedStory = await storageProvider.save(newStory as Story);
-        setSavedStories([...savedStories, savedStory]);
-        setCompletedPrompts(new Set([...completedPrompts, selectedPrompt]));
-        setStory('');
-        setSelectedPrompt('');
-        setIsWriting(false);
-        setWritingTimer(0);
-      } catch (error) {
-        console.error('Failed to save story:', error);
-        alert('Failed to save story. Please try again.');
-      }
+    if (!story.trim()) {
+      alert('Please write a story before saving.');
+      return;
+    }
+    if (!selectedPrompt) {
+      alert('Please select a prompt before saving.');
+      return;
+    }
+    if (!storageProvider) {
+      alert('Storage not available. Please try again.');
+      return;
+    }
+    
+    try {
+      const newStory: Omit<Story, 'id' | 'createdAt' | 'updatedAt'> = {
+        prompt: selectedPrompt,
+        content: story,
+        wordCount: story.trim().split(/\s+/).length,
+        timeSpent: writingTimer,
+        savedAt: new Date().toLocaleDateString(),
+        category: storyPrompts.find(p => p.text === selectedPrompt)?.category || 'Unknown'
+      };
+      
+      const savedStory = await storageProvider.save(newStory as Story);
+      setSavedStories([...savedStories, savedStory]);
+      setCompletedPrompts(new Set([...completedPrompts, selectedPrompt]));
+      setStory('');
+      setSelectedPrompt('');
+      setIsWriting(false);
+      setWritingTimer(0);
+      alert('Story saved successfully!');
+    } catch (error) {
+      console.error('Failed to save story:', error);
+      alert(`Failed to save story: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`);
     }
   };
 
@@ -236,9 +275,28 @@ export function StoryTherapyPage() {
           <h1 className="text-4xl font-semibold mb-2 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
             📖 Story Therapy
           </h1>
-          <p className="text-lg text-muted-foreground">
+          <p className="text-lg text-muted-foreground mb-4">
             Heal through the power of storytelling and narrative
           </p>
+          {/* Tab Buttons */}
+          <div className="flex gap-2">
+            <Button
+              variant={activeTab === 'stories' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveTab('stories')}
+              className="rounded-full"
+            >
+              Story Prompts
+            </Button>
+            <Button
+              variant={activeTab === 'divine-comedy' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveTab('divine-comedy')}
+              className="rounded-full"
+            >
+              Divine Comedy
+            </Button>
+          </div>
         </div>
         
         {/* Storage Type Toggle */}
@@ -284,7 +342,8 @@ export function StoryTherapyPage() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+      {activeTab === 'stories' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
         <Card className="lg:col-span-1 hover-lift">
           <CardHeader>
             <CardTitle className="text-xl sm:text-2xl">Story Prompts</CardTitle>
@@ -411,9 +470,58 @@ export function StoryTherapyPage() {
           </CardContent>
         </Card>
       </div>
+      )}
+
+      {/* Divine Comedy Section */}
+      {activeTab === 'divine-comedy' && (
+      <div className="space-y-6">
+        {divineComedyChapters.map((chapter) => (
+          <Card key={chapter.number} className="hover-lift">
+            <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5">
+              <div className="flex items-center gap-3 mb-2">
+                <Badge className="bg-primary/20 text-primary rounded-full px-3 py-1">
+                  {chapter.cantica}
+                </Badge>
+                <Badge variant="outline" className="rounded-full">
+                  Chapter {chapter.number}
+                </Badge>
+              </div>
+              <CardTitle className="text-2xl mb-2">{chapter.title}</CardTitle>
+              <CardDescription className="text-base">
+                <span className="font-semibold text-foreground">Theme:</span> {chapter.theme}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6 pt-6">
+              <div>
+                <h4 className="font-semibold text-lg mb-3">Philosophical Interpretation</h4>
+                <p className="text-foreground/80 leading-relaxed whitespace-pre-wrap">
+                  {chapter.interpretation}
+                </p>
+              </div>
+              
+              <div className="bg-muted/30 rounded-lg p-4 border border-border">
+                <h4 className="font-semibold mb-2">Reflection Prompt</h4>
+                <p className="text-foreground/70 italic">{chapter.reflection}</p>
+              </div>
+
+              <div>
+                <h4 className="font-semibold mb-2">Key Concepts</h4>
+                <div className="flex flex-wrap gap-2">
+                  {chapter.keywords.map((keyword, idx) => (
+                    <Badge key={idx} variant="outline" className="rounded-full bg-accent/10">
+                      {keyword}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      )}
 
       {/* Saved Stories */}
-      {savedStories.length > 0 && (
+      {activeTab === 'stories' && savedStories.length > 0 && (
         <Card className="hover-lift">
           <CardHeader>
             <CardTitle className="text-2xl">Your Story Collection</CardTitle>
@@ -444,7 +552,7 @@ export function StoryTherapyPage() {
                          {story.content}
                       </p>
                     </div>
-                    <Button size="sm" variant="outline" className="w-full mt-4 rounded-full hover:bg-accent/20 transition-all duration-300">
+                    <Button size="sm" variant="outline" className="w-full mt-4 rounded-full hover:bg-accent/20 transition-all duration-300" onClick={() => setSelectedStoryForReading(story)}>
                       Read Full Story
                     </Button>
                   </CardContent>
@@ -454,6 +562,40 @@ export function StoryTherapyPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Story Reading Modal */}
+      <Dialog open={selectedStoryForReading !== null} onOpenChange={(open) => !open && setSelectedStoryForReading(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">{selectedStoryForReading?.prompt}</DialogTitle>
+            <DialogDescription>View your saved story</DialogDescription>
+            <div className="flex gap-4 items-center pt-2">
+              <Badge className={`${getCategoryColor(selectedStoryForReading?.category || '')} rounded-full`}>
+                {selectedStoryForReading?.category}
+              </Badge>
+              <span className="text-sm text-muted-foreground">{selectedStoryForReading?.savedAt}</span>
+            </div>
+          </DialogHeader>
+          <div className="mt-6 space-y-4">
+            <div className="flex gap-6 text-sm text-muted-foreground pb-4 border-b">
+              <div>
+                <span className="font-semibold text-foreground">{selectedStoryForReading?.wordCount}</span> words
+              </div>
+              <div>
+                <span className="font-semibold text-foreground">{selectedStoryForReading && formatTime(selectedStoryForReading.timeSpent)}</span> writing time
+              </div>
+            </div>
+            <p className="text-base whitespace-pre-wrap leading-relaxed text-foreground">
+              {selectedStoryForReading?.content}
+            </p>
+          </div>
+          <div className="mt-6 flex gap-2 justify-end">
+            <Button variant="outline" onClick={() => setSelectedStoryForReading(null)}>
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

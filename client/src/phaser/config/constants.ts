@@ -172,5 +172,14 @@ export const BENCH_QUOTES = [
   '"You have within you right now, everything you need to deal with whatever comes." - Brian Tracy',
   '"Healing takes time, and asking for help is a courageous step." - Mariska Hargitay',
   '"Hope is being able to see that there is light despite all the darkness." - Desmond Tutu',
-  '"Every day may not be good, but there is something good in every day." - Alice Morse Earle'
+  '"Every day may not be good, but there is something good in every day." - Alice Morse Earle',
+  '"Although the world is full of suffering, it is also full of the overcoming of it." - Helen Keller',
+  '"What we once enjoyed and deeply loved we can never lose; all that we love deeply becomes a part of us." - Helen Keller',
+  '"In the depth of winter, I finally learned that within me there lay an invincible summer." - Albert Camus',
+  '"Tears have a wisdom all their own. They come when a person has relaxed enough to let go." - Frederick Buechner',
+  '"Once the storm is over, you won\'t remember how you made it through. But one thing is certain: you came out stronger." - Haruki Murakami',
+  '"They live forever in your broken heart that doesn\'t seal back up. And you come through, and you learn to dance with the limp." - Anne Lamott',
+  '"Keep going. Everything you need will come to you at the perfect time." - Unknown',
+  '"The wound is the place where the Light enters you." - Rumi',
+  '"Hope is the thing with feathers that perches in the soul." - Emily Dickinson'
 ];

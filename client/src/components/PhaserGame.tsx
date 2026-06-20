@@ -1,15 +1,23 @@
 import * as React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import Phaser from 'phaser';
 import { createGameConfig } from '@/phaser/config/gameConfig';
 import { HealingWorldScene } from '@/phaser/scenes/HealingWorldScene';
 import { ArrowLeft } from 'lucide-react';
+import { getSectionById } from '@/journey/sections';
+import { buildSectionStations, setActiveStations } from '@/journey/walkSections';
 
 export function PhaserGame() {
   const navigate = useNavigate();
+  const { section: sectionParam } = useParams();
   const gameRef = React.useRef<Phaser.Game | null>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
-  
+
+  // When opened from a garage this is the section being explored (its
+  // sub-sections become the world's billboards). Otherwise it's the general world.
+  const section = sectionParam ? getSectionById(sectionParam) : null;
+  const backTo = section ? '/journey/drive' : '/';
+
   // Tutorial prompt state (asks user if they want tutorial)
   const [showTutorialPrompt, setShowTutorialPrompt] = React.useState(false);
   
@@ -98,7 +106,11 @@ export function PhaserGame() {
   
   React.useEffect(() => {
     if (!containerRef.current) return;
-    
+
+    // Inject this world's billboards (section sub-sections, or the general
+    // stations) BEFORE the game boots — the scene reads them at construction.
+    setActiveStations(section ? buildSectionStations(section) : null);
+
     // Create Phaser game
     const config = createGameConfig('phaser-game-container');
     gameRef.current = new Phaser.Game(config);
@@ -214,8 +226,11 @@ export function PhaserGame() {
         gameRef.current.destroy(true);
         gameRef.current = null;
       }
+
+      // Reset the injected stations so a later general world isn't affected.
+      setActiveStations(null);
     };
-  }, [navigate]);
+  }, [navigate, sectionParam]);
   
   return (
     <div 
@@ -232,27 +247,10 @@ export function PhaserGame() {
         WebkitTouchCallout: 'none',
         WebkitTapHighlightColor: 'transparent'
       }}>
-      {/* Back button - subtle, non-intrusive */}
+      {/* Back button — to the road (3D) inside a section world, else home */}
       <button
-        onClick={() => navigate('/')}
-        className="absolute top-4 left-4 z-50 
-                   flex items-center gap-2 
-                   px-4 py-2 
-                   bg-white/80 backdrop-blur-sm
-                   text-stone-600 font-medium text-sm
-                   rounded-full shadow-sm
-                   hover:bg-white hover:shadow-md
-                   transition-all duration-300
-                   focus:outline-none focus:ring-2 focus:ring-stone-300/50"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        <span>Back</span>
-      </button>
-
-      {/* Switch to the 3D driving version */}
-      <button
-        onClick={() => navigate('/journey/drive')}
-        className="absolute top-4 left-32 z-50
+        onClick={() => navigate(backTo)}
+        className="absolute top-4 left-4 z-50
                    flex items-center gap-2
                    px-4 py-2
                    bg-white/80 backdrop-blur-sm
@@ -262,8 +260,16 @@ export function PhaserGame() {
                    transition-all duration-300
                    focus:outline-none focus:ring-2 focus:ring-stone-300/50"
       >
-        <span>🚗 Drive instead</span>
+        <ArrowLeft className="w-4 h-4" />
+        <span>{section ? 'Back to the road' : 'Back'}</span>
       </button>
+
+      {/* Section title (which world you're walking in) */}
+      {section && (
+        <div className="absolute top-4 left-1/2 z-40 -translate-x-1/2 rounded-full bg-white/80 backdrop-blur-sm px-5 py-2 text-stone-700 font-semibold text-sm shadow-sm">
+          {section.emoji} {section.title}
+        </div>
+      )}
 
       {/* Debug: Reset Tutorial Button */}
       <button

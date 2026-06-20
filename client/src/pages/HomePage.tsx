@@ -142,7 +142,7 @@ export function HomePage() {
         variants={fadeUpVariant}
       >
         <div className="max-w-7xl mx-auto">
-          <Link to="/journey" className="group block">
+          <Link to="/journey/drive" className="group block">
             <div className="relative overflow-hidden bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 
                           rounded-3xl p-8 md:p-12
                           shadow-2xl hover:shadow-3xl
@@ -178,8 +178,8 @@ export function HomePage() {
                     Start Interactive Journey
                   </h3>
                   <p className="text-lg md:text-xl text-white/90 leading-relaxed mb-4">
-                    Explore a peaceful 2D world and discover healing stations at your own pace. 
-                    Walk through therapy, community, tools, and meditation areas.
+                    Drive through a peaceful 3D world and discover healing stations at your own pace.
+                    Pull into a garage to choose a path : therapy, community, tools or resources. Your Time, your Space!
                   </p>
                   <div className="inline-flex items-center text-white font-semibold text-lg
                                 group-hover:translate-x-2 transition-transform duration-300">
