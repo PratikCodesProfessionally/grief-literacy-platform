@@ -157,13 +157,14 @@ export class RAGPipelineService {
   private conversationHistory: ConversationMessage[] = [];
   private maxHistoryLength = 15;
   private readonly useBackendAIProxy = (import.meta.env.VITE_USE_BACKEND_AI_PROXY ?? 'true') === 'true';
+  private readonly apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
   private aiProxyStatusPromise: Promise<AIProxyStatus | null> | null = null;
 
   private getAIProxyStatus(): Promise<AIProxyStatus | null> {
     if (!this.useBackendAIProxy) return Promise.resolve(null);
     if (this.aiProxyStatusPromise) return this.aiProxyStatusPromise;
 
-    this.aiProxyStatusPromise = fetch('/api/ai/status', {
+    this.aiProxyStatusPromise = fetch(`${this.apiBaseUrl}/api/ai/status`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

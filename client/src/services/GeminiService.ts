@@ -12,11 +12,14 @@ export class GeminiService {
   // Free-tier friendly default (fast/cheap). Can be overridden later.
   private model = 'gemini-1.5-flash';
   private useBackendProxy: boolean;
+  private apiBaseUrl: string;
 
   constructor() {
     // Default to backend proxy for security (no key in the browser)
     this.useBackendProxy = (import.meta.env.VITE_USE_BACKEND_AI_PROXY ?? 'true') === 'true';
     this.apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
+    // API base URL for backend (e.g., Render backend when deployed to Vercel)
+    this.apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
 
     if (!this.useBackendProxy && !this.apiKey) {
       console.warn('⚠️ Gemini not configured: set VITE_GEMINI_API_KEY (or enable backend proxy)');
@@ -49,7 +52,7 @@ export class GeminiService {
 
     const response = await fetch(
       this.useBackendProxy
-        ? '/api/ai/gemini'
+        ? `${this.apiBaseUrl}/api/ai/gemini`
         : `${this.baseUrl}/models/${this.model}:generateContent?key=${encodeURIComponent(this.apiKey)}`,
       {
         method: 'POST',

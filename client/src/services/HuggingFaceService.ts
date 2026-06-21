@@ -34,12 +34,15 @@ export class HuggingFaceService {
   // Using Meta's Llama 3.1 - Free and powerful
   private model = 'meta-llama/Llama-3.1-8B-Instruct';
   private useBackendProxy: boolean;
+  private apiBaseUrl: string;
   
   constructor() {
     // Default to backend proxy for security (no key in the browser)
     this.useBackendProxy = (import.meta.env.VITE_USE_BACKEND_AI_PROXY ?? 'true') === 'true';
     // Free API key from huggingface.co (only needed if proxy disabled)
     this.apiKey = import.meta.env.VITE_HUGGINGFACE_API_KEY || '';
+    // API base URL for backend (e.g., Render backend when deployed to Vercel)
+    this.apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
 
     if (!this.useBackendProxy && !this.apiKey) {
       console.warn('⚠️ Hugging Face not configured: set VITE_HUGGINGFACE_API_KEY (or enable backend proxy)');
@@ -71,7 +74,10 @@ export class HuggingFaceService {
     ];
 
     try {
-      const response = await fetch(this.useBackendProxy ? '/api/ai/huggingface' : this.baseUrl, {
+      const apiUrl = this.useBackendProxy 
+        ? `${this.apiBaseUrl}/api/ai/huggingface` 
+        : this.baseUrl;
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: this.useBackendProxy
           ? { 'Content-Type': 'application/json' }

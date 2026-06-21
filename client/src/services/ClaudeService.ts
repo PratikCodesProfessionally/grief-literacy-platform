@@ -16,12 +16,15 @@ export class ClaudeService {
   private baseUrl = 'https://api.anthropic.com/v1/messages';
   private model = 'claude-3-5-sonnet-20241022'; // Latest Claude model
   private useBackendProxy: boolean;
+  private apiBaseUrl: string;
   
   constructor() {
     // Default to backend proxy for security (no key in the browser)
     this.useBackendProxy = (import.meta.env.VITE_USE_BACKEND_AI_PROXY ?? 'true') === 'true';
     // API key should be set in environment variables (only needed if proxy disabled)
     this.apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY || '';
+    // API base URL for backend (e.g., Render backend when deployed to Vercel)
+    this.apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
   }
 
   isConfigured(): boolean {
@@ -43,7 +46,10 @@ export class ClaudeService {
     const systemPrompt = this.buildSystemPrompt(context);
 
     try {
-      const response = await fetch(this.useBackendProxy ? '/api/ai/claude' : this.baseUrl, {
+      const apiUrl = this.useBackendProxy 
+        ? `${this.apiBaseUrl}/api/ai/claude` 
+        : this.baseUrl;
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: this.useBackendProxy
           ? { 'Content-Type': 'application/json' }
