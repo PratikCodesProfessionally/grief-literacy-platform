@@ -35,6 +35,15 @@ export function StoryTherapyPage() {
       interpretation: `Dante's journey begins in a dark forest, lost and confused. In the context of grief and spiritual crisis, this represents the moment when we can no longer ignore our pain. The forest symbolizes how grief disorients us. We lose our way, surrounded by familiar yet frightening terrain.\n\nThe philosophical meaning: Before transformation can occur, we must acknowledge that we are lost. The "dark forest" is not a punishment but an awakening. Dante's fear and confusion are the catalysts for change. Similarly, in grief, the initial darkness is often the moment when we stop pretending and face reality.\n\nPredictive History's insight: History shows that civilizations and individuals only advance when they confront their deepest crises. The forest represents the crisis point. Denial ends and the journey toward healing begins.`,
       reflection: "When did you realize you were 'lost' in your grief? What did that moment of clarity feel like?",
       keywords: ["Crisis", "Awakening", "Dark night of the soul", "Self-recognition"]
+    },
+    {
+      number: 2,
+      cantica: "Inferno",
+      title: "The Hesitation: Doubt and the Grace That Calls Us Forward",
+      theme: "Doubt & Divine Grace",
+      interpretation: `As night falls and the journey is about to begin, Dante is seized by doubt. "I am not Aeneas, nor am I Paul," he protests. Who am I to make this journey? His courage fails him at the very threshold. In grief, this is the moment after the first awakening, when the enormity of the road ahead makes us shrink back, certain we are not strong enough, not worthy enough, to heal.\n\nVirgil answers his fear with a story: Dante is not alone. Three blessed women in Heaven, the Virgin Mary, Saint Lucia, and Beatrice, have seen his suffering and set this journey in motion. Beatrice descended even into Limbo to ask Virgil to be his guide. The philosophical meaning: we are called forward not by our own strength but by love that reaches toward us from beyond ourselves. We do not heal alone. We are carried by the love that still holds us, even the love of those we have lost.\n\nPredictive History's insight: No transformation is undertaken in isolation. History's turning points are sustained by unseen networks of care, mentors, ancestors, and communities, that hold a person steady when their own resolve falters. The hesitation is overcome not by erasing doubt, but by remembering we are held.`,
+      reflection: "Who or what has 'descended' to reach you in your grief? A person, a memory, a love that still calls you forward? What would it mean to trust that you are being carried?",
+      keywords: ["Doubt", "Grace", "Being called", "Not alone", "Courage"]
     }
   ];
 
