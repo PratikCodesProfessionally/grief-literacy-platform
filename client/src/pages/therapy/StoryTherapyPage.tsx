@@ -24,6 +24,7 @@ export function StoryTherapyPage() {
   const [isLoading, setIsLoading] = React.useState(true);
   const [selectedStoryForReading, setSelectedStoryForReading] = React.useState<Story | null>(null);
   const [activeTab, setActiveTab] = React.useState<'stories' | 'divine-comedy'>('stories');
+  const [currentChapterIndex, setCurrentChapterIndex] = React.useState(0);
 
   // Divine Comedy Chapters - Chapter-by-chapter philosophical interpretation inspired by Predictive History
   const divineComedyChapters = [
@@ -44,6 +45,15 @@ export function StoryTherapyPage() {
       interpretation: `As night falls and the journey is about to begin, Dante is seized by doubt. "I am not Aeneas, nor am I Paul," he protests. Who am I to make this journey? His courage fails him at the very threshold. In grief, this is the moment after the first awakening, when the enormity of the road ahead makes us shrink back, certain we are not strong enough, not worthy enough, to heal.\n\nVirgil answers his fear with a story: Dante is not alone. Three blessed women in Heaven, the Virgin Mary, Saint Lucia, and Beatrice, have seen his suffering and set this journey in motion. Beatrice descended even into Limbo to ask Virgil to be his guide. The philosophical meaning: we are called forward not by our own strength but by love that reaches toward us from beyond ourselves. We do not heal alone. We are carried by the love that still holds us, even the love of those we have lost.\n\nPredictive History's insight: No transformation is undertaken in isolation. History's turning points are sustained by unseen networks of care, mentors, ancestors, and communities, that hold a person steady when their own resolve falters. The hesitation is overcome not by erasing doubt, but by remembering we are held.`,
       reflection: "Who or what has 'descended' to reach you in your grief? A person, a memory, a love that still calls you forward? What would it mean to trust that you are being carried?",
       keywords: ["Doubt", "Grace", "Being called", "Not alone", "Courage"]
+    },
+    {
+      number: 3,
+      cantica: "Inferno",
+      title: "The Gate of Hell: Acceptance and the Point of No Return",
+      theme: "Acceptance & Commitment",
+      interpretation: `At the entrance to Hell stands a gate with an inscription that reads: "Abandon all hope, ye who enter here." This is the moment of absolute threshold. Dante and Virgil stand before the ultimate darkness, and Dante must choose: turn back to the safety of ignorance, or cross the threshold into the unknown.\n\nIn the language of grief, this is the moment when we must accept that we cannot go back to who we were. The person we have lost will not return. The life we had is not coming back. This is not a moment of despair but a moment of profound acceptance. We cross this gate when we stop negotiating with reality and commit to the journey forward.\n\nThe philosophical meaning: The inscription is not a curse but a teaching. To enter the underworld of grief is to release our expectations about how life should be. We abandon the hope that things will return to normal. We abandon the false hope that denial protects us. In exchange, we gain the only authentic hope: the possibility of transformation and integration. We become willing to experience the full depth of what we have lost, because in that depth lies the pathway to wisdom.\n\nPredictive History's insight: Every civilization that has endured and grown has passed through gates where it had to abandon what no longer served it. The Renaissance was born from those willing to abandon medieval certainties. Nations have been reborn by those willing to cross thresholds of no return. The inscription at Hell's gate is a covenant: nothing will be the same, but you will emerge changed.`,
+      reflection: "What have you had to abandon in your grief? What false hopes have you released? What remains on the other side of your threshold?",
+      keywords: ["Acceptance", "Letting go", "Threshold", "Commitment", "Integration"]
     }
   ];
 
@@ -484,57 +494,81 @@ export function StoryTherapyPage() {
       {/* Divine Comedy Section */}
       {activeTab === 'divine-comedy' && (
       <div className="space-y-6">
-        {divineComedyChapters.map((chapter) => (
-          <Card key={chapter.number} className="hover-lift">
-            <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5">
-              <div className="flex items-center gap-3 mb-2">
-                <Badge className="bg-primary/20 text-primary rounded-full px-3 py-1">
-                  {chapter.cantica}
-                </Badge>
-                <Badge variant="outline" className="rounded-full">
-                  Chapter {chapter.number}
-                </Badge>
-              </div>
-              <CardTitle className="text-2xl mb-2">{chapter.title}</CardTitle>
-              <CardDescription className="text-base">
-                <span className="font-semibold text-foreground">Theme:</span> {chapter.theme}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6 pt-6">
-              <div>
-                <h4 className="font-semibold text-lg mb-3">Philosophical Interpretation</h4>
-                <p className="text-foreground/80 leading-relaxed whitespace-pre-wrap">
-                  {chapter.interpretation}
-                </p>
-              </div>
-              
-              <div className="bg-muted/30 rounded-lg p-4 border border-border">
-                <h4 className="font-semibold mb-2">Reflection Prompt</h4>
-                <p className="text-foreground/70 italic">{chapter.reflection}</p>
-              </div>
-
-              <div>
-                <h4 className="font-semibold mb-2">Key Concepts</h4>
-                <div className="flex flex-wrap gap-2">
-                  {chapter.keywords.map((keyword, idx) => (
-                    <Badge key={idx} variant="outline" className="rounded-full bg-accent/10">
-                      {keyword}
-                    </Badge>
-                  ))}
+        {divineComedyChapters.length > 0 && (
+          <>
+            <Card key={divineComedyChapters[currentChapterIndex].number} className="hover-lift">
+              <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5">
+                <div className="flex items-center gap-3 mb-2">
+                  <Badge className="bg-primary/20 text-primary rounded-full px-3 py-1">
+                    {divineComedyChapters[currentChapterIndex].cantica}
+                  </Badge>
+                  <Badge variant="outline" className="rounded-full">
+                    Chapter {divineComedyChapters[currentChapterIndex].number}
+                  </Badge>
                 </div>
-              </div>
-              <div className="border-t pt-4 mt-6">
-                <a 
-                  href="https://digitaldante.columbia.edu/dante/divine-comedy/" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-primary hover:text-primary/80 font-medium transition-colors duration-300"
-                >
-                  Read full text on Digital Dante →
-                </a>
-              </div>            </CardContent>
-          </Card>
-        ))}
+                <CardTitle className="text-2xl mb-2">{divineComedyChapters[currentChapterIndex].title}</CardTitle>
+                <CardDescription className="text-base">
+                  <span className="font-semibold text-foreground">Theme:</span> {divineComedyChapters[currentChapterIndex].theme}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6 pt-6">
+                <div>
+                  <h4 className="font-semibold text-lg mb-3">Philosophical Interpretation</h4>
+                  <p className="text-foreground/80 leading-relaxed whitespace-pre-wrap">
+                    {divineComedyChapters[currentChapterIndex].interpretation}
+                  </p>
+                </div>
+                
+                <div className="bg-muted/30 rounded-lg p-4 border border-border">
+                  <h4 className="font-semibold mb-2">Reflection Prompt</h4>
+                  <p className="text-foreground/70 italic">{divineComedyChapters[currentChapterIndex].reflection}</p>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold mb-2">Key Concepts</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {divineComedyChapters[currentChapterIndex].keywords.map((keyword, idx) => (
+                      <Badge key={idx} variant="outline" className="rounded-full bg-accent/10">
+                        {keyword}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+                <div className="border-t pt-4 mt-6">
+                  <a 
+                    href="https://digitaldante.columbia.edu/dante/divine-comedy/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-primary hover:text-primary/80 font-medium transition-colors duration-300"
+                  >
+                    Read full text on Digital Dante
+                  </a>
+                </div>
+
+                <div className="flex items-center justify-between gap-4 border-t pt-6 mt-6">
+                  <Button 
+                    onClick={() => setCurrentChapterIndex(prev => Math.max(0, prev - 1))}
+                    disabled={currentChapterIndex === 0}
+                    variant="outline"
+                  >
+                    Previous Chapter
+                  </Button>
+                  
+                  <div className="text-sm text-foreground/60 font-medium">
+                    Chapter {currentChapterIndex + 1} of {divineComedyChapters.length}
+                  </div>
+                  
+                  <Button 
+                    onClick={() => setCurrentChapterIndex(prev => Math.min(divineComedyChapters.length - 1, prev + 1))}
+                    disabled={currentChapterIndex === divineComedyChapters.length - 1}
+                  >
+                    Next Chapter
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
       )}
 
