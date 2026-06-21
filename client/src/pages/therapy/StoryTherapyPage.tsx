@@ -523,7 +523,16 @@ export function StoryTherapyPage() {
                   ))}
                 </div>
               </div>
-            </CardContent>
+              <div className="border-t pt-4 mt-6">
+                <a 
+                  href="https://digitaldante.columbia.edu/dante/divine-comedy/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-primary hover:text-primary/80 font-medium transition-colors duration-300"
+                >
+                  Read full text on Digital Dante →
+                </a>
+              </div>            </CardContent>
           </Card>
         ))}
       </div>
