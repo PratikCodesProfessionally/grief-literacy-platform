@@ -35,7 +35,26 @@ export function StoryTherapyPage() {
       theme: "Self-Awareness & Crisis",
       interpretation: `Dante's journey begins in a dark forest, lost and confused. In the context of grief and spiritual crisis, this represents the moment when we can no longer ignore our pain. The forest symbolizes how grief disorients us. We lose our way, surrounded by familiar yet frightening terrain.\n\nThe philosophical meaning: Before transformation can occur, we must acknowledge that we are lost. The "dark forest" is not a punishment but an awakening. Dante's fear and confusion are the catalysts for change. Similarly, in grief, the initial darkness is often the moment when we stop pretending and face reality.\n\nPredictive History's insight: History shows that civilizations and individuals only advance when they confront their deepest crises. The forest represents the crisis point. Denial ends and the journey toward healing begins.`,
       reflection: "When did you realize you were 'lost' in your grief? What did that moment of clarity feel like?",
-      keywords: ["Crisis", "Awakening", "Dark night of the soul", "Self-recognition"]
+      keywords: ["Crisis", "Awakening", "Dark night of the soul", "Self-recognition"],
+      tribute: `Lost am I, my Lords, and midway gone astray,
+my pen still aches with words it cannot say,
+their measures cut by antique blades away,
+scorched by a fire no mercy will allay.
+
+The dance has been my life, my breath, my creed,
+of elves and monsters and the rites they lead,
+who wheel through shadowed wood and tangled mead,
+while I, bewildered, follow where they bleed.
+
+Aristotle, Socrates, and Beatrice,
+three loves that hold my soul and grant no peace,
+within this dark abyss that none release,
+I speak their names and bid the shadows cease.
+
+I summon all their love into the pit,
+where shadows of the ancient evil sit,
+that one frail star, long darkened, might be lit,
+and guide my steps where Heaven sees them fit.`
     },
     {
       number: 2,
@@ -534,6 +553,14 @@ export function StoryTherapyPage() {
                     ))}
                   </div>
                 </div>
+                {divineComedyChapters[currentChapterIndex].tribute && (
+                  <div className="bg-accent/5 rounded-lg p-6 border border-accent/20">
+                    <h4 className="font-semibold text-lg mb-4">A Tribute</h4>
+                    <p className="text-foreground/80 leading-relaxed whitespace-pre-wrap italic font-serif">
+                      {divineComedyChapters[currentChapterIndex].tribute}
+                    </p>
+                  </div>
+                )}
                 <div className="border-t pt-4 mt-6">
                   <a 
                     href="https://digitaldante.columbia.edu/dante/divine-comedy/" 
