@@ -63,7 +63,29 @@ and guide my steps where Heaven sees them fit.`
       theme: "Doubt & Divine Grace",
       interpretation: `As night falls and the journey is about to begin, Dante is seized by doubt. "I am not Aeneas, nor am I Paul," he protests. Who am I to make this journey? His courage fails him at the very threshold. In grief, this is the moment after the first awakening, when the enormity of the road ahead makes us shrink back, certain we are not strong enough, not worthy enough, to heal.\n\nVirgil answers his fear with a story: Dante is not alone. Three blessed women in Heaven, the Virgin Mary, Saint Lucia, and Beatrice, have seen his suffering and set this journey in motion. Beatrice descended even into Limbo to ask Virgil to be his guide. The philosophical meaning: we are called forward not by our own strength but by love that reaches toward us from beyond ourselves. We do not heal alone. We are carried by the love that still holds us, even the love of those we have lost.\n\nPredictive History's insight: No transformation is undertaken in isolation. History's turning points are sustained by unseen networks of care, mentors, ancestors, and communities, that hold a person steady when their own resolve falters. The hesitation is overcome not by erasing doubt, but by remembering we are held.`,
       reflection: "Who or what has 'descended' to reach you in your grief? A person, a memory, a love that still calls you forward? What would it mean to trust that you are being carried?",
-      keywords: ["Doubt", "Grace", "Being called", "Not alone", "Courage"]
+      keywords: ["Doubt", "Grace", "Being called", "Not alone", "Courage"],
+      tribute: `Love bypasses Heaven
+Descends into the earthly realm
+Erases fear from Dante's helm
+Now he has got noone to blame
+
+Virgil is the messenger of Beatrice
+To take Dante away from the earthly Matrix
+
+Beatrice the reflection of Saint Lucia
+Sprouting and growing fast like alocasia
+Bends down the shadowy shades of heaven
+to wake up the ancient poet virgil as a raven
+
+Beatrice is the beaker full of love
+overflowing and estatic in her blood
+Saint Lucia's favorite vision is in her grub
+for dante's pain is hers and in her sob
+
+Saint Lucia's disciple is in rubble
+In front of the Hell's reckoning stumbled
+The Virgin mary feels lost Dante's trouble
+A true testament of faith and love's bubble`
     },
     {
       number: 3,
