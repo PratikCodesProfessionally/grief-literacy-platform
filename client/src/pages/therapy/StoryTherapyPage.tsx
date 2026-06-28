@@ -94,7 +94,32 @@ A true testament of faith and love's bubble`
       theme: "Acceptance & Commitment",
       interpretation: `At the entrance to Hell stands a gate with an inscription that reads: "Abandon all hope, ye who enter here." This is the moment of absolute threshold. Dante and Virgil stand before the ultimate darkness, and Dante must choose: turn back to the safety of ignorance, or cross the threshold into the unknown.\n\nIn the language of grief, this is the moment when we must accept that we cannot go back to who we were. The person we have lost will not return. The life we had is not coming back. This is not a moment of despair but a moment of profound acceptance. We cross this gate when we stop negotiating with reality and commit to the journey forward.\n\nThe philosophical meaning: The inscription is not a curse but a teaching. To enter the underworld of grief is to release our expectations about how life should be. We abandon the hope that things will return to normal. We abandon the false hope that denial protects us. In exchange, we gain the only authentic hope: the possibility of transformation and integration. We become willing to experience the full depth of what we have lost, because in that depth lies the pathway to wisdom.\n\nPredictive History's insight: Every civilization that has endured and grown has passed through gates where it had to abandon what no longer served it. The Renaissance was born from those willing to abandon medieval certainties. Nations have been reborn by those willing to cross thresholds of no return. The inscription at Hell's gate is a covenant: nothing will be the same, but you will emerge changed.`,
       reflection: "What have you had to abandon in your grief? What false hopes have you released? What remains on the other side of your threshold?",
-      keywords: ["Acceptance", "Letting go", "Threshold", "Commitment", "Integration"]
+      keywords: ["Acceptance", "Letting go", "Threshold", "Commitment", "Integration"],
+      tribute: `'Let us not talk of them,but look and pass'
+says the ancient poet with aghast 
+For charon has fastened his ferry-mast
+to voyage into the suffering city at last 
+
+Those who refused to live 'n do their creed
+entrenched blind in cowardice's mere greed
+shall find their resort here, these drunked mead
+for they've wasted and pilaged the Adam's seed
+
+Dante engulfed in earthly empathy 
+got emotions metamorphosed into sympathy 
+For he is touched deeply and unpleasantly
+defeated by pain and beastly apathy
+
+For Dante must cast aside his ego
+For his is warned about his mental vertigo
+For Dante's will must now overcome this embargo
+Is he is to voyage deeper into this limbo?`,
+      predictiveHistoryInsight: [
+        `The atmosphere shifts from the entrance into a turbid timeless air filled with strange utterances, horrible pronouncements, and accents of anger, creating a chaotic and sensory-overloading experience for Dante.`,
+        `Dante is physically and emotionally overwhelmed by the transition. He describes his head as oppressed by horror and asks Virgil for clarity about the souls he hears suffering, showing his human empathy and fear.`,
+        `Virgil stays calm and analytical. He explains the geography and the nature of the suffering souls with a clinical, teacher-like authority, creating a sharp contrast with Dante's turmoil.`,
+        `The souls in this region are defeated by their pain, and the move into Hell marks a final surrender of human agency and the abandonment of hope or ambition elsewhere in the Divine Comedy.`
+      ]
     }
   ];
 
@@ -581,6 +606,16 @@ A true testament of faith and love's bubble`
                     <p className="text-foreground/80 leading-relaxed whitespace-pre-wrap italic font-serif">
                       {divineComedyChapters[currentChapterIndex].tribute}
                     </p>
+                  </div>
+                )}
+                {divineComedyChapters[currentChapterIndex].predictiveHistoryInsight && (
+                  <div className="bg-muted/30 rounded-lg p-6 border border-border space-y-4">
+                    <h4 className="font-semibold text-lg">Predictive History's Insight</h4>
+                    <ul className="list-disc pl-5 space-y-3 text-foreground/80 leading-relaxed">
+                      {divineComedyChapters[currentChapterIndex].predictiveHistoryInsight.map((insightLine, index) => (
+                        <li key={index}>{insightLine}</li>
+                      ))}
+                    </ul>
                   </div>
                 )}
                 <div className="border-t pt-4 mt-6">
