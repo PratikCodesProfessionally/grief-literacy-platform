@@ -27,7 +27,20 @@ export function StoryTherapyPage() {
   const [currentChapterIndex, setCurrentChapterIndex] = React.useState(0);
 
   // Divine Comedy Chapters - Chapter-by-chapter philosophical interpretation inspired by Predictive History
-  const divineComedyChapters = [
+  interface DivineComedyChapter {
+    number: number;
+    cantica: string;
+    title: string;
+    theme: string;
+    interpretation: string;
+    reflection: string;
+    keywords: string[];
+    tribute?: string;
+    predictiveHistoryInsight?: string[];
+    videoUrl?: string;
+  }
+
+  const divineComedyChapters: DivineComedyChapter[] = [
     {
       number: 1,
       cantica: "Inferno",
@@ -92,7 +105,7 @@ A true testament of faith and love's bubble`
       cantica: "Inferno",
       title: "The Gate of Hell: Acceptance and the Point of No Return",
       theme: "Acceptance & Commitment",
-      interpretation: `At the entrance to Hell stands a gate with an inscription that reads: "Abandon all hope, ye who enter here." This is the moment of absolute threshold. Dante and Virgil stand before the ultimate darkness, and Dante must choose: turn back to the safety of ignorance, or cross the threshold into the unknown.\n\nIn the language of grief, this is the moment when we must accept that we cannot go back to who we were. The person we have lost will not return. The life we had is not coming back. This is not a moment of despair but a moment of profound acceptance. We cross this gate when we stop negotiating with reality and commit to the journey forward.\n\nThe philosophical meaning: The inscription is not a curse but a teaching. To enter the underworld of grief is to release our expectations about how life should be. We abandon the hope that things will return to normal. We abandon the false hope that denial protects us. In exchange, we gain the only authentic hope: the possibility of transformation and integration. We become willing to experience the full depth of what we have lost, because in that depth lies the pathway to wisdom.\n\nPredictive History's insight: Every civilization that has endured and grown has passed through gates where it had to abandon what no longer served it. The Renaissance was born from those willing to abandon medieval certainties. Nations have been reborn by those willing to cross thresholds of no return. The inscription at Hell's gate is a covenant: nothing will be the same, but you will emerge changed.`,
+      interpretation: `At the entrance to Hell stands a gate with an inscription that reads: "Abandon all hope, ye who enter here." This is the moment of absolute threshold. Dante and Virgil stand before the ultimate darkness, and Dante must choose: turn back to the safety of ignorance, or cross the threshold into the unknown.\n\nIn the language of grief, this is the moment when we must accept that we cannot go back to who we were. The person we have lost will not return. The life we had is not coming back. This is not a moment of despair but a moment of profound acceptance. We cross this gate when we stop negotiating with reality and commit to the journey forward.\n\nThe philosophical meaning: The inscription is not a curse but a teaching. To enter the underworld of grief is to release our expectations about how life should be. We abandon the hope that things will return to normal. We abandon the false hope that denial protects us. In exchange, we gain the only authentic hope: the possibility of transformation and integration. We become willing to experience the full depth of what we have lost, because in that depth lies the pathway to wisdom.\n\nInside History's insight: Every civilization that has endured and grown has passed through gates where it had to abandon what no longer served it. The Renaissance was born from those willing to abandon medieval certainties. Nations have been reborn by those willing to cross thresholds of no return. The inscription at Hell's gate is a covenant: nothing will be the same, but you will emerge changed.`,
       reflection: "What have you had to abandon in your grief? What false hopes have you released? What remains on the other side of your threshold?",
       keywords: ["Acceptance", "Letting go", "Threshold", "Commitment", "Integration"],
       tribute: `'Let us not talk of them,but look and pass'
@@ -120,6 +133,40 @@ Is he is to voyage deeper into this limbo?`,
         `Virgil stays calm and analytical. He explains the geography and the nature of the suffering souls with a clinical, teacher-like authority, creating a sharp contrast with Dante's turmoil.`,
         `The souls in this region are defeated by their pain, and the move into Hell marks a final surrender of human agency and the abandonment of hope or ambition elsewhere in the Divine Comedy.`
       ]
+    },
+    {
+      number: 4,
+      cantica: "Inferno",
+      title: "Limbo: The Virtuous Souls and the Longing Without Hope",
+      theme: "Longing & Virtue",
+      interpretation: `Descending into the First Circle, Dante enters Limbo, not a place of torment but of longing. Here dwell the virtuous souls who lived well yet died without baptism: the great poets and philosophers of antiquity. They are not punished with fire or ice. Their only suffering is desire without hope. As Virgil explains, "without hope we live in longing." They gaze eternally toward a light they cannot reach.\n\nIn the language of grief, Limbo is the landscape of suspended mourning, the place where we hold everything good and worthy about the one we have lost, and yet ache with a longing that finds no resolution. It is honor without peace, love without arrival. Dante is welcomed here by Homer, Horace, Ovid, and Lucan, and admitted as the sixth among them. Together they enter a noble castle where Aristotle sits as "the master of those who know," beside Socrates and Plato.\n\nThe philosophical meaning: Limbo asks whether goodness alone is enough, and answers with a tender ambiguity. These souls are honored, luminous, and at rest, yet incomplete. Grief teaches the same paradox. We can carry a love that is whole and beautiful and still live inside its longing. To honor what we have lost is not the same as being released from it.\n\nPredictive History's insight: civilizations are built on the poets and thinkers who came before, the classical foundation that later ages reclaim. Dante does not discard the virtuous pagans. He crowns them, even as he places them beyond salvation. History advances by honoring the inheritance it can never fully return to.`,
+      reflection: "What do you carry that is good and whole, yet still aches with longing? Is it possible to honor a love completely and still live inside its desire?",
+      keywords: ["Limbo", "Longing", "Virtue", "Honor", "Suspension"],
+      tribute: `Dante plays with poets
+Placing them in this cantos' riot
+Because they lacked baptism's might
+So they remain here quiet?
+
+Some souls were saved afterwards
+Before they could go astray and haywards
+By the resurrected one utopianly
+Because they seeked divinity appropriately
+
+Before he could pay homage to homer
+Virgil places himself alongside as a roamer
+Other gaint shadows take his space - the Horace
+N' Ovid 'Avid Arousal of Ars Amatoria' resurface
+
+Wrong place wrong time
+Socrates and Plato make the base of the exalted castle sublime
+As they march forth they see other greats
+'Everything has an end, they say' and this was one of those dire case`,
+      predictiveHistoryInsight: [
+        `Logic of Perfect Justice & Innocent Souls: Dante's vision of Limbo rests on the premise that God's justice is perfect and logical. Rather than a mechanical exclusion of the unbaptized, seats in the order of Heaven are assigned through reason, love, and virtue, a response to the theological problem of innocent souls who die without baptism.`,
+        `Virgil's Choice to Remain in Limbo: A central paradox. Virgil was granted special divine permission and the opportunity to reach Paradise by guiding Dante, yet he is not in Paradise. He remains in Limbo because he chose to stay.`,
+        `Classical Poetry vs. Empire: The Great Citadel of Limbo houses the virtuous pagans and poets (Homer, Horace, Ovid, Lucan, Virgil). Poetry is what gives birth to civilization. Greek culture was built on excellence (arete) and flourishing (eudaimonia), while Roman culture shifted toward piety and obedience. Virgil embodies this classical foundation, which Dante reclaims as he confronts both pagan philosophy and the medieval Church.`
+      ],
+      videoUrl: "https://www.youtube.com/watch?v=e_9fndobOnI&t=11663s"
     }
   ];
 
@@ -618,15 +665,25 @@ Is he is to voyage deeper into this limbo?`,
                     </ul>
                   </div>
                 )}
-                <div className="border-t pt-4 mt-6">
-                  <a 
-                    href="https://digitaldante.columbia.edu/dante/divine-comedy/" 
-                    target="_blank" 
+                <div className="border-t pt-4 mt-6 flex flex-wrap items-center gap-x-6 gap-y-2">
+                  <a
+                    href="https://digitaldante.columbia.edu/dante/divine-comedy/"
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 text-primary hover:text-primary/80 font-medium transition-colors duration-300"
                   >
                     Read full text on Digital Dante
                   </a>
+                  {divineComedyChapters[currentChapterIndex].videoUrl && (
+                    <a
+                      href={divineComedyChapters[currentChapterIndex].videoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-primary hover:text-primary/80 font-medium transition-colors duration-300"
+                    >
+                      🎥 Watch the lecture on YouTube
+                    </a>
+                  )}
                 </div>
 
                 <div className="flex items-center justify-between gap-4 border-t pt-6 mt-6">
