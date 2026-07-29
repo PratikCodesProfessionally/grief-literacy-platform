@@ -628,14 +628,43 @@ export class HealingWorldScene extends Phaser.Scene {
   private createInteractiveObjects(): void {
     const groundY = this.scale.height - 180;
     
-    // Place trees with quotes
+    // Place trees with quotes — spread across the full world width
     const treePositions = [
-      { x: 1800, quote: BENCH_QUOTES[0], size: 'large' as const },
-      { x: 3800, quote: BENCH_QUOTES[1], size: 'medium' as const },
-      { x: 6500, quote: BENCH_QUOTES[2], size: 'large' as const },
-      { x: 9200, quote: BENCH_QUOTES[3], size: 'medium' as const },
-      { x: 11800, quote: BENCH_QUOTES[4], size: 'large' as const },
-      { x: 13000, quote: BENCH_QUOTES[5], size: 'medium' as const }
+      // Opening stretch (before first station)
+      { x: 600,   quote: BENCH_QUOTES[0],  size: 'medium' as const },
+      { x: 1100,  quote: BENCH_QUOTES[15], size: 'large'  as const },
+
+      // Between station 1 (Therapy) and station 2 (Community)
+      { x: 1800,  quote: BENCH_QUOTES[1],  size: 'large'  as const },
+      { x: 2300,  quote: BENCH_QUOTES[16], size: 'medium' as const },
+
+      // Between station 2 (Community) and station 3 (Tools)
+      { x: 3100,  quote: BENCH_QUOTES[2],  size: 'medium' as const },
+      { x: 3800,  quote: BENCH_QUOTES[17], size: 'large'  as const },
+
+      // Between station 3 (Tools) and station 4 (Resources)
+      { x: 4600,  quote: BENCH_QUOTES[3],  size: 'large'  as const },
+      { x: 5200,  quote: BENCH_QUOTES[18], size: 'medium' as const },
+
+      // Between station 4 (Resources) and station 5 (Meditation)
+      { x: 6000,  quote: BENCH_QUOTES[4],  size: 'medium' as const },
+      { x: 6500,  quote: BENCH_QUOTES[19], size: 'large'  as const },
+
+      // Around / beyond Meditation Garden (station 5)
+      { x: 7500,  quote: BENCH_QUOTES[5],  size: 'large'  as const },
+      { x: 8200,  quote: BENCH_QUOTES[20], size: 'medium' as const },
+
+      // Deep exploration zone
+      { x: 9000,  quote: BENCH_QUOTES[6],  size: 'large'  as const },
+      { x: 9700,  quote: BENCH_QUOTES[21], size: 'medium' as const },
+      { x: 10400, quote: BENCH_QUOTES[7],  size: 'large'  as const },
+      { x: 11000, quote: BENCH_QUOTES[22], size: 'medium' as const },
+
+      // Far reaches
+      { x: 11800, quote: BENCH_QUOTES[8],  size: 'large'  as const },
+      { x: 12400, quote: BENCH_QUOTES[23], size: 'medium' as const },
+      { x: 13000, quote: BENCH_QUOTES[9],  size: 'large'  as const },
+      { x: 13600, quote: BENCH_QUOTES[24], size: 'medium' as const }
     ];
     
     treePositions.forEach(({ x, quote, size }) => {

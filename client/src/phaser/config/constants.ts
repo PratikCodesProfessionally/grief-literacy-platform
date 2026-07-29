@@ -167,6 +167,7 @@ export const NPC_CONFIGS = [
 
 // Inspirational quotes for benches
 export const BENCH_QUOTES = [
+  // Original quotes (indices 0–14)
   '"You are braver than you believe, stronger than you seem, and smarter than you think." - A.A. Milne',
   '"The only way out is through." - Robert Frost',
   '"You have within you right now, everything you need to deal with whatever comes." - Brian Tracy',
@@ -181,5 +182,28 @@ export const BENCH_QUOTES = [
   '"They live forever in your broken heart that doesn\'t seal back up. And you come through, and you learn to dance with the limp." - Anne Lamott',
   '"Keep going. Everything you need will come to you at the perfect time." - Unknown',
   '"The wound is the place where the Light enters you." - Rumi',
-  '"Hope is the thing with feathers that perches in the soul." - Emily Dickinson'
+  '"Hope is the thing with feathers that perches in the soul." - Emily Dickinson',
+
+  // New quotes (indices 15–35)
+  '"Grief is the price we pay for love." - Queen Elizabeth II',
+  '"There is no grief like the grief that does not speak." - Henry Wadsworth Longfellow',
+  '"Grief is not a sign of weakness, nor a lack of faith. It is the price of love." - Unknown',
+  '"To live in hearts we leave behind is not to die." - Thomas Campbell',
+  '"Unable are the loved to die, for love is immortality." - Emily Dickinson',
+  '"When someone you love becomes a memory, the memory becomes a treasure." - Unknown',
+  '"The reality is that you will grieve forever. You will not \'get over\' the loss; you will learn to live with it." - Elisabeth Kübler-Ross',
+  '"Grief is just love with nowhere to go." - Jamie Anderson',
+  '"It\'s okay to not be okay." - Unknown',
+  '"You don\'t have to be positive all the time. It\'s perfectly okay to feel sad, angry, annoyed, frustrated, scared, or anxious." - Lori Deschene',
+  '"Be gentle with yourself. You are a child of the universe, no less than the trees and the stars." - Max Ehrmann',
+  '"Growth is painful. Change is painful. But nothing is as painful as staying stuck somewhere you don\'t belong." - Mandy Hale',
+  '"Somewhere in between all your laughing and crying, your hello and your goodbye, lies a story worth telling." - Unknown',
+  '"Even the darkest night will end and the sun will rise." - Victor Hugo',
+  '"Turn your wounds into wisdom." - Oprah Winfrey',
+  '"Sometimes you have to go through the storm to see the rainbow." - Unknown',
+  '"Grief never ends, but it changes. It\'s a passage, not a place to stay." - Unknown',
+  '"Your task is not to seek for love, but merely to seek and find all the barriers within yourself that you have built against it." - Rumi',
+  '"What we have once enjoyed we can never lose. All that we love deeply becomes a part of us." - Helen Keller',
+  '"Courage doesn\'t always roar. Sometimes courage is the quiet voice at the end of the day saying, \'I will try again tomorrow.\'" - Mary Anne Radmacher',
+  '"You are allowed to be both a masterpiece and a work in progress simultaneously." - Sophia Bush'
 ];
