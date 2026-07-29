@@ -167,6 +167,7 @@ export const NPC_CONFIGS = [
 
 // Inspirational quotes for benches
 export const BENCH_QUOTES = [
+  // Original quotes (indices 0–14)
   '"You are braver than you believe, stronger than you seem, and smarter than you think." - A.A. Milne',
   '"The only way out is through." - Robert Frost',
   '"You have within you right now, everything you need to deal with whatever comes." - Brian Tracy',
@@ -181,5 +182,28 @@ export const BENCH_QUOTES = [
   '"They live forever in your broken heart that doesn\'t seal back up. And you come through, and you learn to dance with the limp." - Anne Lamott',
   '"Keep going. Everything you need will come to you at the perfect time." - Unknown',
   '"The wound is the place where the Light enters you." - Rumi',
-  '"Hope is the thing with feathers that perches in the soul." - Emily Dickinson'
+  '"Hope is the thing with feathers that perches in the soul." - Emily Dickinson',
+
+  // New quotes (indices 15–35) — hopeful & encouraging
+  '"Even the darkest night will end and the sun will rise." - Victor Hugo',
+  '"You are allowed to be both a masterpiece and a work in progress simultaneously." - Sophia Bush',
+  '"Stars can\'t shine without darkness." - Unknown',
+  '"To live in hearts we leave behind is not to die." - Thomas Campbell',
+  '"When someone you love becomes a memory, the memory becomes a treasure." - Unknown',
+  '"Courage doesn\'t always roar. Sometimes it\'s the quiet voice at the end of the day saying, \'I will try again tomorrow.\'" - Mary Anne Radmacher',
+  '"Be gentle with yourself. You are a child of the universe, no less than the trees and the stars." - Max Ehrmann',
+  '"Turn your wounds into wisdom." - Oprah Winfrey',
+  '"There is a crack in everything — that\'s how the light gets in." - Leonard Cohen',
+  '"You are stronger than you know, braver than you feel, and more loved than you can imagine." - Unknown',
+  '"Every morning brings new potential, and every sunset is proof you survived the day." - Unknown',
+  '"Though no one can go back and make a brand new start, anyone can start from now and make a brand new ending." - Carl Bard',
+  '"What lies behind us and what lies before us are tiny matters compared to what lies within us." - Ralph Waldo Emerson',
+  '"The human spirit is stronger than anything that can happen to it." - C.C. Scott',
+  '"Out of difficulties grow miracles." - Jean de la Bruyère',
+  '"You don\'t have to see the whole staircase, just take the first step." - Martin Luther King Jr.',
+  '"One day you will tell your story of how you overcame what you went through, and it will be someone else\'s survival guide." - Brené Brown',
+  '"You are not alone. You have always had within you everything you need to heal." - Unknown',
+  '"After every storm there is a golden sky." - Unknown',
+  '"Healing is not an overnight process. It is a daily cleansing of pain, it is a daily healing of your life." - León Brown',
+  '"The most beautiful people we have known are those who have known defeat, known suffering — and have found their way out of the depths." - Elisabeth Kübler-Ross'
 ];
