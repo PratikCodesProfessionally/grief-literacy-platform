@@ -44,6 +44,7 @@ export class HealingWorldScene extends Phaser.Scene {
   private currentPrompt?: Phaser.GameObjects.Container;
   private currentNPCDialogue?: Phaser.GameObjects.Container;
   private currentTreeQuote?: Phaser.GameObjects.Container;
+  private currentActiveTree?: Tree;
   private seasonManager!: SeasonManager;
   private seasonUI?: Phaser.GameObjects.Container;
   private isMobile: boolean = false;
@@ -1009,19 +1010,12 @@ export class HealingWorldScene extends Phaser.Scene {
   private checkTreeInteractions(): boolean {
     for (const tree of this.trees) {
       if (tree.isPlayerNearby(this.player.x, this.player.y, 120)) {
-        // Support manual trigger with interact button
+        // Support manual trigger with interact button (proximity handles hiding)
         if (this.player.peekInteractPressed() && !this.currentTreeQuote) {
           this.player.consumeInteractPressed();
           console.log('[SCENE] 🌳 Manual tree interaction');
           this.currentTreeQuote = tree.showQuote(this);
-          
-          // Auto-hide after 8 seconds
-          this.time.delayedCall(8000, () => {
-            if (this.currentTreeQuote) {
-              tree.hideQuote(this.currentTreeQuote, this);
-              this.currentTreeQuote = undefined;
-            }
-          });
+          this.currentActiveTree = tree;
           return true; // Consumed
         }
         return false; // Near tree but didn't interact
@@ -1031,23 +1025,29 @@ export class HealingWorldScene extends Phaser.Scene {
   }
   
   private checkPassiveTreeDisplay(): void {
-    // Auto-show quote when player stops near tree (no button needed)
+    // Find if player is near any tree
+    let nearTree: Tree | undefined;
     for (const tree of this.trees) {
       if (tree.isPlayerNearby(this.player.x, this.player.y, 100)) {
-        const playerStopped = Math.abs(this.player.velocity.x) < 1;
-        if (!this.currentTreeQuote && playerStopped) {
-          console.log('[SCENE] 🌳 Auto-showing tree quote (player stopped)');
-          this.currentTreeQuote = tree.showQuote(this);
-          
-          // Auto-hide after 6 seconds
-          this.time.delayedCall(6000, () => {
-            if (this.currentTreeQuote) {
-              tree.hideQuote(this.currentTreeQuote, this);
-              this.currentTreeQuote = undefined;
-            }
-          });
-        }
-        return; // Only check one tree at a time
+        nearTree = tree;
+        break;
+      }
+    }
+
+    if (nearTree) {
+      // Entered a new tree's range — show quote immediately
+      if (!this.currentTreeQuote) {
+        console.log('[SCENE] 🌳 Player entered tree range — showing quote');
+        this.currentTreeQuote = nearTree.showQuote(this);
+        this.currentActiveTree = nearTree;
+      }
+    } else {
+      // Player left all trees — hide quote immediately
+      if (this.currentTreeQuote && this.currentActiveTree) {
+        console.log('[SCENE] 🌳 Player left tree range — hiding quote');
+        this.currentActiveTree.hideQuote(this.currentTreeQuote, this);
+        this.currentTreeQuote = undefined;
+        this.currentActiveTree = undefined;
       }
     }
   }
