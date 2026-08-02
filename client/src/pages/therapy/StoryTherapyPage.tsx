@@ -167,6 +167,53 @@ As they march forth they see other greats
         `Classical Poetry vs. Empire: The Great Citadel of Limbo houses the virtuous pagans and poets (Homer, Horace, Ovid, Lucan, Virgil). Poetry is what gives birth to civilization. Greek culture was built on excellence (arete) and flourishing (eudaimonia), while Roman culture shifted toward piety and obedience. Virgil embodies this classical foundation, which Dante reclaims as he confronts both pagan philosophy and the medieval Church.`
       ],
       videoUrl: "https://www.youtube.com/watch?v=e_9fndobOnI&t=11663s"
+    },
+    {
+      number: 5,
+      cantica: "Inferno",
+      title: "The Wind of Lust: Misdirected Love and Moral Clarity",
+      theme: "Desire, Judgment, and Self-Control",
+      interpretation: `Canto 5 turns from the threshold of Hell into the storm of the Second Circle, where Minos judges the souls who confess their own lives and are sent where they belong. The encounter reveals that lust is not a random punishment but a condition of love that has lost measure and direction. Desire itself is not the enemy; the danger begins when appetite overrules reason and the soul lets itself be carried without restraint.
+
+    In grief, this chapter mirrors the struggle to tell the difference between what is tender and what is consuming. Dante's pity for Francesca shows how easy it is to confuse sympathy with approval, or beauty with truth. Virgil's role, and Minos' judgment, remind us that moral clarity requires more than feeling. It requires discernment. The storm becomes an image of the mind and body when they are blown by passion without grounding.`,
+      reflection: "Where in your life have you felt the difference between love that steadies you and desire that sweeps you away?",
+      keywords: ["Lust", "Judgment", "Reason", "Desire", "Discernment"],
+      tribute: `Love is a disease that destroys civilization
+says Venus the mother of Aeneas
+through Virgil's Pen
+But the Minos' serpent
+is weary of this literature 
+So he warns Dante of Virgil's allure
+
+Aenes is trying to destroy the legacy of Dido 
+In Virgil's Aeneid by marrying her in an false oath
+And sneaking secretly towards Italy henceforth 
+
+Love took hold of dido to destroy Carthage 
+Virgil's literature of obedience and peity
+denies him the right to be a noble sage
+minos warns to trust noone in this cantos' visage
+
+Francesca and her lover had only read the lancelot 
+For Dante cannot swallow this love bird's endplot
+
+The difference between love and lust reignite
+Something that touches body but doesnot touch the soul quite?`,
+      predictiveHistoryInsight: [
+        `1. Minos as the Connoisseur of Sin`,
+        `The Divine Judge: The professor highlights Minos standing at the entrance of the Second Circle, examining and judging souls as they arrive.`,
+        `Confession and Self-Condemnation: The professor notes that the damned souls willingly confess everything to Minos. Their placement in Hell is not an arbitrary punishment forced upon them, but a direct result of their own actions and choices during life.`,
+        `2. The Nature of Lust & Misdirected Love`,
+        `Incontinence vs. Malice: Canto 5 marks the beginning of the sins of Incontinence (lack of self-control). The professor explains that unlike deliberate evil or violence, lust stems from a natural, primal emotion (love) that has become unregulated and misdirected.`,
+        `Subordinating Reason to Appetite: The fundamental definition of lust in Dante's theology is placing physical/carnal desire above rational intellect.`,
+        `3. The Contrapasso (The Windstorm)`,
+        `Symbolism of the Tempest: The souls in Canto 5 are tossed violently through pitch-black air by ceaseless dark windstorms.`,
+        `The Professor's Insight: The professor points out that this punishment directly mirrors their psychological state on Earth: because they allowed themselves to be blown around by the "winds of passion" without rational agency, they are eternally swept around in literal chaos.`,
+        `4. The Encounter with Francesca and Paolo`,
+        `Romanticized Tragedy vs. Moral Reality: The professor analyzes Dante's interaction with Francesca da Rimini. While Dante feels deep sympathy and pity for her romantic story, the professor points out that Francesca deflects personal responsibility, blaming love itself and the book they were reading (Lancelot) rather than her own choices.`,
+        `Dante's Swoon: Dante fainting at the end of Canto 5 reflects his own struggle with romantic poetry and courtly love, realizing how easily human empathy can obscure moral judgment.`
+      ],
+      videoUrl: "https://youtu.be/e_9fndobOnI?si=zMrvazOsfpJu8qB-"
     }
   ];
 
@@ -656,11 +703,49 @@ As they march forth they see other greats
                   </div>
                 )}
                 {divineComedyChapters[currentChapterIndex].predictiveHistoryInsight && (
-                  <div className="bg-muted/30 rounded-lg p-6 border border-border space-y-4">
-                    <h4 className="font-semibold text-lg">Predictive History's Insight</h4>
-                    <ul className="list-disc pl-5 space-y-3 text-foreground/80 leading-relaxed">
+                  <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-gradient-to-br from-white via-slate-50 to-slate-100/80 p-6 shadow-sm ring-1 ring-black/5 dark:border-slate-800/80 dark:from-slate-950 dark:via-slate-900 dark:to-slate-900/80">
+                    <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary/70 via-accent/70 to-secondary/70" />
+                    <div className="mb-5 flex items-center gap-3">
+                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary ring-1 ring-primary/15">
+                        PH
+                      </span>
+                      <h4 className="text-2xl md:text-3xl font-black tracking-tight text-foreground">
+                        Predictive History's Insight
+                      </h4>
+                    </div>
+                    <ul className="space-y-4">
                       {divineComedyChapters[currentChapterIndex].predictiveHistoryInsight.map((insightLine, index) => (
-                        <li key={index}>{insightLine}</li>
+                        <li
+                          key={index}
+                          className="rounded-2xl border border-slate-200/80 bg-white/90 p-5 text-sm md:text-[15px] leading-7 text-foreground/85 shadow-sm shadow-slate-900/5 backdrop-blur-sm transition-all duration-300 hover:border-primary/20 hover:bg-white hover:shadow-md dark:border-slate-800/70 dark:bg-slate-950/75 dark:hover:border-primary/30"
+                        >
+                          {(() => {
+                            const [firstLine, ...bodyLines] = insightLine.split('\n');
+                            const headingMatch = firstLine.match(/^(\d+)\.\s*(.+)$/);
+
+                            if (headingMatch) {
+                              return (
+                                <div className="space-y-3">
+                                  <div className="flex items-start gap-3">
+                                    <span className="inline-flex min-w-9 items-center justify-center rounded-full bg-primary/10 px-3 py-1 text-sm font-bold text-primary ring-1 ring-primary/15">
+                                      {headingMatch[1]}
+                                    </span>
+                                    <h5 className="text-lg md:text-xl font-black leading-snug tracking-tight text-foreground">
+                                      {headingMatch[2]}
+                                    </h5>
+                                  </div>
+                                  {bodyLines.length > 0 && (
+                                    <div className="rounded-xl border border-slate-200/70 bg-slate-50/90 p-4 text-sm leading-7 text-foreground/85 dark:border-slate-800/70 dark:bg-slate-900/60">
+                                      <p className="whitespace-pre-wrap">{bodyLines.join('\n')}</p>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            }
+
+                            return <p className="whitespace-pre-wrap">{insightLine}</p>;
+                          })()}
+                        </li>
                       ))}
                     </ul>
                   </div>
