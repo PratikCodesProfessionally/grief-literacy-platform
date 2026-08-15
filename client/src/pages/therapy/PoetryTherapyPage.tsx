@@ -294,6 +294,25 @@ export function PoetryTherapyPage() {
   
   const healingPoems: HealingPoem[] = [
     {
+      id: 1000,
+      title: "Der Schmetterling und die Rose",
+      author: "Heinrich Heine",
+      content: `Der Schmetterling ist in die Rose verliebt,
+Umflattert sie tausendmal,
+Ihn selber aber, goldig zart,
+Umflattert der liebende Sonnenstrahl.
+Jedoch in wen ist die Rose verliebt?
+
+— English translation —
+The butterfly is in love with the rose,
+He flutters round her a thousandfold;
+But he himself, golden and tender,
+Is fluttered round by the loving sunbeam.
+Yet whom does the rose love?`,
+      category: "Heine",
+      readTime: "1 min"
+    },
+    {
       id: 1,
       title: "Grief Speaks",
       author: "Unknown",
