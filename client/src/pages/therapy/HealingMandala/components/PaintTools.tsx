@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { PaintMode } from '../types';
-import { Button } from '../../components/ui/button';
+import { Button } from '@/components/ui/button';
 import { Brush, Eraser, Eye, Pipette, Code } from 'lucide-react';
 
 interface PaintToolsProps {

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { COLOR_PALETTES } from '../constants';
 import { PaletteKey } from '../types';
-import { Button } from '../../components/ui/button';
+import { Button } from '@/components/ui/button';
 
 interface ColorPalettesProps {
   activePalette: PaletteKey;
