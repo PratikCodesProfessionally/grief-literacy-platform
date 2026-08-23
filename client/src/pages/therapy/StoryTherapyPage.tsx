@@ -6,9 +6,214 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ArrowLeft, Save, FileText, Clock, CheckCircle, Mic, MicOff, Cloud, HardDrive, X } from 'lucide-react';
+import { ArrowLeft, Save, FileText, Clock, CheckCircle, Mic, MicOff, Cloud, HardDrive, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { StorageProviderFactory } from '@/services/StorageService';
 import type { IStorageProvider, Story } from '@/services/StorageService';
+
+interface InsightSlide {
+  number: string | null;
+  heading: string;
+  bullets: string[];
+}
+
+// Insight entries arrive as a flat list where "1. Some Heading" opens a section
+// and the entries after it are that section's points. Regroup them into slides.
+function buildInsightSlides(insights: string[]): InsightSlide[] {
+  const slides: InsightSlide[] = [];
+
+  insights.forEach((entry) => {
+    const [firstLine, ...rest] = entry.split('\n');
+    const headingMatch = firstLine.match(/^(\d+)\.\s*(.+)$/);
+
+    if (headingMatch) {
+      slides.push({
+        number: headingMatch[1],
+        heading: headingMatch[2],
+        bullets: rest.map((line) => line.trim()).filter(Boolean),
+      });
+      return;
+    }
+
+    if (slides.length === 0) {
+      slides.push({ number: null, heading: 'Overview', bullets: [] });
+    }
+    slides[slides.length - 1].bullets.push(entry.trim());
+  });
+
+  return slides;
+}
+
+// "Label: explanation" bullets render with the label emphasised. The length and
+// word-count limits keep a colon appearing mid-sentence from being mistaken for
+// a label separator.
+function splitBulletLabel(bullet: string): [string | null, string] {
+  const separator = bullet.indexOf(':');
+  if (separator < 3 || separator > 70) return [null, bullet];
+
+  const candidate = bullet.slice(0, separator);
+  if (candidate.split(/\s+/).length > 9) return [null, bullet];
+
+  return [candidate, bullet.slice(separator + 1).trim()];
+}
+
+function PredictiveHistoryDeck({
+  insights,
+  cantica,
+  chapterNumber,
+  chapterTitle,
+}: {
+  insights: string[];
+  cantica: string;
+  chapterNumber: number;
+  chapterTitle: string;
+}) {
+  const slides = React.useMemo(() => buildInsightSlides(insights), [insights]);
+  const [slideIndex, setSlideIndex] = React.useState(0);
+
+  // A new chapter means a new deck; start it from the title slide.
+  React.useEffect(() => {
+    setSlideIndex(0);
+  }, [chapterNumber]);
+
+  const totalSlides = slides.length + 1; // title slide, then one per section
+  const goTo = React.useCallback(
+    (next: number) => setSlideIndex(Math.min(totalSlides - 1, Math.max(0, next))),
+    [totalSlides]
+  );
+
+  // Arrow keys drive the deck only while it holds focus, so typing elsewhere is unaffected.
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      goTo(slideIndex + 1);
+    } else if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      goTo(slideIndex - 1);
+    }
+  };
+
+  const activeSlide = slideIndex === 0 ? null : slides[slideIndex - 1];
+
+  return (
+    <div
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+      aria-roledescription="carousel"
+      aria-label="Predictive History's Insight slides"
+      className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-lg ring-1 ring-black/5 outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:border-slate-800/80 dark:bg-slate-950"
+    >
+      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary/70 via-accent/70 to-secondary/70" />
+
+      {/* Deck chrome */}
+      <div className="flex items-center justify-between gap-4 border-b border-slate-200/70 px-6 py-4 dark:border-slate-800/70">
+        <div className="flex items-center gap-3">
+          <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary ring-1 ring-primary/15">
+            PH
+          </span>
+          <div className="leading-tight">
+            <p className="text-sm font-bold tracking-tight text-foreground">Predictive History's Insight</p>
+            <p className="text-xs text-foreground/50">
+              {cantica} · Canto {chapterNumber}
+            </p>
+          </div>
+        </div>
+        <span className="rounded-full bg-slate-100 px-3 py-1 font-mono text-xs font-semibold tabular-nums text-foreground/60 dark:bg-slate-900">
+          {slideIndex + 1} / {totalSlides}
+        </span>
+      </div>
+
+      {/* Stage */}
+      <div className="relative flex min-h-[340px] flex-col justify-center bg-gradient-to-br from-white via-slate-50 to-slate-100/70 px-8 py-10 md:min-h-[380px] md:px-12 dark:from-slate-950 dark:via-slate-900 dark:to-slate-900/70">
+        {activeSlide === null ? (
+          <div className="space-y-4 text-center">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary/70">
+              {cantica} · Canto {chapterNumber}
+            </p>
+            <h5 className="text-balance text-3xl font-black leading-tight tracking-tight text-foreground md:text-4xl">
+              {chapterTitle}
+            </h5>
+            <div className="mx-auto h-px w-24 bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+            <p className="mx-auto mb-0 text-sm text-foreground/55">
+              {slides.length} {slides.length === 1 ? 'insight' : 'insights'} from the lecture · use the arrows to advance
+            </p>
+          </div>
+        ) : (
+          <div className="mx-auto w-full max-w-4xl space-y-6">
+            <div className="flex items-start gap-4">
+              {activeSlide.number && (
+                <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-lg font-black text-primary ring-1 ring-primary/15">
+                  {activeSlide.number}
+                </span>
+              )}
+              <h5 className="text-balance text-2xl font-black leading-snug tracking-tight text-foreground md:text-3xl">
+                {activeSlide.heading}
+              </h5>
+            </div>
+
+            <ul className="space-y-4">
+              {activeSlide.bullets.map((bullet, index) => {
+                const [label, body] = splitBulletLabel(bullet);
+                return (
+                  <li key={index} className="flex gap-3 text-sm leading-7 text-foreground/80 md:text-[15px]">
+                    <span className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary/50" />
+                    {/* Opt out of the global prose reading-width cap so bullets fill the slide. */}
+                    <p className="mb-0 max-w-none">
+                      {label && <span className="font-bold text-foreground">{label}: </span>}
+                      {body}
+                    </p>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+      </div>
+
+      {/* Controls */}
+      <div className="flex items-center justify-between gap-4 border-t border-slate-200/70 px-6 py-4 dark:border-slate-800/70">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => goTo(slideIndex - 1)}
+          disabled={slideIndex === 0}
+          aria-label="Previous slide"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Back
+        </Button>
+
+        <div className="flex items-center gap-2" role="tablist" aria-label="Slides">
+          {Array.from({ length: totalSlides }).map((_, index) => (
+            <button
+              key={index}
+              type="button"
+              role="tab"
+              aria-selected={index === slideIndex}
+              aria-label={`Go to slide ${index + 1}`}
+              onClick={() => goTo(index)}
+              className={
+                index === slideIndex
+                  ? 'h-2 w-6 rounded-full bg-primary transition-all duration-300'
+                  : 'h-2 w-2 rounded-full bg-slate-300 transition-all duration-300 hover:bg-primary/40 dark:bg-slate-700'
+              }
+            />
+          ))}
+        </div>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => goTo(slideIndex + 1)}
+          disabled={slideIndex === totalSlides - 1}
+          aria-label="Next slide"
+        >
+          Next
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 export function StoryTherapyPage() {
   const [selectedPrompt, setSelectedPrompt] = React.useState('');
@@ -212,6 +417,43 @@ Something that touches body but doesnot touch the soul quite?`,
         `4. The Encounter with Francesca and Paolo`,
         `Romanticized Tragedy vs. Moral Reality: The professor analyzes Dante's interaction with Francesca da Rimini. While Dante feels deep sympathy and pity for her romantic story, the professor points out that Francesca deflects personal responsibility, blaming love itself and the book they were reading (Lancelot) rather than her own choices.`,
         `Dante's Swoon: Dante fainting at the end of Canto 5 reflects his own struggle with romantic poetry and courtly love, realizing how easily human empathy can obscure moral judgment.`
+      ],
+      videoUrl: "https://youtu.be/e_9fndobOnI?si=zMrvazOsfpJu8qB-"
+    },
+    {
+      number: 6,
+      cantica: "Inferno",
+      title: "The Third Circle: Gluttony, Cerberus, and the City Undone",
+      theme: "Appetite, Isolation, and Civic Decay",
+      interpretation: `Canto 6 lowers Dante into the Third Circle, where a cold and filthy rain falls without end and Cerberus, the three-throated beast, claws at souls who can no longer stand upright. Gluttony here is not a matter of the table. It is appetite that has turned inward until it consumes the person holding it. The damned lie flattened in the mud, unable to see one another, each sealed inside a hunger that no amount of consuming will ever close.
+
+    In grief, this circle names a particular danger: the moment sorrow stops being something we carry and becomes something we feed. Numbing has its own appetite, and it isolates. The mourner who disappears into consumption of any kind is not punished by the rain so much as revealed by it. Ciacco extends the diagnosis outward, from one appetite to a whole city, showing that what hollows a person will hollow a community by the same logic. The lesson is not that desire is shameful, but that desire without direction degrades whoever holds it, and eventually everyone around them.`,
+      reflection: "What have you reached for to fill the absence, and did it ever actually fill it? What would it mean to sit in the rain without reaching?",
+      keywords: ["Gluttony", "Cerberus", "Ciacco", "Contrapasso", "Isolation", "Civic decay"],
+      tribute: `Cerberus, the three-throated dog
+who tears and flays in this cantos' fog
+greets them barking in that grey smog
+N' The damned curl spineless like a hedgehog
+
+Eternal rain and hoisting dements their agog
+For they were gluttons in their earthly backlog
+That thirst cannot be quenched nor unclogged
+Here the 'rain grey with filth' fill their shoes,
+the imaginative analog
+
+"gluttony, desire turned inward, self-havoc
+when widespread consumes a city, amok",
+utters Ciacco to Dante in that unclear smoke`,
+      predictiveHistoryInsight: [
+        `1. Gluttony as Isolation and Degradation`,
+        `Beyond Overeating: The professor highlights how gluttony is not merely about overeating, but about an insatiable, self-absorbed desire that degrades human dignity.`,
+        `Reduced to the Animal: The souls in the Third Circle lie wallowing in cold, filthy rain and mud, brutalized by Cerberus, illustrating how overindulgence reduces human beings to animalistic self-isolation.`,
+        `2. Political Corruption of Florence (Ciacco)`,
+        `The First Political Prophecy: Canto 6 introduces Ciacco, who delivers the first major political prophecy regarding the factional conflict and ruin of Florence.`,
+        `Appetite Becomes Politics: The professor draws a connection between individual appetite and political greed. When citizens prioritize personal consumption over civic virtue, political chaos and corruption inevitably follow.`,
+        `3. Pedagogical Technique (Comparative Punishments)`,
+        `Teaching Through Contrast: Toward the end of the lecture, Professor Jiang uses Canto 6 as a primary example for teaching Dante through contrast, prompting the class to evaluate why cold, heavy rain and filth serve as such an effective contrapasso compared to other physical tortures in Inferno.`,
+        `Environment as Mirror: The comparison illustrates how the physical environment of each circle mirrors the internal spiritual decay of the souls confined to it.`
       ],
       videoUrl: "https://youtu.be/e_9fndobOnI?si=zMrvazOsfpJu8qB-"
     }
@@ -703,52 +945,12 @@ Something that touches body but doesnot touch the soul quite?`,
                   </div>
                 )}
                 {divineComedyChapters[currentChapterIndex].predictiveHistoryInsight && (
-                  <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-gradient-to-br from-white via-slate-50 to-slate-100/80 p-6 shadow-sm ring-1 ring-black/5 dark:border-slate-800/80 dark:from-slate-950 dark:via-slate-900 dark:to-slate-900/80">
-                    <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary/70 via-accent/70 to-secondary/70" />
-                    <div className="mb-5 flex items-center gap-3">
-                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary ring-1 ring-primary/15">
-                        PH
-                      </span>
-                      <h4 className="text-2xl md:text-3xl font-black tracking-tight text-foreground">
-                        Predictive History's Insight
-                      </h4>
-                    </div>
-                    <ul className="space-y-4">
-                      {divineComedyChapters[currentChapterIndex].predictiveHistoryInsight.map((insightLine, index) => (
-                        <li
-                          key={index}
-                          className="rounded-2xl border border-slate-200/80 bg-white/90 p-5 text-sm md:text-[15px] leading-7 text-foreground/85 shadow-sm shadow-slate-900/5 backdrop-blur-sm transition-all duration-300 hover:border-primary/20 hover:bg-white hover:shadow-md dark:border-slate-800/70 dark:bg-slate-950/75 dark:hover:border-primary/30"
-                        >
-                          {(() => {
-                            const [firstLine, ...bodyLines] = insightLine.split('\n');
-                            const headingMatch = firstLine.match(/^(\d+)\.\s*(.+)$/);
-
-                            if (headingMatch) {
-                              return (
-                                <div className="space-y-3">
-                                  <div className="flex items-start gap-3">
-                                    <span className="inline-flex min-w-9 items-center justify-center rounded-full bg-primary/10 px-3 py-1 text-sm font-bold text-primary ring-1 ring-primary/15">
-                                      {headingMatch[1]}
-                                    </span>
-                                    <h5 className="text-lg md:text-xl font-black leading-snug tracking-tight text-foreground">
-                                      {headingMatch[2]}
-                                    </h5>
-                                  </div>
-                                  {bodyLines.length > 0 && (
-                                    <div className="rounded-xl border border-slate-200/70 bg-slate-50/90 p-4 text-sm leading-7 text-foreground/85 dark:border-slate-800/70 dark:bg-slate-900/60">
-                                      <p className="whitespace-pre-wrap">{bodyLines.join('\n')}</p>
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            }
-
-                            return <p className="whitespace-pre-wrap">{insightLine}</p>;
-                          })()}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                  <PredictiveHistoryDeck
+                    insights={divineComedyChapters[currentChapterIndex].predictiveHistoryInsight}
+                    cantica={divineComedyChapters[currentChapterIndex].cantica}
+                    chapterNumber={divineComedyChapters[currentChapterIndex].number}
+                    chapterTitle={divineComedyChapters[currentChapterIndex].title}
+                  />
                 )}
                 <div className="border-t pt-4 mt-6 flex flex-wrap items-center gap-x-6 gap-y-2">
                   <a
