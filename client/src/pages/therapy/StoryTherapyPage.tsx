@@ -329,9 +329,9 @@ For he is touched deeply and unpleasantly
 defeated by pain and beastly apathy
 
 For Dante must cast aside his ego
-For his is warned about his mental vertigo
+For he is warned about his mental vertigo
 For Dante's will must now overcome this embargo
-Is he is to voyage deeper into this limbo?`,
+Is he to voyage deeper into this limbo?`,
       predictiveHistoryInsight: [
         `The atmosphere shifts from the entrance into a turbid timeless air filled with strange utterances, horrible pronouncements, and accents of anger, creating a chaotic and sensory-overloading experience for Dante.`,
         `Dante is physically and emotionally overwhelmed by the transition. He describes his head as oppressed by horror and asks Virgil for clarity about the souls he hears suffering, showing his human empathy and fear.`,
@@ -435,7 +435,7 @@ who tears and flays in this cantos' fog
 greets them barking in that grey smog
 N' The damned curl spineless like a hedgehog
 
-Eternal rain and hoisting dements their agog
+Eternal rain and hoisting dements their souls agog
 For they were gluttons in their earthly backlog
 That thirst cannot be quenched nor unclogged
 Here the 'rain grey with filth' fill their shoes,
