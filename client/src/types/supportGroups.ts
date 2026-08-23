@@ -29,7 +29,13 @@ export interface SupportGroup {
   posts: GroupPost[];
 }
 
-export type GroupTopic = 
+export type GroupTopic =
+  | 'Loss of Parent'
+  | 'Pet Loss Haven'
+  | 'Sudden Loss Sanctuary'
+  | 'Pregnancy & Infant Loss'
+  | 'Young Hearts Gathering'
+  | 'Relationship Transitions'
   | 'Anxiety Support'
   | 'Grief & Loss'
   | 'Life Transitions'

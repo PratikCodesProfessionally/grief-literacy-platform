@@ -161,22 +161,14 @@ class SupportGroupsService {
    * Create a new group for a topic
    */
   private createGroup(topic: string): SupportGroup {
-    let template = GROUP_TEMPLATES.find(t => t.topic === topic);
-    
-    // If template doesn't exist, create a dynamic one
-    if (!template) {
-      template = {
-        topic: topic,
-        description: `Support group for ${topic}`,
-        icon: '🫂',
-      };
-    }
+    // Topics outside the curated templates fall back to a generic group
+    const template = GROUP_TEMPLATES.find(t => t.topic === topic);
 
     return {
       id: this.generateId(),
-      topic: template.topic,
-      description: template.description,
-      icon: template.icon,
+      topic,
+      description: template?.description ?? `Support group for ${topic}`,
+      icon: template?.icon ?? '🫂',
       members: [],
       maxCapacity: 7,
       createdAt: new Date(),
