@@ -100,12 +100,15 @@ function PredictiveHistoryDeck({
       onKeyDown={handleKeyDown}
       aria-roledescription="carousel"
       aria-label="Predictive History's Insight slides"
-      className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-lg ring-1 ring-black/5 outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:border-slate-800/80 dark:bg-slate-950"
+      /* Colours come from theme tokens rather than fixed slate/white shades: the
+         app's night-reading-mode swaps the palette without adding Tailwind's
+         `dark` class, so `dark:` variants never fire there. */
+      className="group relative overflow-hidden rounded-2xl border border-foreground/10 bg-card text-card-foreground shadow-lg outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
     >
       <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary/70 via-accent/70 to-secondary/70" />
 
       {/* Deck chrome */}
-      <div className="flex items-center justify-between gap-4 border-b border-slate-200/70 px-6 py-4 dark:border-slate-800/70">
+      <div className="flex items-center justify-between gap-4 border-b border-foreground/10 px-6 py-4">
         <div className="flex items-center gap-3">
           <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary ring-1 ring-primary/15">
             PH
@@ -117,13 +120,13 @@ function PredictiveHistoryDeck({
             </p>
           </div>
         </div>
-        <span className="rounded-full bg-slate-100 px-3 py-1 font-mono text-xs font-semibold tabular-nums text-foreground/60 dark:bg-slate-900">
+        <span className="rounded-full bg-foreground/5 px-3 py-1 font-mono text-xs font-semibold tabular-nums text-foreground/60">
           {slideIndex + 1} / {totalSlides}
         </span>
       </div>
 
       {/* Stage */}
-      <div className="relative flex min-h-[340px] flex-col justify-center bg-gradient-to-br from-white via-slate-50 to-slate-100/70 px-8 py-10 md:min-h-[380px] md:px-12 dark:from-slate-950 dark:via-slate-900 dark:to-slate-900/70">
+      <div className="relative flex min-h-[340px] flex-col justify-center bg-background/40 px-8 py-10 md:min-h-[380px] md:px-12">
         {activeSlide === null ? (
           <div className="space-y-4 text-center">
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary/70">
@@ -156,8 +159,9 @@ function PredictiveHistoryDeck({
                 return (
                   <li key={index} className="flex gap-3 text-sm leading-7 text-foreground/80 md:text-[15px]">
                     <span className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary/50" />
-                    {/* Opt out of the global prose reading-width cap so bullets fill the slide. */}
-                    <p className="mb-0 max-w-none">
+                    {/* Opt out of the global prose reading-width caps so bullets fill the slide.
+                        Needs `!` because `.night-reading-mode p` outranks a plain utility. */}
+                    <p className="mb-0 !max-w-none">
                       {label && <span className="font-bold text-foreground">{label}: </span>}
                       {body}
                     </p>
@@ -170,7 +174,7 @@ function PredictiveHistoryDeck({
       </div>
 
       {/* Controls */}
-      <div className="flex items-center justify-between gap-4 border-t border-slate-200/70 px-6 py-4 dark:border-slate-800/70">
+      <div className="flex items-center justify-between gap-4 border-t border-foreground/10 px-6 py-4">
         <Button
           variant="outline"
           size="sm"
@@ -194,7 +198,7 @@ function PredictiveHistoryDeck({
               className={
                 index === slideIndex
                   ? 'h-2 w-6 rounded-full bg-primary transition-all duration-300'
-                  : 'h-2 w-2 rounded-full bg-slate-300 transition-all duration-300 hover:bg-primary/40 dark:bg-slate-700'
+                  : 'h-2 w-2 rounded-full bg-foreground/20 transition-all duration-300 hover:bg-primary/40'
               }
             />
           ))}
@@ -454,6 +458,42 @@ utters Ciacco to Dante in that unclear smoke`,
         `3. Pedagogical Technique (Comparative Punishments)`,
         `Teaching Through Contrast: Toward the end of the lecture, Professor Jiang uses Canto 6 as a primary example for teaching Dante through contrast, prompting the class to evaluate why cold, heavy rain and filth serve as such an effective contrapasso compared to other physical tortures in Inferno.`,
         `Environment as Mirror: The comparison illustrates how the physical environment of each circle mirrors the internal spiritual decay of the souls confined to it.`
+      ],
+      videoUrl: "https://youtu.be/e_9fndobOnI?si=zMrvazOsfpJu8qB-"
+    },
+    {
+      number: 7,
+      cantica: "Inferno",
+      title: "Fortune's Wheel: Greed, Prodigality, and the Marsh of Anger",
+      theme: "Materialism, Providence, and Anger",
+      interpretation: `Canto 7 opens with Plutus barking his unintelligible cry and closes in the black marsh of the Styx, covering two circles in a single descent. In the Fourth Circle the hoarders and the spendthrifts shove great weights against one another for eternity, and Dante's arrangement is the argument: the miser and the waster are not opposites but two readings of the same mistake, each treating material things as though they could settle something inside. Neither reaches rest, because the collision itself is the point.
+
+    Between the two circles Virgil pauses to explain Fortune, and the explanation reframes everything. Fortune is not blind cruelty or random luck but an appointed minister, turning her wheel by design. What torments us is not that the world takes things away, but our insistence that we should have been exempt. In grief this lands hard, because loss so often feels like a verdict. The canto then descends into anger's two faces, the wrathful who strike outward and the sullen who sink and choke on what they never said. Both are grief that found no other language, and the mud is simply what unspoken anger becomes when it is left to sit.`,
+      reflection: "When loss came, did your anger turn outward or sink inward and go quiet? What has gone unsaid that is still sitting beneath the surface?",
+      keywords: ["Greed", "Prodigality", "Fortune", "Providence", "Wrath", "Sullenness", "Styx"],
+      tribute: `'Pape Satan, pape Satan , aleppe!'
+Cries Plutus to monger fear among the intruders
+for this is a circle of greed and wealth squanderers
+
+Virgil defends dante's journey with divine manuevers
+For his path is willed from high above, Michael's measures
+So trembles Plutus with his other marauders
+Who spin round in the whirlpool of eternity invoking horrors
+
+Those who hoard seem to be the fit contenders
+And the spendthrift tend to drift alike in that spiral vers`,
+      predictiveHistoryInsight: [
+        `1. The Economics of Sin & Materialism (Greed vs. Prodigality)`,
+        `Opposing Extremes, One Punishment: The professor emphasizes how Dante groups opposing extremes, the Hoarders (misers) and the Spendthrifts (prodigals), into the same punishment.`,
+        `The Eternal Collision: Both groups share an unhealthy obsession with material goods, creating an eternal collision where neither extreme achieves peace, illustrating how undisciplined desires ruin internal order.`,
+        `2. Lady Fortune as Divine Minister`,
+        `Fortune Reinterpreted: A central philosophical focus of the canto is Virgil's explanation of Fortune. Rather than a random, cruel force of luck, Fortune is presented as an angelic minister ordained by God to distribute worldly goods.`,
+        `The Root of Greed: Human greed arises when people treat temporary worldly wealth as ultimate status rather than recognizing divine providence.`,
+        `3. Contrapasso of Emotional Extremes`,
+        `Two Faces of Anger: Moving into the River Styx, the professor addresses the dual nature of anger, the actively violent Wrathful who tear at each other above the marsh, and the passively resentful Sullen who choke in the mud beneath.`,
+        `Descending to Overcome: This connects to the opening classroom discussion, where the professor notes that facing negative emotions requires descending deep into their consequences in order to overcome them.`,
+        `4. Pedagogical Strategy`,
+        `Structural Symmetry: As part of his overarching framework for teaching the Inferno, the professor uses the contrasting punishments of Canto 7, rolling heavy weights against choking in murky sludge, to demonstrate how Dante uses structural symmetry to make moral lessons accessible and memorable.`
       ],
       videoUrl: "https://youtu.be/e_9fndobOnI?si=zMrvazOsfpJu8qB-"
     }
