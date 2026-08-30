@@ -496,6 +496,45 @@ And the spendthrift tend to drift alike in that spiral vers`,
         `Structural Symmetry: As part of his overarching framework for teaching the Inferno, the professor uses the contrasting punishments of Canto 7, rolling heavy weights against choking in murky sludge, to demonstrate how Dante uses structural symmetry to make moral lessons accessible and memorable.`
       ],
       videoUrl: "https://youtu.be/e_9fndobOnI?si=zMrvazOsfpJu8qB-"
+    },
+    {
+      number: 8,
+      cantica: "Inferno",
+      title: "The City of Dis: Authority, Pride, and Divine Aid",
+      theme: "Authority, Boundary, Grace",
+      interpretation: `This canto reveals the threshold of the City of Dis, where the world of moral law becomes more severe and the limits of earthly authority become painfully visible. Virgil can guide Dante through the outer circles, but he cannot force entry into the city of the rebel angels. The gate is not just a physical obstacle; it marks a spiritual boundary that requires divine permission. The scene teaches that even the greatest human reason must submit to a higher order. Dante is not yet ready to pass by human power alone, and the refusal of the demons exposes the difference between poetic guidance and sacred authority.\n\nIn grief this matters because some losses cannot be navigated by sentiment or intellect alone. There are thresholds of suffering where we need help beyond our own strength, and where grace must arrive from beyond us. The obstacles are not canceled by love or courage; they are met with humility and openness to divine aid.`,
+      reflection: "In what areas of your grief have you felt the limits of your own strength? Where do you need a grace or guide beyond yourself to move forward?",
+      keywords: ["Authority", "Threshold", "City of Dis", "Divine aid", "Humility", "Grace"],
+      tribute: `Phlegyas first protests to guide them across the marshy moss
+But virgil quickly shuts him down, to prevent any further time loss
+the weight of Dante is carried by divine boss
+So they should find their way across?
+
+'Filipo Argenti' Dante's archrival
+a Florentine who was arrogant and presumptuous in life's miracle
+founds himself huffing and puffing in this marshy muddy marble
+as he is teared, smeared and strangled
+Dante observes this as he stays afloat in that rubble
+
+'You stay put here through thick and thin',
+Says Virgil, but Dante senses his forecoming tailspin
+So he hesitates alone to keep high, his head and chin
+'Let us in!'
+Virgil tries to enviously win
+and reason with its grave citizens and their kin
+in front of city of dis, they are pinned 
+They will let virgil in,
+but identify Dante as a gremlin`,
+      predictiveHistoryInsight: [
+        `1. The Limits of Virgil's Authority`,
+        `Blocked at the Threshold: The professor notes that while Virgil is effectively the "master of outer hell" and is able to command demons and navigate the geography easily, he faces a significant challenge at the City of Dis, where the demons attempt to block Dante from entering, suggesting that Virgil's influence does not extend to the inner circles of hell (3:30:26).`,
+        `Brotherhood with Devils: The scene where Virgil speaks privately with the fallen angels highlights a complex dynamic, he appears to be on familiar terms with them, almost like they share a brotherhood. Despite this, they still refuse to let Dante pass, showcasing a boundary that Virgil cannot cross on his own (3:33:23).`,
+        `2. The Arrival of Divine Aid`,
+        `A Necessary Intervention: Because Virgil is unable to force entry into the city, an angel is required to unlock the gate. The professor points out that this causes Virgil to feel embarrassed or "vexed," as it reveals a limitation to his control and pride, reinforcing his status as a fallible guide rather than an omnipotent one (3:45:41 - 3:46:49).`,
+        `3. The Nature of the Journey`,
+        `Reckless Entry: The professor emphasizes that this resistance is not entirely new and characterizes the "reckless" entry of Dante, a living soul, into the realm of the dead as the primary reason for the demons' anger (3:34:00).`
+      ],
+      videoUrl: "https://youtu.be/e_9fndobOnI?si=zMrvazOsfpJu8qB-"
     }
   ];
 
