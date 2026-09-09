@@ -19,6 +19,7 @@ export function ToolsPage() {
   const mainTools = [
     {
       id: 'journaling',
+      comingSoon: false,
       name: 'Grief Journaling',
       description: 'Guided prompts for daily reflection and processing',
       icon: BookMarked,
@@ -27,6 +28,7 @@ export function ToolsPage() {
     },
     {
       id: 'letters',
+      comingSoon: false,
       name: 'Letters to Loved Ones',
       description: 'Write messages to those you\'ve lost',
       icon: Heart,
@@ -35,6 +37,7 @@ export function ToolsPage() {
     },
     {
       id: 'memory',
+      comingSoon: false,
       name: 'Memory Garden',
       description: 'Create a digital space to honor memories',
       icon: Flower2,
@@ -43,6 +46,7 @@ export function ToolsPage() {
     },
     {
       id: 'meditation',
+      comingSoon: false,
       name: 'Guided Meditations',
       description: 'Mindfulness and healing meditation sessions',
       icon: Brain,
@@ -51,6 +55,7 @@ export function ToolsPage() {
     },
     {
       id: 'emergency',
+      comingSoon: true,
       name: 'Emergency Toolkit',
       description: 'Quick access to calming resources when overwhelmed',
       icon: AlertCircle,
@@ -59,6 +64,7 @@ export function ToolsPage() {
     },
     {
       id: 'breathing',
+      comingSoon: true,
       name: 'Breathing Exercises',
       description: 'Simple techniques for managing difficult moments',
       icon: Wind,
@@ -67,6 +73,7 @@ export function ToolsPage() {
     },
     {
       id: 'plants-healing',
+      comingSoon: false,
       name: 'Plants for Healing',
       description: 'Learn nurturing plant care rituals that support emotional healing',
       icon: Sprout,
@@ -195,7 +202,7 @@ export function ToolsPage() {
                     flex flex-col items-center justify-center gap-3 md:gap-4 p-8
                     shadow-lg shadow-green-200/50 dark:shadow-emerald-950/70
                     transition-all duration-700 ease-out
-                    cursor-pointer
+                    ${tool.comingSoon ? 'cursor-not-allowed' : 'cursor-pointer'}
                     ${isActive 
                       ? 'scale-100 opacity-100 z-20' 
                       : 'scale-90 opacity-70'
@@ -209,10 +216,17 @@ export function ToolsPage() {
                     }
                   }}
                   onMouseLeave={handleUserInteraction}
-                  aria-label={`${tool.name}: ${tool.description}`}
+                  onClick={tool.comingSoon ? (e) => e.preventDefault() : undefined}
+                  aria-disabled={tool.comingSoon ? true : undefined}
+                  aria-label={`${tool.name}: ${tool.description}${tool.comingSoon ? ' (coming soon)' : ''}`}
                   aria-current={isActive ? 'true' : 'false'}
                 >
                   <div className={`absolute inset-0 rounded-full bg-white/30 dark:bg-black/25 transition-opacity duration-700 ${isActive ? 'opacity-40' : 'opacity-20'}`} />
+                  {tool.comingSoon && (
+                    <span className="absolute top-4 md:top-5 left-1/2 -translate-x-1/2 z-20 whitespace-nowrap text-[10px] md:text-xs font-semibold tracking-wide uppercase text-amber-900 bg-amber-200/90 px-2.5 py-0.5 rounded-full shadow-sm dark:text-amber-100 dark:bg-amber-800/80">
+                      Coming Soon
+                    </span>
+                  )}
                   
                   <div className="relative z-10 flex flex-col items-center gap-3 md:gap-4 px-6">
                     <tool.icon className="w-14 h-14 md:w-16 md:h-16 text-gray-700 dark:text-emerald-50 drop-shadow-sm" />

@@ -17,6 +17,7 @@ export function ResourcesPage() {
   const resources = [
     {
       id: 'books',
+      comingSoon: false,
       title: 'Self-Help Books',
       description: 'Curated recommendations for books on grief, healing, and resilience',
       icon: Book,
@@ -26,6 +27,7 @@ export function ResourcesPage() {
     },
     {
       id: 'courses',
+      comingSoon: false,
       title: 'Educational Courses',
       description: 'Short courses on grief literacy and emotional wellness',
       icon: GraduationCap,
@@ -35,6 +37,7 @@ export function ResourcesPage() {
     },
     {
       id: 'cultural',
+      comingSoon: true,
       title: 'Cultural Practices',
       description: 'Learn how different cultures approach grief and mourning',
       icon: Globe,
@@ -44,6 +47,7 @@ export function ResourcesPage() {
     },
     {
       id: 'professional',
+      comingSoon: false,
       title: 'Professional Help',
       description: 'Crisis hotlines and professional grief support resources',
       icon: Phone,
@@ -173,7 +177,7 @@ export function ResourcesPage() {
                     flex flex-col items-center justify-center gap-3 md:gap-4 p-8
                     shadow-lg shadow-amber-200/50
                     transition-all duration-700 ease-out
-                    cursor-pointer
+                    ${resource.comingSoon ? 'cursor-not-allowed' : 'cursor-pointer'}
                     ${isActive 
                       ? 'scale-100 opacity-100 z-20' 
                       : 'scale-90 opacity-70'
@@ -187,10 +191,17 @@ export function ResourcesPage() {
                     }
                   }}
                   onMouseLeave={handleUserInteraction}
-                  aria-label={`${resource.title}: ${resource.description}`}
+                  onClick={resource.comingSoon ? (e) => e.preventDefault() : undefined}
+                  aria-disabled={resource.comingSoon ? true : undefined}
+                  aria-label={`${resource.title}: ${resource.description}${resource.comingSoon ? ' (coming soon)' : ''}`}
                   aria-current={isActive ? 'true' : 'false'}
                 >
                   <div className={`absolute inset-0 rounded-full bg-white/30 transition-opacity duration-700 ${isActive ? 'opacity-40' : 'opacity-20'}`} />
+                  {resource.comingSoon && (
+                    <span className="absolute top-4 md:top-5 left-1/2 -translate-x-1/2 z-20 whitespace-nowrap text-[10px] md:text-xs font-semibold tracking-wide uppercase text-amber-900 bg-amber-200/90 px-2.5 py-0.5 rounded-full shadow-sm">
+                      Coming Soon
+                    </span>
+                  )}
                   
                   <div className="relative z-10 flex flex-col items-center gap-3 md:gap-4 px-6">
                     <resource.icon className="w-14 h-14 md:w-16 md:h-16 text-gray-700 drop-shadow-sm" />

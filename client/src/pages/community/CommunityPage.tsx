@@ -16,6 +16,7 @@ export function CommunityPage() {
   const communityOptions = [
     {
       id: 'circles',
+      comingSoon: false,
       title: 'Sacred Circles',
       description: 'Join safe, anonymous support circles by type of loss (max 7 members)',
       icon: Users,
@@ -24,6 +25,7 @@ export function CommunityPage() {
     },
     {
       id: 'peer',
+      comingSoon: false,
       title: 'Peer Support',
       description: 'Connect one-on-one with someone who understands',
       icon: MessageCircle,
@@ -32,6 +34,7 @@ export function CommunityPage() {
     },
     {
       id: 'memorial',
+      comingSoon: true,
       title: 'Memorial Wall',
       description: 'Honor and remember loved ones together',
       icon: Heart,
@@ -160,7 +163,7 @@ export function CommunityPage() {
                     flex flex-col items-center justify-center gap-3 md:gap-4 p-8
                     shadow-lg shadow-blue-200/50
                     transition-all duration-700 ease-out
-                    cursor-pointer
+                    ${option.comingSoon ? 'cursor-not-allowed' : 'cursor-pointer'}
                     ${isActive 
                       ? 'scale-100 opacity-100 z-20' 
                       : 'scale-90 opacity-70'
@@ -174,10 +177,17 @@ export function CommunityPage() {
                     }
                   }}
                   onMouseLeave={handleUserInteraction}
-                  aria-label={`${option.title}: ${option.description}`}
+                  onClick={option.comingSoon ? (e) => e.preventDefault() : undefined}
+                  aria-disabled={option.comingSoon ? true : undefined}
+                  aria-label={`${option.title}: ${option.description}${option.comingSoon ? ' (coming soon)' : ''}`}
                   aria-current={isActive ? 'true' : 'false'}
                 >
                   <div className={`absolute inset-0 rounded-full bg-white/30 transition-opacity duration-700 ${isActive ? 'opacity-40' : 'opacity-20'}`} />
+                  {option.comingSoon && (
+                    <span className="absolute top-4 md:top-5 left-1/2 -translate-x-1/2 z-20 whitespace-nowrap text-[10px] md:text-xs font-semibold tracking-wide uppercase text-amber-900 bg-amber-200/90 px-2.5 py-0.5 rounded-full shadow-sm">
+                      Coming Soon
+                    </span>
+                  )}
                   
                   <div className="relative z-10 flex flex-col items-center gap-3 md:gap-4 px-6">
                     <option.icon className="w-14 h-14 md:w-16 md:h-16 text-gray-700 drop-shadow-sm" />
