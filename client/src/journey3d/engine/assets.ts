@@ -8,6 +8,23 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 const MODEL_BASE = '/models/journey';
 const loader = new GLTFLoader();
 
+const textureLoader = new THREE.TextureLoader();
+
+/** Load a texture, resolving to null (rather than throwing) if it is missing. */
+function loadTexture(url: string): Promise<THREE.Texture | null> {
+  return new Promise((resolve) => {
+    textureLoader.load(
+      url,
+      (texture) => resolve(texture),
+      undefined,
+      () => {
+        console.warn(`[journey3d] Missing texture ${url} — falling back.`);
+        resolve(null);
+      }
+    );
+  });
+}
+
 function loadGLB(file: string): Promise<THREE.Object3D | null> {
   return new Promise((resolve) => {
     loader.load(
@@ -78,8 +95,12 @@ function proceduralTree(): THREE.Object3D {
 }
 
 // House with an open garage bay on the -Z (road-facing) side, plus a sign board.
-function proceduralHouse(color: number): THREE.Object3D {
+// Returns a handle rather than a bare object: houses are recycled as the
+// endless road streams past, and each one has to be re-tinted for whichever
+// station it is standing in for this time around.
+function proceduralHouse(): HouseHandle {
   const house = new THREE.Group();
+  const accents: THREE.MeshStandardMaterial[] = [];
 
   const wallMat = new THREE.MeshStandardMaterial({ color: 0xf5f5f4, roughness: 0.85 });
   const walls = new THREE.Mesh(new THREE.BoxGeometry(8, 5, 7), wallMat);
@@ -89,10 +110,9 @@ function proceduralHouse(color: number): THREE.Object3D {
   house.add(walls);
 
   // Roof
-  const roof = new THREE.Mesh(
-    new THREE.ConeGeometry(6.5, 3, 4),
-    new THREE.MeshStandardMaterial({ color, roughness: 0.7 })
-  );
+  const roofMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.7 });
+  accents.push(roofMat);
+  const roof = new THREE.Mesh(new THREE.ConeGeometry(6.5, 3, 4), roofMat);
   roof.position.y = 6.5;
   roof.rotation.y = Math.PI / 4;
   roof.castShadow = true;
@@ -113,21 +133,33 @@ function proceduralHouse(color: number): THREE.Object3D {
   );
   post.position.set(0, 5.2, -3.6);
   house.add(post);
-  const board = new THREE.Mesh(
-    new THREE.BoxGeometry(4.5, 1.4, 0.2),
-    new THREE.MeshStandardMaterial({ color })
-  );
+  const boardMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+  accents.push(boardMat);
+  const board = new THREE.Mesh(new THREE.BoxGeometry(4.5, 1.4, 0.2), boardMat);
   board.position.set(0, 6.2, -3.6);
   house.add(board);
 
-  return house;
+  return {
+    object: house,
+    setAccent: (color: number) => accents.forEach((m) => m.color.setHex(color)),
+  };
+}
+
+/** A recyclable house: the object to place, plus a way to re-tint it. */
+export interface HouseHandle {
+  object: THREE.Object3D;
+  setAccent: (color: number) => void;
 }
 
 export interface JourneyAssets {
   car: THREE.Object3D;
   tree: () => THREE.Object3D;
-  house: (color: number) => THREE.Object3D;
+  house: () => HouseHandle;
+  /** Photographic horizon, or null to fall back to procedural peaks. */
+  backdrop: THREE.Texture | null;
 }
+
+const BACKDROP_URL = '/Images/Swissalps.webp';
 
 // Kenney vehicle GLBs are ~1 unit and may face +Z. Normalize a loaded car model
 // to ~4 units long, centered on origin, sitting on the ground (y=0), facing -Z
@@ -163,11 +195,22 @@ function normalizeCar(model: THREE.Object3D): THREE.Object3D {
 
 /** Load all models (GLB if present, otherwise procedural). Always resolves. */
 export async function loadJourneyAssets(): Promise<JourneyAssets> {
-  const [carGlb, treeGlb, houseGlb] = await Promise.all([
+  const [carGlb, treeGlb, houseGlb, backdrop] = await Promise.all([
     loadGLB('car.glb'),
     loadGLB('tree.glb'),
     loadGLB('house-garage.glb'),
+    loadTexture(BACKDROP_URL),
   ]);
+
+  if (backdrop) {
+    backdrop.colorSpace = THREE.SRGBColorSpace;
+    // Tiled around the horizon cylinder, so it has to repeat horizontally.
+    // Mirrored, not plain repeat: the photo's left and right edges do not match,
+    // so a plain tile would leave a hard vertical seam at every join.
+    backdrop.wrapS = THREE.MirroredRepeatWrapping;
+    backdrop.wrapT = THREE.ClampToEdgeWrapping;
+    backdrop.anisotropy = 4;
+  }
 
   const enableShadows = (obj: THREE.Object3D) => {
     obj.traverse((c) => {
@@ -183,7 +226,12 @@ export async function loadJourneyAssets(): Promise<JourneyAssets> {
   return {
     car: carGlb ? normalizeCar(carGlb) : proceduralCar(),
     tree: () => (treeGlb ? treeGlb.clone(true) : proceduralTree()),
-    // GLB house ignores color tint; procedural uses it to distinguish stations.
-    house: (color: number) => (houseGlb ? houseGlb.clone(true) : proceduralHouse(color)),
+    // The GLB house carries its own colours, so re-tinting is a no-op there;
+    // the procedural one uses the accent to tell the stations apart.
+    house: () =>
+      houseGlb
+        ? { object: houseGlb.clone(true), setAccent: () => undefined }
+        : proceduralHouse(),
+    backdrop,
   };
 }

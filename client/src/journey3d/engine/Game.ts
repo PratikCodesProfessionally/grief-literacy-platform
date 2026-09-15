@@ -4,13 +4,24 @@ import { Car } from './Car';
 import { Controls } from './Controls';
 import { buildWorld, World } from './world';
 import { JourneySound } from './Audio';
+import { Particles } from './Particles';
 import { StationConfig } from '../../phaser/config/constants';
+
+export interface DriveStats {
+  /** Distance driven so far, in world units (~metres). */
+  distance: number;
+  /** How many distinct quote trees have been passed. */
+  found: number;
+  /** How many quote trees exist in this world. */
+  total: number;
+}
 
 export interface GameCallbacks {
   onQuote: (quote: string | null) => void;
   onNearGarage: (station: StationConfig | null) => void;
   onEnterGarage: (station: StationConfig) => void;
   onImpact: () => void;
+  onStats: (stats: DriveStats) => void;
 }
 
 const QUOTE_RADIUS = 14;
@@ -18,6 +29,13 @@ const QUOTE_RADIUS = 14;
 // down the road past a house (decoupled from the tight entry trigger).
 const GARAGE_NEAR_X = 14;
 const GARAGE_NEAR_Z = 12;
+
+// The HUD only needs a few updates a second; React re-renders are far more
+// expensive than the frame itself.
+const STATS_INTERVAL = 0.2;
+
+// Tyre marks lie just above the road surface (see ROAD_Y in world.ts).
+const SKID_Y = 0.14;
 
 export class Game {
   private container: HTMLElement;
@@ -30,6 +48,7 @@ export class Game {
   private controls!: Controls;
   private car!: Car;
   private world!: World;
+  private particles!: Particles;
   private audio = new JourneySound();
   private muted = false;
 
@@ -41,6 +60,8 @@ export class Game {
 
   private currentQuote: string | null = null;
   private currentNearGarage: StationConfig | null = null;
+  private foundQuotes = new Set<string>();
+  private statsTimer = 0;
   private entered = false;
   private paused = false;
   private disposed = false;
@@ -59,18 +80,24 @@ export class Game {
     this.renderer.setSize(width, height);
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    // Filmic tone mapping keeps the bright sky and the shaded grass from
+    // flattening out at the ends of the range.
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.12;
+    this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.container.appendChild(this.renderer.domElement);
 
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x9fd2f0); // soft sky
-    this.scene.fog = new THREE.Fog(0x9fd2f0, 60, 240);
+    // Far enough to leave the mountain rings visible but hazy.
+    this.scene.fog = new THREE.Fog(0x9fd2f0, 90, 520);
 
-    this.camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
+    this.camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1200);
 
     // Lights
-    const hemi = new THREE.HemisphereLight(0xcfeaff, 0x6b8e23, 1.0);
+    const hemi = new THREE.HemisphereLight(0xcfeaff, 0x6b8e23, 1.5);
     this.scene.add(hemi);
-    const sun = new THREE.DirectionalLight(0xfff4e0, 1.6);
+    const sun = new THREE.DirectionalLight(0xfff4e0, 2.4);
     sun.position.set(40, 80, 30);
     sun.castShadow = true;
     sun.shadow.mapSize.set(1024, 1024);
@@ -81,6 +108,7 @@ export class Game {
     sun.shadow.camera.right = s;
     sun.shadow.camera.top = s;
     sun.shadow.camera.bottom = -s;
+    sun.shadow.bias = -0.0005;
     this.scene.add(sun);
     this.scene.add(sun.target);
 
@@ -95,6 +123,8 @@ export class Game {
     this.scene.add(this.car.object);
     // Keep the sun shadow following the car a bit.
     sun.target = this.car.object;
+
+    this.particles = new Particles(this.scene);
 
     this.createSkidMarks();
     this.controls = new Controls();
@@ -135,6 +165,10 @@ export class Game {
     this.car.update(dt, this.controls, this.world.bounds, this.camera);
     this.audio.setSpeed(this.car.speed01);
 
+    // Stream the endless world around the car before anything reads positions:
+    // houses, trees and lamps all recycle as the road unrolls.
+    this.world.update(this.car.position.x, this.car.position.z);
+
     // Skid: sound + tire marks while braking.
     const braking = this.car.isBraking;
     this.audio.setSkidding(braking);
@@ -143,13 +177,28 @@ export class Game {
     // Impact: bounce off trees, play sound + fire the apology message.
     if (!this.entered && this.car.collide(this.world.treeColliders)) {
       this.audio.playImpact();
+      this.particles.burst(this.car.position);
       this.callbacks.onImpact();
     }
 
+    this.particles.update(dt, this.car.position);
     this.checkProximity();
+    this.reportStats(dt);
     this.renderer.render(this.scene, this.camera);
   };
 
+  private reportStats(dt: number): void {
+    this.statsTimer -= dt;
+    if (this.statsTimer > 0) return;
+    this.statsTimer = STATS_INTERVAL;
+    this.callbacks.onStats({
+      distance: this.car.distance,
+      found: this.foundQuotes.size,
+      // The road is endless, so progress is measured against the whole
+      // collection of quotes rather than the handful currently on screen.
+      total: this.world.quotePoolSize,
+    });
+  }
 
   private createSkidMarks(): void {
     const geo = new THREE.CircleGeometry(0.35, 8);
@@ -176,7 +225,7 @@ export class Game {
     for (const side of [-0.7, 0.7]) {
       const m = this.skidMarks[this.skidIndex];
       this.skidIndex = (this.skidIndex + 1) % this.skidMarks.length;
-      m.position.set(p.x - fwd.x * 1.2 + right.x * side, 0.03, p.z - fwd.z * 1.2 + right.z * side);
+      m.position.set(p.x - fwd.x * 1.2 + right.x * side, SKID_Y, p.z - fwd.z * 1.2 + right.z * side);
       m.visible = true;
     }
   }
@@ -206,6 +255,7 @@ export class Game {
     }
     if (nearestQuote !== this.currentQuote) {
       this.currentQuote = nearestQuote;
+      if (nearestQuote) this.foundQuotes.add(nearestQuote);
       this.callbacks.onQuote(nearestQuote);
     }
 
@@ -245,6 +295,7 @@ export class Game {
     this.audio.dispose();
     this.renderer?.setAnimationLoop(null);
     this.controls?.dispose();
+    this.particles?.dispose();
     if (this.renderer) {
       this.renderer.dispose();
       this.renderer.domElement.remove();

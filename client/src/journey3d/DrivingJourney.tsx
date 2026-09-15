@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Volume2, VolumeX } from 'lucide-react';
-import { Game } from './engine/Game';
+import { Game, DriveStats } from './engine/Game';
 import { StationConfig } from '../phaser/config/constants';
 import { getSectionMenu } from '../journey/sections';
 
@@ -33,6 +33,7 @@ export function DrivingJourney() {
   const [nearGarage, setNearGarage] = React.useState<StationConfig | null>(null);
   const [muted, setMuted] = React.useState(false);
   const [bump, setBump] = React.useState<string | null>(null);
+  const [stats, setStats] = React.useState<DriveStats | null>(null);
   const bumpTimer = React.useRef<number | null>(null);
 
   // One-time intro tutorial (shown on first visit to the 3D world).
@@ -63,6 +64,7 @@ export function DrivingJourney() {
     const game = new Game(containerRef.current, {
       onQuote: (q) => setQuote(q),
       onNearGarage: (s) => setNearGarage(s),
+      onStats: (s) => setStats(s),
       onEnterGarage: (station) => {
         // Enter this section's 2D walking world; sections with no sub-pages
         // (e.g. the meditation garage) navigate straight to the page.
@@ -133,6 +135,28 @@ export function DrivingJourney() {
       >
         {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
       </button>
+
+      {/* Drive HUD — how far you've come, and how many roadside words you've met */}
+      {stats && (
+        <div className="pointer-events-none absolute top-4 left-1/2 z-40 flex -translate-x-1/2 gap-2">
+          <div className="hidden rounded-2xl border border-white/60 bg-white/70 px-4 py-2 text-center shadow-sm backdrop-blur-md sm:block">
+            <div className="text-lg font-semibold leading-none text-stone-700">
+              {Math.round(stats.distance)} m
+            </div>
+            <div className="mt-1 text-[10px] font-medium uppercase tracking-[0.14em] text-stone-500">
+              Travelled
+            </div>
+          </div>
+          <div className="rounded-2xl border border-white/60 bg-white/70 px-4 py-2 text-center shadow-sm backdrop-blur-md">
+            <div className="text-lg font-semibold leading-none text-stone-700">
+              {stats.found} / {stats.total}
+            </div>
+            <div className="mt-1 text-[10px] font-medium uppercase tracking-[0.14em] text-stone-500">
+              Words found
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Positive quote card (shown when passing a tree) */}
       {quote && (

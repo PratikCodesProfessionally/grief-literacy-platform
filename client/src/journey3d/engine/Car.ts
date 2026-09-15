@@ -18,27 +18,49 @@ const CAR_RADIUS = 1.4;
 
 // Light arcade car: kinematic steering on the ground plane (no real physics).
 // The model is assumed to face -Z forward (matches the procedural fallback).
+//
+// The model hangs off two nested pivots:
+//   object (position + heading, yaw only)
+//     └── tilt (lean into corners, squat under braking)
+//       └── model
+// Rolling the tilt group rather than the outer object keeps the lean around
+// the car's own forward axis whatever direction it happens to be facing.
 export class Car {
   readonly object: THREE.Object3D;
+  private tilt: THREE.Group;
   private heading = 0; // radians around +Y; 0 = facing -Z
   private speed = 0; // units/sec (positive = forward)
   private braking = false;
   private lastHitIndex = -1; // debounces repeated impacts with the same tree
+  private travelled = 0; // metres driven, for the HUD
+  private roll = 0;
+  private pitch = 0;
+  private camFov = 60;
 
   // Tuning (calm cruising, not racing)
   private readonly maxForward = 22;
   private readonly maxReverse = 8;
   private readonly accel = 18;
-  private readonly brakeDrag = 26;
   private readonly idleDrag = 10;
   private readonly turnRate = 1.8; // rad/sec at full speed
+
+  // Feel: how far the body leans, and how quickly it settles.
+  private readonly maxRoll = 0.1;
+  private readonly maxPitch = 0.035;
+  private readonly bodyEase = 5.5;
 
   private readonly forward = new THREE.Vector3();
   private readonly camTarget = new THREE.Vector3();
   private readonly desiredCam = new THREE.Vector3();
 
-  constructor(object: THREE.Object3D, startX = 0, startZ = 0, startHeading = 0) {
-    this.object = object;
+  constructor(model: THREE.Object3D, startX = 0, startZ = 0, startHeading = 0) {
+    this.tilt = new THREE.Group();
+    this.tilt.add(model);
+
+    const root = new THREE.Group();
+    root.add(this.tilt);
+    this.object = root;
+
     this.heading = startHeading;
     this.object.position.set(startX, 0, startZ);
     this.object.rotation.y = this.heading;
@@ -51,6 +73,16 @@ export class Car {
   /** Normalized speed magnitude (0 idle .. 1 top), for audio/effects. */
   get speed01(): number {
     return Math.min(1, Math.abs(this.speed) / this.maxForward);
+  }
+
+  /** Rough speed readout for the HUD, scaled to feel like km/h. */
+  get speedKmh(): number {
+    return Math.abs(this.speed) * 3.6;
+  }
+
+  /** Total distance driven, in world units (~metres). */
+  get distance(): number {
+    return this.travelled;
   }
 
   /** True while actively braking and still rolling forward (for skid fx). */
@@ -102,10 +134,8 @@ export class Car {
     const steer = controls.steer;
 
     // Longitudinal: accelerate toward throttle intent, otherwise drag to 0.
-    if (throttle > 0) {
+    if (throttle !== 0) {
       this.speed += this.accel * throttle * dt;
-    } else if (throttle < 0) {
-      this.speed += this.accel * throttle * dt; // reverse / brake
     } else {
       // Coast: ease speed back toward zero.
       const drag = this.idleDrag * dt;
@@ -126,6 +156,16 @@ export class Car {
     // Integrate position along the forward vector.
     this.forward.set(-Math.sin(this.heading), 0, -Math.cos(this.heading));
     this.object.position.addScaledVector(this.forward, this.speed * dt);
+    this.travelled += Math.abs(this.speed) * dt;
+
+    // Body: lean out of the turn, squat under power, dive under braking.
+    const targetRoll = -steer * this.maxRoll * speedFactor;
+    const targetPitch = this.braking ? this.maxPitch : -throttle * this.maxPitch * 0.6;
+    const ease = Math.min(1, this.bodyEase * dt);
+    this.roll += (targetRoll - this.roll) * ease;
+    this.pitch += (targetPitch - this.pitch) * ease;
+    this.tilt.rotation.z = this.roll;
+    this.tilt.rotation.x = this.pitch;
 
     // Keep within the play area; bumping a wall sheds speed.
     const p = this.object.position;
@@ -135,19 +175,31 @@ export class Car {
       this.speed *= 0.5;
     }
 
-    this.updateCamera(camera);
+    this.updateCamera(camera, dt, speedFactor);
   }
 
-  private updateCamera(camera: THREE.PerspectiveCamera): void {
-    // Chase camera: behind and above, looking slightly ahead of the car.
-    this.desiredCam.copy(this.object.position)
-      .addScaledVector(this.forward, -9) // behind
-      .add(new THREE.Vector3(0, 6, 0)); // above
-    camera.position.lerp(this.desiredCam, 0.1);
+  private updateCamera(camera: THREE.PerspectiveCamera, dt: number, speedFactor: number): void {
+    // Chase camera: behind and above, easing back and rising a little as the
+    // speed builds so the road opens up ahead of you.
+    const back = 9 + speedFactor * 1.6;
+    const up = 6 + speedFactor * 0.5;
+    this.desiredCam
+      .copy(this.object.position)
+      .addScaledVector(this.forward, -back);
+    this.desiredCam.y += up;
+    camera.position.lerp(this.desiredCam, Math.min(1, 6 * dt));
 
     this.camTarget.copy(this.object.position).addScaledVector(this.forward, 4);
     this.camTarget.y += 1.2;
     camera.lookAt(this.camTarget);
+
+    // Very slight FOV stretch with speed — a sense of pace without the drama.
+    const targetFov = 60 + speedFactor * 4;
+    if (Math.abs(targetFov - this.camFov) > 0.01) {
+      this.camFov += (targetFov - this.camFov) * Math.min(1, 3 * dt);
+      camera.fov = this.camFov;
+      camera.updateProjectionMatrix();
+    }
   }
 
   /** Place the camera correctly on the first frame (no lerp). */
