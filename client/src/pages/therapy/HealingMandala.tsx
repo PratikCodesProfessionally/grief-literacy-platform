@@ -1,7 +1,8 @@
 import * as React from 'react';
+import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Paintbrush, Eraser, Droplet, Sparkles, Download, Undo2, Redo2, RotateCcw, ChevronDown, ChevronUp, Palette, ZoomIn, ZoomOut } from 'lucide-react';
+import { Paintbrush, Eraser, Droplet, Sparkles, Download, Undo2, Redo2, RotateCcw, ChevronDown, ChevronUp, Palette, ZoomIn, ZoomOut, Maximize2, Minimize2 } from 'lucide-react';
 import { addArtwork, svgToDataUrl } from '@/lib/canvassence';
 
 interface HealingMandalaProps {
@@ -79,6 +80,8 @@ export const HealingMandala: React.FC<HealingMandalaProps> = ({
   const [isDesktop, setIsDesktop] = React.useState(false);
   const [canvasSize, setCanvasSize] = React.useState(600);
   const [zoomLevel, setZoomLevel] = React.useState(1);
+  // Full-screen focus view: hides the controls panel so the mandala fills the screen.
+  const [isFocusMode, setIsFocusMode] = React.useState(false);
   const [isBottomSheetExpanded, setIsBottomSheetExpanded] = React.useState(false);
   const [expandedSections, setExpandedSections] = React.useState<Set<string>>(new Set(['paint-tools']));
   
@@ -89,11 +92,15 @@ export const HealingMandala: React.FC<HealingMandalaProps> = ({
       const height = window.innerHeight;
       const landscape = width > height;
       
+      // Phones held sideways can be wider than 768px but only ~360-430px tall;
+      // they need the compact phone layout, not the tablet one.
+      const mobile = width < 768 || (landscape && height < 500);
+
       setViewportSize({ width, height });
       setIsLandscape(landscape);
-      setIsMobile(width < 768);
-      setIsTablet(width >= 768 && width < 1024);
-      setIsDesktop(width >= 1024);
+      setIsMobile(mobile);
+      setIsTablet(!mobile && width < 1024);
+      setIsDesktop(!mobile && width >= 1024);
       
       // Calculate canvas size based on viewport
       let newCanvasSize;
@@ -128,7 +135,45 @@ export const HealingMandala: React.FC<HealingMandalaProps> = ({
       window.removeEventListener('orientationchange', updateViewport);
     };
   }, []);
-  
+
+  // ── Mobile canvas fit ─────────────────────────────────────────────────────────
+  // On phones the palette sheet sits below the scroll area (in normal flow), so
+  // the mandala is sized to the space actually left between header and sheet.
+  // Expanding the sheet shrinks the scroll area, and the mandala shrinks with it
+  // instead of being covered.
+  const scrollAreaRef = React.useRef<HTMLDivElement | null>(null);
+  const [scrollAreaSize, setScrollAreaSize] = React.useState({ width: 0, height: 0 });
+
+  React.useEffect(() => {
+    const el = scrollAreaRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect;
+      setScrollAreaSize({ width, height });
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  // Short screens (phones in landscape) get a compact header and tighter padding.
+  const isCompactHeight = isMobile && isLandscape;
+  // p-2 / p-4 on both sides of the content wrapper
+  const stagePadding = (isFocusMode ? isMobile : isCompactHeight) ? 16 : 32;
+  const fitsStage = (isMobile || isFocusMode) && scrollAreaSize.width > 0;
+  const fittedCanvasSize = fitsStage
+    ? Math.max(
+        96,
+        Math.min(
+          // Full screen uses all the room it has; the normal phone view caps at 500px.
+          isFocusMode ? Infinity : 500,
+          scrollAreaSize.width - stagePadding,
+          scrollAreaSize.height - stagePadding,
+        ),
+      )
+    : canvasSize;
+  // Zoom changes the real size (not a CSS transform) so the stage can scroll to every part.
+  const displayCanvasSize = isFocusMode ? fittedCanvasSize * zoomLevel : fittedCanvasSize;
+
   // ── Touch event handling for mobile ───────────────────────────────────────────
   const [touchStartPos, setTouchStartPos] = React.useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = React.useState(false);
@@ -1098,18 +1143,84 @@ export const HealingMandala: React.FC<HealingMandalaProps> = ({
 
   const canComplete = true;
 
-  // ── Zoom controls ────────────────────────────────────────────────────────────
+  // ── Full screen & zoom ───────────────────────────────────────────────────────
+  const ZOOM_STEPS = [1, 1.5, 2, 3, 4];
+  const zoomAnchorRef = React.useRef<{ cx: number; cy: number } | null>(null);
+
+  // Remember which point of the stage is centred so zooming keeps it in view.
+  const applyZoom = (next: number) => {
+    const el = scrollAreaRef.current;
+    zoomAnchorRef.current = el && el.scrollWidth > 0
+      ? {
+          cx: (el.scrollLeft + el.clientWidth / 2) / el.scrollWidth,
+          cy: (el.scrollTop + el.clientHeight / 2) / el.scrollHeight,
+        }
+      : null;
+    setZoomLevel(next);
+  };
+
+  React.useLayoutEffect(() => {
+    const anchor = zoomAnchorRef.current;
+    const el = scrollAreaRef.current;
+    if (!anchor || !el) return;
+    zoomAnchorRef.current = null;
+    el.scrollLeft = anchor.cx * el.scrollWidth - el.clientWidth / 2;
+    el.scrollTop = anchor.cy * el.scrollHeight - el.clientHeight / 2;
+  }, [zoomLevel]);
+
   const handleZoomIn = () => {
-    setZoomLevel(prev => Math.min(prev + 0.25, 2));
+    const next = ZOOM_STEPS.find((z) => z > zoomLevel);
+    if (next) applyZoom(next);
   };
-  
+
   const handleZoomOut = () => {
-    setZoomLevel(prev => Math.max(prev - 0.25, 0.5));
+    const next = [...ZOOM_STEPS].reverse().find((z) => z < zoomLevel);
+    if (next) applyZoom(next);
   };
-  
-  const resetZoom = () => {
+
+  const resetZoom = () => applyZoom(1);
+
+  const enterFocusMode = () => {
+    setIsFocusMode(true);
+    setIsBottomSheetExpanded(false);
+    // Real browser full screen also hides the address bar where supported
+    // (Android, desktop). iPhone Safari lacks it and keeps the in-app view.
+    const el = modalRef.current;
+    if (el && document.fullscreenEnabled && !document.fullscreenElement) {
+      el.requestFullscreen({ navigationUI: 'hide' }).catch(() => {});
+    }
+  };
+
+  const exitFocusMode = React.useCallback(() => {
+    setIsFocusMode(false);
     setZoomLevel(1);
-  };
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  }, []);
+
+  // Leaving browser full screen (Esc, back gesture) also leaves the focus view.
+  React.useEffect(() => {
+    const onFullscreenChange = () => {
+      if (!document.fullscreenElement) {
+        setIsFocusMode(false);
+        setZoomLevel(1);
+      }
+    };
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', onFullscreenChange);
+      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    };
+  }, []);
+
+  // Esc leaves the in-app focus view when browser full screen isn't active.
+  React.useEffect(() => {
+    if (!isFocusMode) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !document.fullscreenElement) exitFocusMode();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isFocusMode, exitFocusMode]);
 
   // ── Section toggle helpers ───────────────────────────────────────────────────
   const toggleSection = (sectionId: string) => {
@@ -1272,7 +1383,24 @@ export const HealingMandala: React.FC<HealingMandalaProps> = ({
     </>
   );
 
-  return (
+  // ── Full-screen floating controls ────────────────────────────────────────────
+  const floatingPill = 'flex items-center gap-1 p-1 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm shadow-lg ring-1 ring-black/5';
+  const isLandscapeStage = scrollAreaSize.width > scrollAreaSize.height;
+  const historyButtons = (
+    <>
+      <Button size="sm" variant="ghost" onClick={undo} disabled={!undoStack.length} aria-label="Undo" title="Undo" className="h-9 w-9 p-0 rounded-full">
+        <Undo2 className="w-4 h-4" />
+      </Button>
+      <Button size="sm" variant="ghost" onClick={redo} disabled={!redoStack.length} aria-label="Redo" title="Redo" className="h-9 w-9 p-0 rounded-full">
+        <Redo2 className="w-4 h-4" />
+      </Button>
+    </>
+  );
+
+  // Portal to <body>: the host page wraps its content in a `relative z-10`
+  // stacking context, which would otherwise trap this modal below the sticky
+  // site header (z-40) and hide the modal header on phones.
+  return createPortal(
     <>
       {/* Session Restore Prompt */}
       {showSessionRestorePrompt && (
@@ -1312,7 +1440,8 @@ export const HealingMandala: React.FC<HealingMandalaProps> = ({
       ref={modalRef}
       className={`
         fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center
-        ${isMobile ? 'p-0' : 'p-4 animate-in fade-in-0 duration-300'}
+        ${isMobile || isFocusMode ? 'p-0' : 'p-4'}
+        ${isMobile ? '' : 'animate-in fade-in-0 duration-300'}
       `}
       style={{
         paddingTop: isMobile ? 'env(safe-area-inset-top, 0)' : undefined,
@@ -1325,51 +1454,74 @@ export const HealingMandala: React.FC<HealingMandalaProps> = ({
         className={`
           bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 
           shadow-2xl flex flex-col overflow-hidden
-          ${isMobile 
-            ? 'w-full h-full rounded-none' 
+          ${isMobile || isFocusMode
+            ? 'w-full h-full rounded-none'
             : isTablet 
               ? 'w-[95vw] max-w-4xl h-[95vh] rounded-xl' 
-              : 'w-full max-w-6xl h-[90vh] rounded-2xl animate-in zoom-in-95 duration-300'
+              : 'w-full max-w-6xl h-[90vh] rounded-2xl'
           }
+          ${isDesktop ? 'animate-in zoom-in-95 duration-300' : ''}
         `}
         style={{
-          maxHeight: isMobile ? '100vh' : isTablet ? '95vh' : '90vh',
+          // Mobile fills the fixed overlay via h-full; 100vh would include the
+          // area behind mobile browser toolbars.
+          maxHeight: isMobile || isFocusMode ? undefined : isTablet ? '95vh' : '90vh',
         }}
       >
         {/* Sticky Header */}
         <div className={`
           sticky top-0 z-20 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700
-          ${isMobile ? 'px-4 py-3' : 'px-8 py-4'}
+          ${isFocusMode && isCompactHeight ? 'px-4 py-1' : isFocusMode || isCompactHeight ? 'px-4 py-1.5' : isMobile ? 'px-4 py-3' : 'px-8 py-4'}
         `}>
+          {isFocusMode ? (
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-base font-semibold text-gray-900 dark:text-white truncate">
+                Healing Mandala
+              </h2>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={exitFocusMode}
+                className={`shrink-0 ${isCompactHeight ? 'h-8' : 'h-9'}`}
+              >
+                <Minimize2 className="w-4 h-4 mr-2" />
+                Exit full screen
+              </Button>
+            </div>
+          ) : (
           <div className="flex items-center justify-between">
-            <div>
+            <div className={isCompactHeight ? 'flex items-baseline gap-3' : undefined}>
               <h2 className={`
                 font-semibold text-gray-900 dark:text-white
-                ${isMobile ? 'text-lg' : 'text-2xl'}
+                ${isCompactHeight ? 'text-base' : isMobile ? 'text-lg' : 'text-2xl'}
               `}>
                 Healing Mandala Therapy
               </h2>
               <p className={`
-                text-indigo-600 dark:text-indigo-400 font-medium mt-1
+                text-indigo-600 dark:text-indigo-400 font-medium
+                ${isCompactHeight ? '' : 'mt-1'}
                 ${isMobile ? 'text-xs' : 'text-sm'}
               `}>
                 Current mood: {mood}
               </p>
             </div>
-            <Button 
-              size="sm" 
-              variant="ghost" 
-              onClick={handleClose} 
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={handleClose}
               className="hover:bg-gray-100 dark:hover:bg-gray-800"
             >
               ✕
             </Button>
           </div>
+          )}
         </div>
 
-        {/* Scrollable Content Area */}
-        <div 
-          className="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth"
+        {/* Scrollable Content Area (the wrapper anchors the full-screen zoom controls) */}
+        <div className="relative flex-1 min-h-0 flex flex-col">
+        <div
+          ref={scrollAreaRef}
+          className={`flex-1 min-h-0 ${isFocusMode ? 'overflow-auto' : 'overflow-y-auto overflow-x-hidden scroll-smooth'}`}
           style={{
             overscrollBehavior: 'contain',
             WebkitOverflowScrolling: 'touch',
@@ -1378,29 +1530,33 @@ export const HealingMandala: React.FC<HealingMandalaProps> = ({
           }}
         >
           <div className={`
-            ${isMobile ? 'p-4 space-y-4' : 'p-8 space-y-6'}
+            ${isFocusMode
+              // min-h-full + the child's m-auto centres the mandala, and stays
+              // scroll-safe (no clipped left/top edge) once zoom makes it overflow.
+              ? `min-h-full flex flex-col ${isMobile ? 'p-2' : 'p-4'}`
+              : isCompactHeight ? 'p-2 space-y-4' : isMobile ? 'p-4 space-y-4' : 'p-8 space-y-6'}
           `}>
-            {/* Instructions */}
-            <p className={`
-              text-gray-600 dark:text-gray-300 leading-relaxed italic
-              ${isMobile ? 'text-sm' : 'text-sm'}
-            `}>
-              Select a color from the palette below and tap segments to paint your mandala. Let creativity flow as you create your unique healing pattern.
-            </p>
+            {/* Instructions (on mobile a shorter hint sits under the mandala) */}
+            {!isMobile && !isFocusMode && (
+              <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed italic">
+                Select a color from the palette below and tap segments to paint your mandala. Let creativity flow as you create your unique healing pattern.
+              </p>
+            )}
 
             {/* Main Content Layout */}
             <div className={`
-              ${isDesktop 
-                ? 'grid grid-cols-[320px_1fr] gap-6' 
-                : 'space-y-6'
+              ${isFocusMode
+                ? 'm-auto'
+                : isDesktop
+                  ? 'grid grid-cols-[320px_1fr] gap-6'
+                  : isMobile
+                    ? 'flex flex-col gap-5'
+                    : 'space-y-6'
               }
             `}>
-              
-              {/* Controls Panel */}
-              <div className={`
-                space-y-4
-                ${isMobile ? 'space-y-3' : 'space-y-6'}
-              `}>
+
+              {/* Controls Panel (hidden, not unmounted, in full screen so its state survives) */}
+              <div className={isFocusMode ? 'hidden' : isMobile ? 'space-y-3' : 'space-y-6'}>
                 
                 {/* Template Selection - Collapsible on Mobile */}
                 {isMobile ? (
@@ -1638,46 +1794,51 @@ export const HealingMandala: React.FC<HealingMandalaProps> = ({
               </div>
 
               {/* Canvas & Color Palette Panel */}
-              <div className="space-y-6">
+              <div className={isFocusMode ? '' : isMobile ? 'order-first space-y-3' : 'space-y-6'}>
                 {/* Canvas Container */}
-                <div className="relative w-full flex justify-center">
-                  <div 
-                    className="relative aspect-square rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.02)] overflow-hidden"
-                    style={{ 
-                      width: canvasSize,
-                      maxWidth: '100%',
+                <div className={isFocusMode ? 'relative flex' : 'relative w-full flex justify-center'}>
+                  <div
+                    className={`relative aspect-square shrink-0 rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.02)] overflow-hidden ${
+                      // One-finger drag pans the zoomed stage; taps still paint.
+                      // (!important beats the inline touch-action:none set on the SVG.)
+                      isFocusMode ? '[&_svg]:![touch-action:pan-x_pan-y]' : ''
+                    }`}
+                    style={{
+                      width: displayCanvasSize,
+                      maxWidth: isFocusMode ? undefined : '100%',
                       backgroundColor: '#FEFEFE',
                       backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'20\' height=\'20\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' /%3E%3CfeColorMatrix type=\'saturate\' values=\'0\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\' opacity=\'0.02\'/%3E%3C/svg%3E")',
-                      transform: `scale(${zoomLevel})`,
-                      transformOrigin: 'center',
-                      transition: scrollY > 0 ? 'none' : 'transform 0.2s ease-out',
                     }}
                   >
-                    <div 
-                      ref={containerRef} 
+                    <div
+                      ref={containerRef}
                       className="w-full h-full"
                       style={{ display: 'block' }}
                     />
-                    
-                    {/* Zoom Controls - Only show when zoomed */}
-                    {zoomLevel !== 1 && (
-                      <div className="absolute top-2 right-2 flex gap-1">
-                        <Button size="sm" variant="secondary" onClick={() => setZoomLevel(prev => Math.max(prev - 0.25, 0.5))} className="h-8 w-8 p-0">
-                          <ZoomOut className="w-4 h-4" />
-                        </Button>
-                        <Button size="sm" variant="secondary" onClick={() => setZoomLevel(1)} className="h-8 px-2 text-xs">
-                          {Math.round(zoomLevel * 100)}%
-                        </Button>
-                        <Button size="sm" variant="secondary" onClick={() => setZoomLevel(prev => Math.min(prev + 0.25, 2))} className="h-8 w-8 p-0">
-                          <ZoomIn className="w-4 h-4" />
-                        </Button>
-                      </div>
+
+                    {/* Open full screen */}
+                    {!isFocusMode && (
+                      <button
+                        type="button"
+                        onClick={enterFocusMode}
+                        className="absolute top-2 right-2 inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm shadow-md ring-1 ring-black/5 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-900 transition-colors"
+                        title="Open full screen to paint comfortably"
+                      >
+                        <Maximize2 className="w-4 h-4" />
+                        Full screen
+                      </button>
                     )}
                   </div>
                 </div>
 
-                {/* Color Palette - Desktop/Tablet Only */}
-                {!isMobile && (
+                {isMobile && !isFocusMode && (
+                  <p className="text-xs text-center text-gray-500 dark:text-gray-400 italic">
+                    Pick a color below and tap segments to paint. Use Full screen to zoom in, or scroll down for design and paint tools.
+                  </p>
+                )}
+
+                {/* Color Palette - Desktop/Tablet Only (full screen uses the dock) */}
+                {!isMobile && !isFocusMode && (
                   <>
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
@@ -1791,107 +1952,149 @@ export const HealingMandala: React.FC<HealingMandalaProps> = ({
           </div>
         </div>
 
-        {/* Mobile Bottom Sheet Color Palette */}
-        {isMobile && (
-          <div 
-            className={`
-              fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700
-              transition-transform duration-300 ease-out z-30
-              ${isBottomSheetExpanded ? 'translate-y-0' : 'translate-y-[calc(100%-120px)]'}
-            `}
-            style={{
-              paddingBottom: 'env(safe-area-inset-bottom, 0)',
-            }}
+          {/* Full-screen floating controls. Portrait stage: tools + undo/redo in one
+              bar at the top. Landscape stage: tools down the left edge, undo/redo top
+              right. Zoom always bottom right. They sit in the empty space around the
+              fitted mandala and only overlap it once zoomed in. */}
+          {isFocusMode && (
+            <div className={`absolute z-10 ${floatingPill} ${isLandscapeStage ? 'left-3 top-1/2 -translate-y-1/2 flex-col rounded-2xl' : 'top-3 left-1/2 -translate-x-1/2 rounded-full'}`}>
+              {([
+                { id: 'paint', label: 'Paint', Icon: Paintbrush },
+                { id: 'fill', label: 'Ring Fill', Icon: Sparkles },
+                { id: 'erase', label: 'Erase', Icon: Eraser },
+                { id: 'eyedropper', label: 'Pick Color', Icon: Droplet },
+              ] as const).map(({ id, label, Icon }) => (
+                <Button
+                  key={id}
+                  size="sm"
+                  variant={mode === id ? 'default' : 'ghost'}
+                  onClick={() => setMode(id)}
+                  aria-pressed={mode === id}
+                  aria-label={label}
+                  title={label}
+                  className={`h-9 rounded-full ${isMobile ? 'w-9 p-0' : 'px-3 justify-start w-full'}`}
+                >
+                  <Icon className="w-4 h-4" />
+                  {!isMobile && <span className="ml-2">{label}</span>}
+                </Button>
+              ))}
+              {!isLandscapeStage && (
+                <>
+                  <span className="w-px h-6 mx-1 bg-gray-200 dark:bg-gray-700" aria-hidden="true" />
+                  {historyButtons}
+                </>
+              )}
+            </div>
+          )}
+          {isFocusMode && isLandscapeStage && (
+            <div className={`absolute top-3 right-3 z-10 rounded-full ${floatingPill}`}>
+              {historyButtons}
+            </div>
+          )}
+          {isFocusMode && (
+            <div className={`absolute bottom-3 right-3 z-10 rounded-full ${floatingPill}`}>
+              <Button size="sm" variant="ghost" onClick={handleZoomOut} disabled={zoomLevel <= ZOOM_STEPS[0]} className="h-9 w-9 p-0 rounded-full" aria-label="Zoom out">
+                <ZoomOut className="w-4 h-4" />
+              </Button>
+              <Button size="sm" variant="ghost" onClick={resetZoom} className="h-9 min-w-[3.5rem] px-2 rounded-full text-xs tabular-nums" aria-label="Reset zoom" title="Fit to screen">
+                {Math.round(zoomLevel * 100)}%
+              </Button>
+              <Button size="sm" variant="ghost" onClick={handleZoomIn} disabled={zoomLevel >= ZOOM_STEPS[ZOOM_STEPS.length - 1]} className="h-9 w-9 p-0 rounded-full" aria-label="Zoom in">
+                <ZoomIn className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Mobile Palette Dock
+            Sits in normal flow below the scroll area (not position: fixed), so it
+            never covers the mandala; the canvas is sized to the space above it.
+            Also used on every screen size in full screen. */}
+        {(isMobile || isFocusMode) && (
+          <div
+            className="shrink-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 shadow-[0_-4px_16px_rgba(0,0,0,0.06)]"
+            style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
           >
-            {/* Drag Handle */}
-            <div className="flex justify-center py-2">
-              <div className="w-12 h-1.5 bg-gray-300 rounded-full cursor-pointer" 
-                   onClick={() => setIsBottomSheetExpanded(!isBottomSheetExpanded)} />
+            {/* Drag handle */}
+            <button
+              type="button"
+              onClick={() => setIsBottomSheetExpanded((v) => !v)}
+              aria-expanded={isBottomSheetExpanded}
+              aria-controls="mandala-palette-details"
+              aria-label={isBottomSheetExpanded ? 'Hide color options' : 'Show more color options'}
+              className="w-full flex justify-center pt-2 pb-1"
+            >
+              <span className="w-10 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full" />
+            </button>
+
+            {/* Quick bar - active color and the full current palette, always visible */}
+            <div className="flex items-center gap-3 px-4 pb-3">
+              <label
+                className="relative shrink-0 w-10 h-10 rounded-full border-2 border-white dark:border-gray-800 shadow ring-1 ring-gray-300 dark:ring-gray-600 cursor-pointer"
+                style={{ backgroundColor: selectedColor }}
+                title="Active color - tap for a custom color"
+              >
+                <input
+                  type="color"
+                  value={selectedColor}
+                  onChange={(e) => setSelectedColor(e.target.value)}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+                <span className="sr-only">Active color, tap to choose a custom color</span>
+              </label>
+
+              <div className="flex-1 min-w-0 flex gap-2 overflow-x-auto p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {palette.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setSelectedColor(c)}
+                    aria-label={`Use color ${c}`}
+                    aria-pressed={selectedColor === c}
+                    className={`shrink-0 w-8 h-8 rounded-full border border-black/10 transition-shadow duration-150 ${
+                      selectedColor === c ? 'ring-2 ring-indigo-500 ring-offset-2 ring-offset-white dark:ring-offset-gray-900' : ''
+                    }`}
+                    style={{ backgroundColor: c }}
+                  />
+                ))}
+              </div>
+
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => setIsBottomSheetExpanded((v) => !v)}
+                aria-expanded={isBottomSheetExpanded}
+                aria-controls="mandala-palette-details"
+                aria-label={isBottomSheetExpanded ? 'Hide color options' : 'Show more color options'}
+                className="shrink-0 h-9 w-9 p-0"
+              >
+                {isBottomSheetExpanded ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
+              </Button>
             </div>
 
-            {/* Collapsed State - Active Color & Quick Palette */}
-            {!isBottomSheetExpanded && (
-              <div className="px-4 pb-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Palette className="w-4 h-4 text-gray-500" />
-                    <span className="text-sm font-medium">Colors</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div 
-                      className="w-8 h-8 rounded-lg border-2 border-gray-300 shadow-sm"
-                      style={{ backgroundColor: selectedColor }}
-                    />
-                    <input 
-                      type="color" 
-                      value={selectedColor} 
-                      onChange={(e) => setSelectedColor(e.target.value)} 
-                      className="w-8 h-8 rounded cursor-pointer"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-5 gap-2">
-                  {palette.slice(0, 5).map((c) => (
-                    <button
-                      key={c}
-                      onClick={() => setSelectedColor(c)}
-                      className={`aspect-square rounded-lg border-2 transition-all duration-150 ${
-                        selectedColor === c ? 'border-indigo-500 scale-110 shadow-md' : 'border-gray-300'
-                      }`}
-                      style={{ backgroundColor: c }}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Expanded State - Full Palette */}
-            {isBottomSheetExpanded && (
-              <div className="px-4 pb-4 max-h-[60vh] overflow-y-auto">
-                <div className="space-y-4">
-                  {/* Active Color Display */}
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Active Color</span>
-                    <div className="flex items-center gap-2">
-                      <div 
-                        className="w-10 h-10 rounded-lg border-2 border-gray-300 shadow-sm"
-                        style={{ backgroundColor: selectedColor }}
-                      />
-                      <input 
-                        type="color" 
-                        value={selectedColor} 
-                        onChange={(e) => setSelectedColor(e.target.value)} 
-                        className="w-10 h-10 rounded cursor-pointer"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Full Color Grid */}
-                  <div>
-                    <h4 className="text-sm font-medium mb-2">{palettes[activePalette].name}</h4>
-                    <div className="grid grid-cols-5 gap-2">
-                      {palette.map((c) => (
-                        <button
-                          key={c}
-                          onClick={() => setSelectedColor(c)}
-                          className={`aspect-square rounded-lg border-2 transition-all duration-150 hover:scale-105 ${
-                            selectedColor === c ? 'border-indigo-500 scale-110 shadow-md' : 'border-gray-300'
-                          }`}
-                          style={{ backgroundColor: c }}
-                          title={c}
-                        />
-                      ))}
-                    </div>
-                  </div>
-
+            {/* Expandable details - themes, symmetry, line color, export */}
+            <div
+              id="mandala-palette-details"
+              aria-hidden={!isBottomSheetExpanded}
+              className={`grid transition-[grid-template-rows] duration-300 ease-out ${
+                isBottomSheetExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+              }`}
+            >
+              <div className="min-h-0 overflow-hidden">
+                <div
+                  className={`${isCompactHeight ? 'max-h-[30dvh]' : 'max-h-[40dvh]'} overflow-y-auto overscroll-contain px-4 pt-3 pb-4 space-y-4 border-t border-gray-200 dark:border-gray-700 ${
+                    isBottomSheetExpanded ? '' : 'invisible'
+                  }`}
+                >
                   {/* Palette Selection */}
                   <div>
-                    <h4 className="text-sm font-medium mb-2">Color Themes</h4>
+                    <h4 className="text-xs font-medium uppercase tracking-wide text-gray-500 mb-2">Color Themes</h4>
                     <div className="flex flex-wrap gap-2">
                       {(Object.keys(palettes) as Array<keyof typeof palettes>).map((key) => (
-                        <Button 
-                          key={key} 
-                          size="sm" 
+                        <Button
+                          key={key}
+                          size="sm"
                           variant={activePalette === key ? 'default' : 'outline'}
                           onClick={() => setActivePalette(key)}
                           className="text-xs"
@@ -1903,34 +2106,35 @@ export const HealingMandala: React.FC<HealingMandalaProps> = ({
                   </div>
 
                   {/* Advanced Settings */}
-                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-4">
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-medium">Symmetry:</span>
+                  <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">Symmetry</span>
                       {[1, 4, 8].map((sym) => (
                         <Button
                           key={sym}
                           size="sm"
                           variant={symmetryMode === sym ? 'default' : 'outline'}
                           onClick={() => setSymmetryMode(sym)}
+                          className="h-8 px-3"
                         >
                           {sym}x
                         </Button>
                       ))}
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Line Color</label>
-                      <input 
-                        type="color" 
-                        value={lineColor} 
-                        onChange={(e) => setLineColor(e.target.value)} 
+                    <label className="flex items-center gap-2">
+                      <span className="text-sm font-medium">Line color</span>
+                      <input
+                        type="color"
+                        value={lineColor}
+                        onChange={(e) => setLineColor(e.target.value)}
                         className="h-8 w-12 rounded cursor-pointer"
                       />
-                    </div>
+                    </label>
                   </div>
 
-                  {/* Actions */}
-                  <div className="flex gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  {/* Export */}
+                  <div className="flex gap-2">
                     <Button size="sm" variant="outline" onClick={exportSVG} className="flex-1">
                       <Download className="w-4 h-4 mr-2" />
                       SVG
@@ -1942,54 +2146,12 @@ export const HealingMandala: React.FC<HealingMandalaProps> = ({
                   </div>
                 </div>
               </div>
-            )}
+            </div>
           </div>
-        )}
-
-        {/* Mobile FAB for Complete */}
-        {isMobile && onComplete && (
-          <Button 
-            size="lg"
-            onClick={() => {
-              const canvas = document.createElement('canvas');
-              canvas.width = 500;
-              canvas.height = 500;
-              const ctx = canvas.getContext('2d');
-              if (ctx && svgRef.current) {
-                const svgData = new XMLSerializer().serializeToString(svgRef.current);
-                const img = new Image();
-                img.onload = () => {
-                  ctx.drawImage(img, 0, 0);
-                  canvas.toBlob((blob) => {
-                    if (blob) {
-                      const sessionDuration = Math.floor((Date.now() - sessionStartTime) / 1000);
-                      const totalSegments = svgRef.current?.querySelectorAll('[data-part]').length || 0;
-                      const paintedSegments = Array.from(svgRef.current?.querySelectorAll('[data-part]') || [])
-                        .filter(el => el.getAttribute('fill') !== '#FCFCFC').length;
-                      
-                      onComplete({
-                        imageBlob: blob,
-                        sessionDuration,
-                        colorsUsed: Array.from(colorsUsed),
-                        percentComplete: totalSegments > 0 ? (paintedSegments / totalSegments) * 100 : 0
-                      });
-                    }
-                  });
-                };
-                img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
-              }
-            }} 
-            disabled={!canComplete}
-            className="fixed bottom-4 right-4 z-40 rounded-full w-14 h-14 shadow-lg bg-indigo-600 hover:bg-indigo-700 text-white"
-            style={{
-              bottom: 'calc(1rem + env(safe-area-inset-bottom, 0))',
-            }}
-          >
-            ✓
-          </Button>
         )}
       </div>
     </div>
-    </>
+    </>,
+    document.body,
   );
 };
