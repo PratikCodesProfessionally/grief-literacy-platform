@@ -15,6 +15,7 @@ import { SymbolicDrawing } from './SymbolicDrawing';
 import { HealingMandala } from './HealingMandala';
 import { AdvancedDigitalStudio } from './AdvancedDigitalStudio';
 import { Canvassence } from './Canvassence';
+import { MandalaBookCard } from './MandalaBookCard';
 
 interface ActivityProgress {
   [key: string]: 'not-started' | 'in-progress' | 'completed';
@@ -345,6 +346,9 @@ export function ArtTherapyPage() {
             ))}
           </div>
         </div>
+
+        {/* Printed Healing Mandalas coloring book */}
+        <MandalaBookCard />
 
         {/* Advanced Digital Art Studio Card */}
         <Card className="bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 dark:from-indigo-900/30 dark:via-purple-900/30 dark:to-pink-900/30 border-2 border-indigo-300 dark:border-indigo-700 shadow-2xl hover:shadow-3xl hover:scale-[1.01] transition-all duration-300 overflow-hidden group relative">
