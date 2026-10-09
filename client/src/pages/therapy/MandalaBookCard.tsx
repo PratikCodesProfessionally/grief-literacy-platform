@@ -12,7 +12,7 @@ export const MANDALA_BOOK = {
   title: 'Healing Mandalas',
   subtitle: 'A Gentle Coloring Book for Children with Big Feelings',
   cover: '/Images/HealingMandalasBookCover.jpg',
-  asin: null as string | null,
+  asin: 'B0HMFT3RL5' as string | null,
 };
 
 /** Amazon store for the visitor's browser language; amazon.com otherwise. */
