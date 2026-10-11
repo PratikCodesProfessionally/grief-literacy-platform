@@ -116,7 +116,7 @@ export function TherapyPage() {
                                         transition-all duration-500 ease-out cursor-pointer
                                         will-change-transform">
                             {/* Image Banner */}
-                            <div className={`relative h-48 md:h-56 ${option.colorClass}`}>
+                            <div className={`relative aspect-[16/9] overflow-hidden ${option.colorClass}`}>
                               <img src={option.iconSrc} alt={option.title}
                                 className={`absolute inset-0 w-full h-full object-cover
                                      opacity-90 group-hover:opacity-100 group-hover:scale-105
@@ -158,7 +158,7 @@ export function TherapyPage() {
                                         transition-all duration-500 ease-out cursor-pointer
                                         will-change-transform">
                             {/* Image Banner */}
-                            <div className={`relative h-48 md:h-56 ${option.colorClass}`}>
+                            <div className={`relative aspect-[16/9] overflow-hidden ${option.colorClass}`}>
                               <img src={option.iconSrc} alt={option.title}
                                 className={`absolute inset-0 w-full h-full object-cover
                                      opacity-90 group-hover:opacity-100 group-hover:scale-105

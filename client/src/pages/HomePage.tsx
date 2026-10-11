@@ -12,6 +12,8 @@ interface Feature {
   iconSrc: string;
   gradient: string;
   colorClass: string;
+  /** object-position for the card banner, to keep faces in frame */
+  bannerImageClass?: string;
 }
 
 export function HomePage() {
@@ -62,6 +64,7 @@ export function HomePage() {
       iconSrc: '/Images/TherapeuticApproachesIcon.png',
       gradient: 'from-sky-400 to-blue-500',
       colorClass: 'bg-gradient-to-br from-sky-400 to-blue-500',
+      bannerImageClass: 'object-[center_20%]',
     },
     {
       id: 2,
@@ -236,11 +239,11 @@ export function HomePage() {
                                       transition-all duration-500 ease-out cursor-pointer
                                       will-change-transform">
                           {/* Image Banner */}
-                          <div className={`relative h-48 md:h-56 ${feature.colorClass}`}>
+                          <div className={`relative aspect-[16/9] overflow-hidden ${feature.colorClass}`}>
                             <img src={feature.iconSrc} alt={feature.title}
-                                 className="absolute inset-0 w-full h-full object-cover
+                                 className={`absolute inset-0 w-full h-full object-cover ${feature.bannerImageClass ?? ''}
                                             opacity-90 group-hover:opacity-100 group-hover:scale-105
-                                            transition-all duration-700 ease-out" />
+                                            transition-all duration-700 ease-out`} />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
                             <h3 className="absolute bottom-4 left-6 text-2xl md:text-3xl font-bold text-white
                                          drop-shadow-lg">
@@ -278,11 +281,11 @@ export function HomePage() {
                                       transition-all duration-500 ease-out cursor-pointer
                                       will-change-transform">
                           {/* Image Banner */}
-                          <div className={`relative h-48 md:h-56 ${feature.colorClass}`}>
+                          <div className={`relative aspect-[16/9] overflow-hidden ${feature.colorClass}`}>
                             <img src={feature.iconSrc} alt={feature.title}
-                                 className="absolute inset-0 w-full h-full object-cover
+                                 className={`absolute inset-0 w-full h-full object-cover ${feature.bannerImageClass ?? ''}
                                             opacity-90 group-hover:opacity-100 group-hover:scale-105
-                                            transition-all duration-700 ease-out" />
+                                            transition-all duration-700 ease-out`} />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
                             <h3 className="absolute bottom-4 right-6 text-2xl md:text-3xl font-bold text-white
                                          drop-shadow-lg text-right">
