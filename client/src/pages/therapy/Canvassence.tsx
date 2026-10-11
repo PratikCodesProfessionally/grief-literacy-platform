@@ -63,7 +63,7 @@ export const Canvassence: React.FC<CanvassenceProps> = ({ open, onClose }) => {
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           <div>
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
               🎨 Canvassence
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400">

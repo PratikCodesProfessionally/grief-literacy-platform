@@ -100,9 +100,8 @@ function PredictiveHistoryDeck({
       onKeyDown={handleKeyDown}
       aria-roledescription="carousel"
       aria-label="Predictive History's Insight slides"
-      /* Colours come from theme tokens rather than fixed slate/white shades: the
-         app's night-reading-mode swaps the palette without adding Tailwind's
-         `dark` class, so `dark:` variants never fire there. */
+      /* Colours come from theme tokens rather than fixed slate/white shades, so
+         the warmer night-reading-mode palette carries through as well. */
       className="group relative overflow-hidden rounded-2xl border border-foreground/10 bg-card text-card-foreground shadow-lg outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
     >
       <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary/70 via-accent/70 to-secondary/70" />
@@ -772,7 +771,7 @@ but identify Dante as a gremlin`,
           </Button>
         </Link>
         <div className="flex-1">
-          <h1 className="text-4xl font-semibold mb-2 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+          <h1 className="text-4xl font-semibold mb-2 bg-gradient-to-r from-primary to-accent dark:to-cyan-300 bg-clip-text text-transparent">
             📖 Story Therapy
           </h1>
           <p className="text-lg text-muted-foreground mb-4">

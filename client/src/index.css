@@ -69,7 +69,10 @@
     --radius: 1rem; /* More rounded corners for softer feel */
   }
   .dark {
-    /* Dark mode with calming, therapeutic tones + Night Reading Optimization */
+    /* Native controls and scrollbars render dark too */
+    color-scheme: dark;
+    /* Dark mode with calming, therapeutic tones + Night Reading Optimization.
+       The slate values below are mirrored in tailwind.dark-palette.cjs. */
     --background: 210 25% 12%; /* Deep blue-gray background */
     --foreground: 32 8% 90%; /* Warm off-white for reduced eye strain */
     --card: 210 20% 15%; /* Slightly lighter card background */

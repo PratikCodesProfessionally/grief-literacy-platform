@@ -10,18 +10,9 @@ import { textRenderingOptimizer } from './lib/textRenderingOptimizer';
 // @ts-ignore - PWA plugin type
 import { registerSW } from 'virtual:pwa-register';
 
-// Initialize text rendering optimizer for crystal-clear display across all browsers
+// Initialize text rendering optimizer for crystal-clear display across all browsers.
+// It also owns the light/dark theme (the `dark` class on <html>).
 textRenderingOptimizer;
-
-const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
-
-function updateDarkClass(e = null) {
-  const isDark = e ? e.matches : darkQuery.matches;
-  document.documentElement.classList.toggle('dark', isDark);
-}
-
-updateDarkClass();
-darkQuery.addEventListener('change', updateDarkClass);
 
 // Register Service Worker for PWA
 if (import.meta.env.PROD) {

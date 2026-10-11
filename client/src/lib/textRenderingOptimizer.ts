@@ -9,14 +9,13 @@ export interface DisplayPreferences {
   textSize: number; // -2 to +4
   lineSpacing: number; // 1.5 to 2.0
   readingWidth: number; // 600 to 800px
-  autoAdjustEvening: boolean;
   reduceBlueLight: boolean;
   boldTextDarkMode: boolean;
 }
 
 export class TextRenderingOptimizer {
   private preferences: DisplayPreferences;
-  private timeCheckInterval: number | null = null;
+  private darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
   constructor() {
     this.preferences = this.loadPreferences();
@@ -26,15 +25,11 @@ export class TextRenderingOptimizer {
   private init(): void {
     this.detectDisplayPreferences();
     this.applyPreferences();
-    
-    if (this.preferences.autoAdjustEvening) {
-      this.startTimeBasedAdjustment();
-    }
 
-    // Listen for system theme changes
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+    // Follow system theme changes
+    this.darkQuery.addEventListener('change', () => {
       if (this.preferences.theme === 'auto') {
-        this.applyTheme(e.matches ? 'dark' : 'light');
+        this.applyTheme('auto');
       }
     });
 
@@ -51,13 +46,8 @@ export class TextRenderingOptimizer {
    * Detect and apply system display preferences
    */
   private detectDisplayPreferences(): void {
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const prefersContrast = window.matchMedia('(prefers-contrast: high)').matches;
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    if (this.preferences.theme === 'auto') {
-      this.applyTheme(prefersDark ? 'dark' : 'light');
-    }
 
     if (prefersContrast && this.preferences.contrast === 'standard') {
       this.preferences.contrast = 'high';
@@ -65,85 +55,36 @@ export class TextRenderingOptimizer {
     }
 
     if (prefersReducedMotion) {
-      document.body.classList.add('reduced-motion');
+      document.documentElement.classList.add('reduced-motion');
     }
   }
 
   /**
-   * Apply time-based theme adjustments
-   */
-  private startTimeBasedAdjustment(): void {
-    this.applyTimeBasedTheme();
-    
-    // Check every hour
-    this.timeCheckInterval = window.setInterval(() => {
-      this.applyTimeBasedTheme();
-    }, 3600000);
-  }
-
-  private applyTimeBasedTheme(): void {
-    const hour = new Date().getHours();
-    const body = document.body;
-
-    if (this.preferences.theme !== 'auto') {
-      return; // User has manual preference
-    }
-
-    if (hour >= 22 || hour < 6) {
-      // Night mode (10pm - 6am)
-      body.classList.add('night-reading-mode');
-      body.classList.remove('evening-mode', 'dark', 'light');
-    } else if (hour >= 18) {
-      // Evening mode (6pm - 10pm)
-      body.classList.add('evening-mode', 'dark');
-      body.classList.remove('night-reading-mode', 'light');
-    } else if (hour >= 6 && hour < 12) {
-      // Morning - lighter theme
-      body.classList.add('light');
-      body.classList.remove('dark', 'night-reading-mode', 'evening-mode');
-    } else {
-      // Afternoon - standard light
-      body.classList.add('light');
-      body.classList.remove('dark', 'night-reading-mode', 'evening-mode');
-    }
-  }
-
-  /**
-   * Apply theme manually
+   * Apply the theme to <html>, the single place Tailwind's `dark:` variants and
+   * the theme variables in index.css look for it. 'auto' follows the device.
    */
   private applyTheme(theme: DisplayPreferences['theme']): void {
-    const body = document.body;
-    body.classList.remove('light', 'dark', 'night-reading-mode', 'evening-mode');
+    const root = document.documentElement;
+    const dark = theme === 'dark' || theme === 'night-reading' || (theme === 'auto' && this.darkQuery.matches);
 
-    switch (theme) {
-      case 'light':
-        body.classList.add('light');
-        break;
-      case 'dark':
-        body.classList.add('dark');
-        break;
-      case 'night-reading':
-        body.classList.add('night-reading-mode');
-        break;
-      case 'auto':
-        this.detectDisplayPreferences();
-        break;
-    }
+    root.classList.toggle('dark', dark);
+    // Night reading layers a warmer palette on top of the dark theme.
+    root.classList.toggle('night-reading-mode', theme === 'night-reading');
   }
 
   /**
    * Apply contrast level
    */
   private applyContrast(): void {
-    const body = document.body;
-    body.classList.remove('high-contrast', 'enhanced-contrast');
+    const root = document.documentElement;
+    root.classList.remove('high-contrast', 'enhanced-contrast');
 
     switch (this.preferences.contrast) {
       case 'high':
-        body.classList.add('high-contrast');
+        root.classList.add('high-contrast');
         break;
       case 'enhanced':
-        body.classList.add('enhanced-contrast');
+        root.classList.add('enhanced-contrast');
         break;
       case 'standard':
         // Default contrast, no class needed
@@ -214,13 +155,6 @@ export class TextRenderingOptimizer {
     this.preferences = { ...this.preferences, ...newPreferences };
     this.savePreferences();
     this.applyPreferences();
-
-    if (this.preferences.autoAdjustEvening && !this.timeCheckInterval) {
-      this.startTimeBasedAdjustment();
-    } else if (!this.preferences.autoAdjustEvening && this.timeCheckInterval) {
-      window.clearInterval(this.timeCheckInterval);
-      this.timeCheckInterval = null;
-    }
   }
 
   /**
@@ -251,7 +185,6 @@ export class TextRenderingOptimizer {
       textSize: 0,
       lineSpacing: 1.7,
       readingWidth: 680,
-      autoAdjustEvening: true,
       reduceBlueLight: true,
       boldTextDarkMode: true,
     };
@@ -274,7 +207,6 @@ export class TextRenderingOptimizer {
       textSize: 0,
       lineSpacing: 1.7,
       readingWidth: 680,
-      autoAdjustEvening: true,
       reduceBlueLight: true,
       boldTextDarkMode: true,
     };
@@ -313,15 +245,6 @@ export class TextRenderingOptimizer {
    */
   public static meetsWCAGAAA(foreground: string, background: string): boolean {
     return this.getContrastRatio(foreground, background) >= 7;
-  }
-
-  /**
-   * Cleanup on destroy
-   */
-  public destroy(): void {
-    if (this.timeCheckInterval) {
-      window.clearInterval(this.timeCheckInterval);
-    }
   }
 }
 

@@ -1593,7 +1593,7 @@ of Karen Uhlenbeck`,
           </Button>
         </Link>
         <div className="flex-1">
-          <h1 className="text-4xl font-semibold mb-2 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+          <h1 className="text-4xl font-semibold mb-2 bg-gradient-to-r from-primary to-accent dark:to-cyan-300 bg-clip-text text-transparent">
             ✍️ Poetry Therapy
           </h1>
           <p className="text-lg text-muted-foreground">

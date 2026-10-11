@@ -67,7 +67,7 @@ export function Header() {
                   className="h-10 w-10 md:h-12 md:w-12 rounded-full shadow-md group-hover:shadow-lg transition-shadow duration-300" 
                 />
               </div>
-              <span className="text-xl md:text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              <span className="text-xl md:text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
                 Grief Literacy
               </span>
             </Link>

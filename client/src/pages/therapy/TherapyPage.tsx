@@ -70,7 +70,7 @@ export function TherapyPage() {
           <div className="relative max-w-7xl mx-auto text-center">
             <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 tracking-tight">
               Therapeutic
-              <span className="block bg-gradient-to-r from-sky-600 to-cyan-600 bg-clip-text text-transparent">
+              <span className="block bg-gradient-to-r from-sky-600 to-cyan-600 dark:from-sky-400 dark:to-cyan-300 bg-clip-text text-transparent">
                 Approaches
               </span>
             </h1>

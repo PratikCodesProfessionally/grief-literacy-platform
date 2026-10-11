@@ -3,7 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="color-scheme" content="light" />
+    <!-- The app ships its own dark theme; declaring it stops browsers (Chrome/Edge/Samsung
+         auto dark mode) from force-darkening the page, which garbles text and images. -->
+    <meta name="color-scheme" content="light dark" />
     
     <!-- PWA Meta Tags -->
     <meta name="application-name" content="Grief Literacy Platform" />

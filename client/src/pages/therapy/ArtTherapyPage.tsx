@@ -189,7 +189,7 @@ export function ArtTherapyPage() {
             </Button>
           </Link>
           <div className="flex-1">
-            <h1 className="text-5xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-orange-600 bg-clip-text text-transparent mb-2 drop-shadow-lg">
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-orange-600 dark:from-purple-400 dark:via-pink-400 dark:to-orange-300 bg-clip-text text-transparent mb-2 drop-shadow-lg">
               🎨 Art Therapy Studio
             </h1>
             <p className="text-lg text-gray-700 dark:text-gray-200 font-medium">
@@ -203,7 +203,7 @@ export function ArtTherapyPage() {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2 text-xl">
               <Sparkles className="h-6 w-6 text-purple-600 animate-pulse" />
-              <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
                 Your Art Therapy Journey
               </span>
             </CardTitle>
@@ -359,7 +359,7 @@ export function ArtTherapyPage() {
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center space-x-3 text-2xl">
                 <Palette className="h-7 w-7 text-indigo-600 group-hover:rotate-12 transition-transform duration-300" />
-                <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
                   Advanced Digital Art Studio
                 </span>
                 <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-none">
