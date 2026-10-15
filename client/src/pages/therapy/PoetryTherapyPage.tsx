@@ -1280,6 +1280,49 @@ of Karen Uhlenbeck`,
   readTime: "3 min",
   audioSrc: "/audio/ToAWomanInHerNaturalState.mp3"
 
+},
+{
+  id: 22,
+  title: "Love.ai",
+  author: "Unknown",
+  content: `Love bubble
+When it bursts,
+it hurts
+
+Inflation and infatuation
+When it frequents,
+it torments
+
+Stagnation episodes
+when it erupts,
+collateral damage heats up
+
+What follows next
+In the dimming heat of sunset
+between Bear and Bull market
+
+Liquidation of memoirs
+When company cracks,
+it racks
+
+Memories of devaluation
+room for unwanted speculation
+awkward awry situation
+
+Sunk cost fallacy
+When it sinks,
+it brings
+
+Diminishing returns
+Like a sunburn,
+In the recession-autumn
+
+No bailout coming
+No one too big to fail
+Just two small hearts
+in a big sale.`,
+  category: "Satire",
+  readTime: "1 min"
 }
   ];
 
