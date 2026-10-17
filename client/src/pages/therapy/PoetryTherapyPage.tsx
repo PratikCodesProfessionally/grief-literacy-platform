@@ -1323,6 +1323,54 @@ Just two small hearts
 in a big sale.`,
   category: "Satire",
   readTime: "1 min"
+},
+{
+  id: 23,
+  title: "A Firmament of Time",
+  author: "Unknown",
+  content: `Truncation in timeline
+violation of timespace continuum in realtime
+Where our hearts froze in the tramline
+When you appeared with your dress sublime
+A firmament in time
+
+When I fell in my prime
+Deep in your silly pantomime
+It was after spring in basking summertime
+Where you appeared with your ocean glime
+A firmament in time
+
+Bustling timid kids, for it was schooltime
+but we were lost in our own paradigm
+For we had found a void in space, a happy crime
+A firmament in time
+
+Tender soft hand of yours as they fell on mine
+Our hearts began to sync and rhyme
+For the clock began to sing 'its sharp nine'
+As the train floated past the Rhein
+A firmament in time
+
+Metaphors began to kiss our lips begrime
+As our cheeks glowed in glitter and shine
+As our feelings profused to form a shrine
+the train floated past the Rhein
+A firmament in time
+
+As the sun ventured past noontime
+caressing our souls past the windowline
+happily buttering our cozy peacetime
+And we had streched our loves to overtime
+A firmament in time
+
+our unspoken chemistry intertwined
+As Milkyway Galaxy is divinely designed
+You softly singnalled to slow with a sigh
+But I declined your telepathy with a neigh
+Something magical took hold of our eyes
+A firmament in time`,
+  category: "Romance",
+  readTime: "2 min"
 }
   ];
 
