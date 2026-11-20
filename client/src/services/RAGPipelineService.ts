@@ -22,6 +22,13 @@ import {
 import { claudeService } from './ClaudeService';
 import { huggingFaceService } from './HuggingFaceService';
 import { geminiService } from './GeminiService';
+import { grandmaSueLocalBrain } from './GrandmaSueLocalBrain';
+
+type CloudProvider = 'claude' | 'huggingface' | 'gemini';
+
+// After a provider fails (no credits, bad key, outage), skip it for a while so each
+// message doesn't sit through the same failing round-trips before falling back.
+const PROVIDER_COOLDOWN_MS = 5 * 60 * 1000;
 
 export interface ConversationMessage {
   role: 'user' | 'assistant';
@@ -46,6 +53,8 @@ export interface RAGResponse {
   techniquesApplied: TechniqueType[];
   isCrisis: boolean;
   sources: string[];
+  /** When provider is 'local', why the cloud AI wasn't used (for the UI tooltip / debugging). */
+  fallbackReason?: string;
 }
 
 interface GrandmaPersonality {
@@ -154,11 +163,38 @@ const CRISIS_RESOURCES = {
  * RAG Pipeline Service
  */
 export class RAGPipelineService {
-  private conversationHistory: ConversationMessage[] = [];
+  private conversationHistory: ConversationMessage[] = []; // recent window, sent to the AI
+  private fullHistory: ConversationMessage[] = []; // whole conversation, for memory (names, losses)
   private maxHistoryLength = 15;
   private readonly useBackendAIProxy = (import.meta.env.VITE_USE_BACKEND_AI_PROXY ?? 'true') === 'true';
   private readonly apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
   private aiProxyStatusPromise: Promise<AIProxyStatus | null> | null = null;
+  private providerCooldownUntil: Partial<Record<CloudProvider, number>> = {};
+  private providerLastError: Partial<Record<CloudProvider, string>> = {};
+
+  private isCoolingDown(provider: CloudProvider): boolean {
+    return (this.providerCooldownUntil[provider] ?? 0) > Date.now();
+  }
+
+  private markProviderFailed(provider: CloudProvider, err: unknown): void {
+    this.providerCooldownUntil[provider] = Date.now() + PROVIDER_COOLDOWN_MS;
+    this.providerLastError[provider] = err instanceof Error ? err.message : String(err);
+  }
+
+  private markProviderOk(provider: CloudProvider): void {
+    delete this.providerCooldownUntil[provider];
+    delete this.providerLastError[provider];
+  }
+
+  /** The last known failure per provider, e.g. for a status tooltip. */
+  getProviderIssues(): Partial<Record<CloudProvider, string>> {
+    return { ...this.providerLastError };
+  }
+
+  /** Pick from a pool, avoiding phrases used in the last few replies. */
+  private pick(pool: string[]): string {
+    return grandmaSueLocalBrain.pick(pool, this.conversationHistory);
+  }
 
   private getAIProxyStatus(): Promise<AIProxyStatus | null> {
     if (!this.useBackendAIProxy) return Promise.resolve(null);
@@ -200,6 +236,7 @@ export class RAGPipelineService {
   ): Promise<RAGResponse> {
     // Update conversation history
     this.conversationHistory = existingHistory.slice(-this.maxHistoryLength);
+    this.fullHistory = existingHistory;
     
     // Check if user is asking about Grandma Sue's knowledge/insights
     if (this.isAskingAboutKnowledge(userMessage)) {
@@ -222,8 +259,9 @@ export class RAGPipelineService {
     
     // Step 4: Generate response
     let response: string;
-    let provider: 'claude' | 'huggingface' | 'gemini' | 'local' = 'local';
-    
+    let provider: AIProvider = 'local';
+    let fallbackReason: string | undefined;
+
     try {
       // Try AI-powered response first
       const aiResult = await this.generateAIResponse(
@@ -236,14 +274,15 @@ export class RAGPipelineService {
       provider = aiResult.provider;
       console.log('✅ AI response generated successfully');
     } catch (error) {
-      console.error('❌ AI generation failed, using knowledge-enhanced fallback:', error);
+      fallbackReason = error instanceof Error ? error.message : String(error);
+      console.warn('❌ AI generation failed, using knowledge-enhanced fallback:', fallbackReason);
       // Fallback to local knowledge-enhanced response (with conversation history for context)
       response = this.generateLocalResponse(
         userMessage,
         analysis,
         retrievedKnowledge,
         isCrisis,
-        this.conversationHistory
+        this.fullHistory
       );
       console.log('📚 Using local fallback response');
     }
@@ -258,7 +297,8 @@ export class RAGPipelineService {
       retrievedKnowledge,
       techniquesApplied: retrievedKnowledge.techniques,
       isCrisis,
-      sources
+      sources,
+      fallbackReason
     };
   }
 
@@ -272,7 +312,7 @@ export class RAGPipelineService {
     isCrisis: boolean
   ): Promise<{ response: string; provider: 'claude' | 'huggingface' | 'gemini' }> {
     // Build the enhanced system prompt
-    const systemPrompt = this.buildEnhancedSystemPrompt(analysis, knowledge, isCrisis);
+    const systemPrompt = this.buildEnhancedSystemPrompt(analysis, knowledge, isCrisis, userMessage);
     
     // Prepare messages
     const messages = [
@@ -282,6 +322,7 @@ export class RAGPipelineService {
       })),
       { role: 'user' as const, content: userMessage }
     ];
+    while (messages.length > 1 && messages[0].role === 'assistant') messages.shift();
 
     // Context for the AI
     const context = {
@@ -293,105 +334,45 @@ export class RAGPipelineService {
     };
 
     const proxyStatus = await this.getAIProxyStatus();
-    if (proxyStatus) {
-      console.log('ℹ️ AI proxy status:', proxyStatus);
-    }
 
-    // Try providers in order. If one fails (e.g. proxy not configured server-side), fall through.
-    const attemptedProviders: Array<'claude' | 'huggingface' | 'gemini'> = [];
-    let lastError: unknown = null;
+    // Providers in priority order. Each one gets the full RAG system prompt
+    // (personality + retrieved knowledge + crisis protocol), not a generic one.
+    const providers: Array<{
+      id: CloudProvider;
+      configured: boolean;
+      run: () => Promise<string>;
+    }> = [
+      { id: 'claude', configured: claudeService.isConfigured(), run: () => claudeService.generateResponse(messages, context, systemPrompt) },
+      { id: 'huggingface', configured: huggingFaceService.isConfigured(), run: () => huggingFaceService.generateResponse(messages, context, systemPrompt) },
+      { id: 'gemini', configured: geminiService.isConfigured(), run: () => geminiService.generateResponse(messages, context, systemPrompt) },
+    ];
 
-    const claudeAvailable = claudeService.isConfigured() && (!proxyStatus || proxyStatus.claude);
-    const huggingFaceAvailable = huggingFaceService.isConfigured() && (!proxyStatus || proxyStatus.huggingface);
-    const geminiAvailable = geminiService.isConfigured() && (!proxyStatus || proxyStatus.gemini);
+    const failures: string[] = [];
+    let attempted = 0;
 
-    if (claudeService.isConfigured() && proxyStatus && !proxyStatus.claude) {
-      console.log('ℹ️ Skipping Claude (not configured server-side)');
-    }
-    if (huggingFaceService.isConfigured() && proxyStatus && !proxyStatus.huggingface) {
-      console.log('ℹ️ Skipping HuggingFace (not configured server-side)');
-    }
-    if (geminiService.isConfigured() && proxyStatus && !proxyStatus.gemini) {
-      console.log('ℹ️ Skipping Gemini (not configured server-side)');
-    }
-
-    if (claudeAvailable) {
-      attemptedProviders.push('claude');
+    for (const p of providers) {
+      if (!p.configured) continue;
+      if (proxyStatus && !proxyStatus[p.id]) continue; // no key on the server
+      if (this.isCoolingDown(p.id)) {
+        failures.push(`${p.id}: ${this.providerLastError[p.id] ?? 'recently failed'} (cooling down)`);
+        continue;
+      }
+      attempted++;
       try {
-        console.log('🤖 Trying Claude for response generation');
-        const response = await this.generateWithClaude(systemPrompt, messages, context);
-        return { response, provider: 'claude' };
+        const response = await p.run();
+        this.markProviderOk(p.id);
+        return { response, provider: p.id };
       } catch (err) {
-        lastError = err;
-        console.warn('⚠️ Claude generation failed; trying next provider:', err);
+        this.markProviderFailed(p.id, err);
+        failures.push(`${p.id}: ${this.providerLastError[p.id]}`);
+        console.warn(`⚠️ ${p.id} failed; trying next provider:`, this.providerLastError[p.id]);
       }
     }
 
-    if (huggingFaceAvailable) {
-      attemptedProviders.push('huggingface');
-      try {
-        console.log('🤖 Trying HuggingFace for response generation');
-        const response = await this.generateWithHuggingFace(messages, context);
-        return { response, provider: 'huggingface' };
-      } catch (err) {
-        lastError = err;
-        console.warn('⚠️ HuggingFace generation failed; trying next provider:', err);
-      }
+    if (attempted === 0 && failures.length === 0) {
+      throw new Error('No AI service configured on the server');
     }
-
-    if (geminiAvailable) {
-      attemptedProviders.push('gemini');
-      try {
-        console.log('🤖 Trying Gemini for response generation');
-        const response = await this.generateWithGemini(messages, context);
-        return { response, provider: 'gemini' };
-      } catch (err) {
-        lastError = err;
-        console.warn('⚠️ Gemini generation failed; no more providers left:', err);
-      }
-    }
-
-    if (attemptedProviders.length === 0) {
-      console.warn('⚠️ No AI service configured - using local fallback');
-      throw new Error('No AI service configured');
-    }
-
-    // We attempted at least one provider but all failed.
-    console.warn(`⚠️ All AI providers failed (${attemptedProviders.join(', ')}); using local fallback`);
-    throw (lastError instanceof Error ? lastError : new Error('All AI providers failed'));
-  }
-
-  /**
-   * Generate response using Claude
-   */
-  private async generateWithClaude(
-    systemPrompt: string,
-    messages: Array<{ role: 'user' | 'assistant'; content: string }>,
-    context: { topics: string[]; sentiment: string; previousTopics: string[] }
-  ): Promise<string> {
-    // Claude API will use its own system prompt building,
-    // but we enhance with our knowledge context
-    return await claudeService.generateResponse(messages, context);
-  }
-
-  /**
-   * Generate response using HuggingFace
-   */
-  private async generateWithHuggingFace(
-    messages: Array<{ role: 'user' | 'assistant'; content: string }>,
-    context: { topics: string[]; sentiment: string; previousTopics: string[] }
-  ): Promise<string> {
-    return await huggingFaceService.generateResponse(messages, context);
-  }
-
-  /**
-   * Generate response using Gemini
-   */
-  private async generateWithGemini(
-    messages: Array<{ role: 'user' | 'assistant'; content: string }>,
-    context: { topics: string[]; sentiment: string; previousTopics: string[] }
-  ): Promise<string> {
-    return await geminiService.generateResponse(messages, context);
+    throw new Error(failures.join(' | ') || 'All AI providers failed');
   }
 
   /**
@@ -400,72 +381,72 @@ export class RAGPipelineService {
   private buildEnhancedSystemPrompt(
     analysis: EmotionalAnalysis,
     knowledge: RetrievalResult,
-    isCrisis: boolean
+    isCrisis: boolean,
+    userMessage = ''
   ): string {
-    let prompt = `You are Grandma Sue, a warm, caring grandmother figure who provides emotional support.
+    const memory = grandmaSueLocalBrain.remember(this.fullHistory, userMessage);
+    const remembered: string[] = [];
+    if (memory.userName) remembered.push(`Their name is ${memory.userName}. Use it now and then, naturally.`);
+    if (memory.lovedOne) {
+      remembered.push(
+        `They are grieving their ${memory.lovedOne.relation}${memory.lovedOne.name ? ` named ${memory.lovedOne.name}` : ''}. Refer to ${memory.lovedOne.name ? 'them by name' : 'them'} warmly when it fits.`
+      );
+    }
 
-## Your Personality
-- Warm and genuinely caring, but not saccharine
-- Wise from life experience, but humble about your limitations
-- Patient, non-judgmental, and accepting
-- Uses endearments naturally (dear, sweetheart, honey) but not excessively
-- Speaks in conversational, natural language - NEVER clinical or textbook-like
-- Listens more than advises, especially initially
-- Validates feelings before offering any guidance
+    let prompt = `You are Grandma Sue: a warm, witty, down-to-earth grandmother who keeps people company through grief, loss, worry and ordinary hard days. You are an AI companion, and you say so honestly if asked.
 
-## Current Conversation Context
-- User's emotional state: ${analysis.emotionalState} (intensity: ${analysis.emotionalIntensity})
-- Problem type: ${analysis.problemType}
-- User appears to need: ${analysis.userNeeds.join(', ')}
+## How you talk
+- Like a real person at a kitchen table, not a pamphlet. Short, warm, specific.
+- Usually 2–5 sentences. Go longer only when they ask for ideas or a story.
+- Respond to the exact thing they said. Pick up their own words and details; never answer with a generic greeting mid-conversation.
+- Validate first, then gently explore. Ask at most ONE question, and make it a good one.
+- Offer advice only when they ask, or after you've listened a while. Then give 2–3 concrete, doable ideas, not a list of six.
+- Vary your openings. Don't start every reply with "Oh, dear" or "I hear you". Use endearments (dear, sweetheart, honey) sparingly.
+- A little lightness is welcome when the mood allows: a gentle joke, a homely image (tea, gardens, knitting), or a short memory from "your" life (late husband Harold, the grandkids). Never joke about their pain.
+- No clinical jargon, no diagnoses, no headings, no markdown tables. **Bold** sparingly at most.
+- If they're grieving, invite stories about the person: names, habits, favourite foods. Remembering is healing.
 
-## Relevant Knowledge to Apply Naturally
-Based on psychology and counseling resources, here are relevant concepts to weave into your response naturally (NEVER quote directly or sound clinical):
-
+## Right now
+- Emotional state: ${analysis.emotionalState} (intensity: ${analysis.emotionalIntensity})
+- Topic: ${analysis.problemType}
+- They seem to need: ${analysis.userNeeds.join(', ') || 'to be heard'}
+${remembered.length ? `
+## What you remember about them
+${remembered.map((r) => `- ${r}`).join('\n')}
+` : ''}
+## Background knowledge (use only if it truly helps; put it in your own homely words, never quote it)
 `;
 
-    // Add retrieved knowledge chunks
-    knowledge.chunks.forEach((chunk, i) => {
-      prompt += `\n### Insight ${i + 1} (from ${chunk.metadata.sourceName}):\n${chunk.content}\n`;
+    knowledge.chunks.slice(0, 4).forEach((chunk, i) => {
+      prompt += `
+### Insight ${i + 1} (from ${chunk.metadata.sourceName}):
+${chunk.content.slice(0, 1200)}
+`;
     });
 
-    prompt += `
-## Response Guidelines
-1. Start by acknowledging the user's feelings (validation first)
-2. Transform any clinical concepts into grandmotherly wisdom
-3. Use gentle, conversational language
-4. Keep response to 2-4 paragraphs maximum
-5. Ask an open-ended question to encourage continued sharing
-6. Never diagnose or prescribe treatment
-`;
-
-    // Add crisis protocol if needed
     if (isCrisis) {
       prompt += `
-## ⚠️ CRISIS PROTOCOL - HIGHEST PRIORITY
-The user may be experiencing a crisis. You MUST:
-1. Stay calm and compassionate
-2. Validate their pain without minimizing
-3. Express genuine concern for their safety
-4. Clearly encourage professional help
-5. Provide crisis resources:
-   - 988 Suicide & Crisis Lifeline (call or text 988)
+## ⚠️ CRISIS PROTOCOL: THIS OVERRIDES EVERYTHING ABOVE
+The person may be in danger. Drop the jokes and stories. You MUST:
+1. Stay calm, warm and direct; take what they said seriously and don't minimise it.
+2. Say plainly that you're worried about their safety and that they deserve real help right now.
+3. Give these resources clearly:
+   - 988 Suicide & Crisis Lifeline (call or text 988, US)
    - Crisis Text Line: text HOME to 741741
-   - Emergency services: 911
-6. Do NOT attempt to be their therapist
-7. Remind them they are not alone and that help is available
+   - Emergency services: 911 (or the local emergency number)
+   - Outside the US: https://www.iasp.info/resources/Crisis_Centres/
+4. Gently ask if they're safe right now and whether someone can be with them.
+5. Do not act as their therapist. Remind them they are not alone.
 
 Start with something like: "${GRANDMA_PERSONALITY.crisisTransitions[0]}"
 `;
     }
 
-    // Add translation reminders
     prompt += `
-## Language Translations (NEVER use clinical terms)
-${Object.entries(CLINICAL_TRANSLATIONS).map(([clinical, natural]) => 
-  `- "${clinical}" → "${natural}"`
-).join('\n')}
+## Plain-language swaps (never use the clinical term)
+${Object.entries(CLINICAL_TRANSLATIONS).map(([clinical, natural]) => `- "${clinical}" → "${natural}"`).join('\n')}
 
-Remember: You are a caring grandmother, not a therapist. Your role is to listen, validate, and gently support - while knowing when professional help is needed.`;
+You are a caring grandmother, not a therapist: listen, validate, gently support, and know when to point to professional help.`;
 
     return prompt;
   }
@@ -484,16 +465,38 @@ Remember: You are a caring grandmother, not a therapist. Your role is to listen,
     if (isCrisis) {
       return this.generateCrisisResponse(analysis);
     }
-    
+
+    // Conversational layer first: memory, intents, follow-ups, losses, jokes, stories...
+    const brain = grandmaSueLocalBrain.respond(userMessage, analysis, conversationHistory);
+    if (brain.kind === 'reply') {
+      return brain.text;
+    }
+    if (brain.kind === 'advice') {
+      // They said "yes" to suggestions: answer for the feeling they shared earlier.
+      let carried = this.getEmotionalContextFromHistory(conversationHistory, analysis);
+      if (grandmaSueLocalBrain.remember(conversationHistory, userMessage).lovedOne) {
+        carried = { ...carried, problemType: 'grief' };
+      }
+      return grandmaSueLocalBrain.personalize(
+        grandmaSueLocalBrain.trimAdvice(this.getHelpfulAdvice(carried, knowledge), conversationHistory),
+        conversationHistory,
+        userMessage
+      );
+    }
+
     // Check if user is asking about document content
     const isDocumentQuery = this.isAskingAboutDocuments(userMessage, knowledge);
-    
+
     if (isDocumentQuery && knowledge.chunks.length > 0) {
       return this.generateDocumentBasedResponse(userMessage, knowledge);
     }
-    
+
     // Generate coherent response based on emotional state (with conversation context)
-    return this.generateEmotionallyCoherentResponse(userMessage, analysis, knowledge, conversationHistory);
+    return grandmaSueLocalBrain.personalize(
+      this.generateEmotionallyCoherentResponse(userMessage, analysis, knowledge, conversationHistory),
+      conversationHistory,
+      userMessage
+    );
   }
 
   /**
@@ -538,7 +541,12 @@ Remember: You are a caring grandmother, not a therapist. Your role is to listen,
     
     // NEUTRAL / casual chat (but NOT if asking for help AND no emotional history)
     if (effectiveAnalysis.emotionalState === 'neutral' && !isAskingForHelp) {
-      return this.generateNeutralCoherentResponse();
+      // Only greet at the start; mid-conversation, keep following what they're saying.
+      const alreadyTalking = conversationHistory.some(m => m.role === 'user');
+      const saidSomething = userMessage.trim().split(/\s+/).length >= 4;
+      return alreadyTalking || saidSomething
+        ? grandmaSueLocalBrain.neutralContinuation(userMessage, conversationHistory)
+        : this.generateNeutralCoherentResponse();
     }
     
     // NEGATIVE emotions OR asking for help (sad, anxious, overwhelmed, etc.)
@@ -603,13 +611,14 @@ Remember: You are a caring grandmother, not a therapist. Your role is to listen,
       // User is explaining the cause - acknowledge their insight
       response += this.getContextAcknowledgment(userMessage);
     } else {
-      // 1. Acknowledgment (empathetic, not happy)
-      response += this.getEmpatheticAcknowledgment(analysis);
+      // 1. Show we heard their actual words, then the empathetic acknowledgment
+      const lead = grandmaSueLocalBrain.reflectionLead(userMessage, this.conversationHistory);
+      response += (lead ? lead + ' ' : '') + this.getEmpatheticAcknowledgment(analysis);
     }
-    
-    // 2. If asking for help, provide actual advice
+
+    // 2. If asking for help, provide actual advice (a few tips, not a wall of text)
     if (isAskingForHelp) {
-      response += '\n\n' + this.getHelpfulAdvice(analysis, knowledge);
+      response += '\n\n' + grandmaSueLocalBrain.trimAdvice(this.getHelpfulAdvice(analysis, knowledge), this.conversationHistory);
     } else {
       // Otherwise, offer support and invite sharing
       response += '\n\n' + this.getSupportiveInvitation(analysis);
@@ -632,7 +641,7 @@ Remember: You are a caring grandmother, not a therapist. Your role is to listen,
         "The connection between weather and mood is very real, honey. When the sun hides away, it can feel like our spirits do too.",
         "I understand, dear. Grey skies and rain can make everything feel heavier. Our bodies miss the sunlight."
       ];
-      return responses[Math.floor(Math.random() * responses.length)];
+      return this.pick(responses);
     }
     
     // General context acknowledgment
@@ -642,7 +651,7 @@ Remember: You are a caring grandmother, not a therapist. Your role is to listen,
       "I appreciate you thinking about what might be causing this, honey. Self-awareness is valuable.",
       "It sounds like you have some insight into what's going on, dear. That's helpful to know."
     ];
-    return responses[Math.floor(Math.random() * responses.length)];
+    return this.pick(responses);
   }
 
   /**
@@ -767,7 +776,7 @@ Remember: You are a caring grandmother, not a therapist. Your role is to listen,
       default: pool = generalNegative;
     }
     
-    return pool[Math.floor(Math.random() * pool.length)];
+    return this.pick(pool);
   }
 
   /**
@@ -1017,7 +1026,7 @@ What would feel most helpful for you right now?`;
     ];
     
     const pool = specificInvitations[analysis.emotionalState] || generalInvitations;
-    return pool[Math.floor(Math.random() * pool.length)];
+    return this.pick(pool);
   }
 
   /**
@@ -1034,7 +1043,7 @@ What would feel most helpful for you right now?`;
         "I love hearing that, sweetheart! Mindfulness is so powerful. Even a few minutes can make such a difference. What got you started?",
         "That's beautiful, honey. Taking time to be present is so valuable in our busy world. What do you notice when you meditate?"
       ];
-      return responses[Math.floor(Math.random() * responses.length)];
+      return this.pick(responses);
     }
     
     if (keywords.some(k => ['exercise', 'workout', 'gym', 'running', 'ran', 'walked', 'walk', 'yoga', 'hiking', 'swimming', 'dancing'].includes(k))) {
@@ -1043,7 +1052,7 @@ What would feel most helpful for you right now?`;
         "I'm so happy to hear that, sweetheart! Movement is medicine for both body and mind. Did you enjoy it?",
         "Good for you, honey! Making time to move is an act of self-love. How often do you try to exercise?"
       ];
-      return responses[Math.floor(Math.random() * responses.length)];
+      return this.pick(responses);
     }
     
     if (keywords.some(k => ['therapy', 'therapist', 'counseling', 'counselor', 'psychiatrist', 'psychologist'].includes(k))) {
@@ -1052,7 +1061,7 @@ What would feel most helpful for you right now?`;
         "That's wonderful, sweetheart. Working with a professional shows such strength. Do you feel it's helping?",
         "I'm glad you're getting support, honey. That's a brave and wise choice. What made you decide to start?"
       ];
-      return responses[Math.floor(Math.random() * responses.length)];
+      return this.pick(responses);
     }
     
     if (keywords.some(k => ['friend', 'friends', 'family', 'loved ones', 'together', 'visited', 'hung out'].includes(k))) {
@@ -1061,7 +1070,7 @@ What would feel most helpful for you right now?`;
         "How wonderful, sweetheart! Spending time with people who matter to us fills our hearts. What did you do together?",
         "That warms my heart to hear, honey. Our relationships are such treasures. Was it nice to see them?"
       ];
-      return responses[Math.floor(Math.random() * responses.length)];
+      return this.pick(responses);
     }
     
     if (keywords.some(k => ['sleep', 'slept', 'rested', 'rest', 'relaxed', 'relaxing'].includes(k))) {
@@ -1070,7 +1079,7 @@ What would feel most helpful for you right now?`;
         "That's wonderful, sweetheart. Rest is when our bodies and minds heal. What helped you relax?",
         "I'm so glad, honey. We often underestimate how much we need proper rest. Are you feeling more energized?"
       ];
-      return responses[Math.floor(Math.random() * responses.length)];
+      return this.pick(responses);
     }
     
     if (keywords.some(k => ['accomplished', 'finished', 'completed', 'achieved', 'succeeded', 'did it', 'made it'].includes(k))) {
@@ -1079,7 +1088,7 @@ What would feel most helpful for you right now?`;
         "That's fantastic, sweetheart! You should be proud of yourself. How does it feel to have it done?",
         "Well done, honey! Completing things gives us such a sense of capability. Tell me about it!"
       ];
-      return responses[Math.floor(Math.random() * responses.length)];
+      return this.pick(responses);
     }
     
     if (keywords.some(k => ['happy', 'joy', 'joyful', 'excited', 'thrilled', 'amazing', 'wonderful'].includes(k))) {
@@ -1088,7 +1097,7 @@ What would feel most helpful for you right now?`;
         "I love hearing that, sweetheart! When did you last feel this happy? What's different now?",
         "That's beautiful, honey. Savor this feeling - you deserve it! What's making you so happy?"
       ];
-      return responses[Math.floor(Math.random() * responses.length)];
+      return this.pick(responses);
     }
     
     if (keywords.some(k => ['grateful', 'thankful', 'blessed', 'appreciate', 'appreciation'].includes(k))) {
@@ -1097,7 +1106,7 @@ What would feel most helpful for you right now?`;
         "That's beautiful, sweetheart. A grateful heart is a happy heart. What's making you feel this way?",
         "I love that, honey. Counting our blessings really does make them multiply. Tell me what you're appreciating!"
       ];
-      return responses[Math.floor(Math.random() * responses.length)];
+      return this.pick(responses);
     }
     
     if (keywords.some(k => ['better', 'improved', 'progress', 'improving', 'healing', 'recovering'].includes(k))) {
@@ -1106,7 +1115,7 @@ What would feel most helpful for you right now?`;
         "I'm so happy for you, sweetheart! Improvement takes time and effort. What made the difference?",
         "That's great news, honey! Sometimes we don't notice our growth until we look back. How does it feel?"
       ];
-      return responses[Math.floor(Math.random() * responses.length)];
+      return this.pick(responses);
     }
     
     if (keywords.some(k => ['hopeful', 'hope', 'looking forward', 'excited about', 'future'].includes(k))) {
@@ -1115,7 +1124,7 @@ What would feel most helpful for you right now?`;
         "That's beautiful, sweetheart. Hope is the light that guides us forward. Tell me about your dreams!",
         "I'm so glad you're feeling hopeful, honey. What's giving you this optimism?"
       ];
-      return responses[Math.floor(Math.random() * responses.length)];
+      return this.pick(responses);
     }
     
     // Default positive responses
@@ -1127,7 +1136,7 @@ What would feel most helpful for you right now?`;
       "I'm so glad to hear that, sweetheart! These positive moments are so important. What's making things good?"
     ];
     
-    return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
+    return this.pick(defaultResponses);
   }
 
   /**
@@ -1146,7 +1155,7 @@ What would feel most helpful for you right now?`;
       "Hello, my dear! I'm here for you. Whether you need to vent, get advice, or just chat - I'm listening."
     ];
     
-    return responses[Math.floor(Math.random() * responses.length)];
+    return this.pick(responses);
   }
 
   /**
@@ -1361,7 +1370,7 @@ What would feel most helpful for you right now?`;
       `I read this part: "${content}"`
     ];
     
-    return framings[Math.floor(Math.random() * framings.length)];
+    return this.pick(framings);
   }
 
   /**
@@ -1412,7 +1421,7 @@ What would feel most helpful for you right now?`;
         "It's lovely to hear from you.",
         "Thank you for stopping by to chat."
       ];
-      return neutralResponses[Math.floor(Math.random() * neutralResponses.length)];
+      return this.pick(neutralResponses);
     }
     
     const listening = GRANDMA_PERSONALITY.listeningPhrases[
@@ -1465,7 +1474,7 @@ What would feel most helpful for you right now?`;
     
     const specific = stateResponses[analysis.emotionalState];
     if (specific) {
-      return `${listening} ${specific[Math.floor(Math.random() * specific.length)]}`;
+      return `${listening} ${this.pick(specific)}`;
     }
     
     return `${listening} Thank you for sharing that with me.`;
@@ -1568,7 +1577,7 @@ What would feel most helpful for you right now?`;
       "What a nice thing to share with me."
     ];
     
-    return greetings[Math.floor(Math.random() * greetings.length)];
+    return this.pick(greetings);
   }
 
   /**
@@ -1617,12 +1626,12 @@ What would feel most helpful for you right now?`;
     // Handle positive emotions
     if (analysis.emotionalState === 'positive' || analysis.sentimentScore > 0.3) {
       const positiveQuestions = questions['positive'];
-      return positiveQuestions[Math.floor(Math.random() * positiveQuestions.length)];
+      return this.pick(positiveQuestions);
     }
     
     const typeQuestions = questions[analysis.problemType];
     if (typeQuestions) {
-      return typeQuestions[Math.floor(Math.random() * typeQuestions.length)];
+      return this.pick(typeQuestions);
     }
     
     // Default questions
@@ -1633,7 +1642,7 @@ What would feel most helpful for you right now?`;
       "What do you need most right now, dear?"
     ];
     
-    return defaults[Math.floor(Math.random() * defaults.length)];
+    return this.pick(defaults);
   }
 
   /**
@@ -1641,6 +1650,7 @@ What would feel most helpful for you right now?`;
    */
   clearHistory(): void {
     this.conversationHistory = [];
+    this.fullHistory = [];
   }
 
   /**

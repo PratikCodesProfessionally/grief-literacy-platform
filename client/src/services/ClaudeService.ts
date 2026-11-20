@@ -14,7 +14,7 @@ interface ClaudeResponse {
 export class ClaudeService {
   private apiKey: string;
   private baseUrl = 'https://api.anthropic.com/v1/messages';
-  private model = 'claude-3-5-sonnet-20241022'; // Latest Claude model
+  private model = 'claude-opus-5-5'; // Only used when calling Anthropic directly (proxy picks its own)
   private useBackendProxy: boolean;
   private apiBaseUrl: string;
   
@@ -37,13 +37,14 @@ export class ClaudeService {
       topics: string[];
       sentiment: string;
       previousTopics: string[];
-    }
+    },
+    systemPromptOverride?: string
   ): Promise<string> {
     if (!this.isConfigured()) {
       throw new Error('Anthropic API key not configured');
     }
 
-    const systemPrompt = this.buildSystemPrompt(context);
+    const systemPrompt = systemPromptOverride || this.buildSystemPrompt(context);
 
     try {
       const apiUrl = this.useBackendProxy 
@@ -61,8 +62,6 @@ export class ClaudeService {
         body: JSON.stringify(
           this.useBackendProxy
             ? {
-                model: this.model,
-                max_tokens: 1024,
                 systemPrompt,
                 messages,
               }
@@ -79,16 +78,17 @@ export class ClaudeService {
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        const error: any = await response.json().catch(() => ({}));
         console.error('Claude API error:', error);
-        throw new Error(`Claude API error: ${response.status}`);
+        throw new Error(`Claude API error: ${response.status} - ${error.detail || error.error?.message || error.error || 'Unknown error'}`);
       }
 
       const data = await response.json();
 
       if (this.useBackendProxy) {
         const text = typeof data?.text === 'string' ? data.text : '';
-        return text || this.getFallbackResponse();
+        if (!text.trim()) throw new Error('Claude returned an empty response');
+        return text.trim();
       }
 
       return data.content[0].text;

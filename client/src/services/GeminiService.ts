@@ -10,7 +10,7 @@ export class GeminiService {
   private apiKey: string;
   private baseUrl = 'https://generativelanguage.googleapis.com/v1beta';
   // Free-tier friendly default (fast/cheap). Can be overridden later.
-  private model = 'gemini-1.5-flash';
+  private model = 'gemini-flash-latest';
   private useBackendProxy: boolean;
   private apiBaseUrl: string;
 
@@ -36,13 +36,14 @@ export class GeminiService {
       topics: string[];
       sentiment: string;
       previousTopics: string[];
-    }
+    },
+    systemPromptOverride?: string
   ): Promise<string> {
     if (!this.isConfigured()) {
       throw new Error('Gemini API key not configured');
     }
 
-    const systemPrompt = this.buildSystemPrompt(context);
+    const systemPrompt = systemPromptOverride || this.buildSystemPrompt(context);
 
     // Gemini expects roles: 'user' and 'model'
     const contents = messages.map((m) => ({
@@ -61,14 +62,14 @@ export class GeminiService {
         },
         body: JSON.stringify(
           this.useBackendProxy
-            ? { messages, systemPrompt, model: this.model }
+            ? { messages, systemPrompt }
             : {
                 systemInstruction: {
                   parts: [{ text: systemPrompt }],
                 },
                 contents,
                 generationConfig: {
-                  maxOutputTokens: 512,
+                  maxOutputTokens: 2048,
                   temperature: 0.7,
                   topP: 0.9,
                 },
@@ -85,7 +86,7 @@ export class GeminiService {
         errorText = await response.text();
       }
       console.error('Gemini API error:', errorText);
-      throw new Error(`Gemini API error: ${response.status}`);
+      throw new Error(`Gemini API error: ${response.status} - ${errorText.slice(0, 300)}`);
     }
 
     const data = await response.json();
@@ -94,7 +95,7 @@ export class GeminiService {
     if (this.useBackendProxy) {
       const text = typeof data?.text === 'string' ? data.text.trim() : '';
       if (text) return text;
-      return this.getFallbackResponse();
+      throw new Error('Gemini returned an empty response');
     }
 
     // Typical shape: { candidates: [ { content: { parts: [ { text } ] } } ] }

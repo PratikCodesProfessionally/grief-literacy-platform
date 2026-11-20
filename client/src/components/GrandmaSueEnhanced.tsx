@@ -53,15 +53,38 @@ interface VoiceSettings {
 const INITIAL_GREETING: Message = {
   id: 'greeting',
   role: 'assistant',
-  content: `Hello, dear one. I'm Grandma Sue. I'm here to listen with an open heart and offer gentle guidance. This is a safe, confidential space for you.
+  content: `Well hello there, dear! I'm Grandma Sue. Come in, sit down, the kettle's just boiled. ☕
 
-I've learned quite a bit about helping people through difficult times, and I'll do my best to share what might help you. We can talk through typing, or if you'd like, you can speak to me using voice.
+This is a safe little corner for whatever you're carrying: grief, worry, a rotten day, or just wanting some company. You can type, or switch on voice and talk to me.
 
-Just remember, while I care deeply and I'm here for you, I'm not a replacement for a professional counselor. If you're going through something really serious, I'll encourage you to reach out to someone who can give you the expert help you deserve.
+One honest thing before we start: I'm an AI companion, not a counselor. If things ever feel really serious, I'll help you find a real person who can help.
 
-Now, what would you like to talk about today?`,
+So, what's on your heart today? Or tell me your name first, if you like.`,
   timestamp: new Date()
 };
+
+// Conversation starters shown while only the greeting is on screen.
+const QUICK_STARTS = [
+  "I'm missing someone",
+  "I feel anxious",
+  "I've had a rough day",
+  "Tell me a story",
+  "Just want to chat",
+];
+
+/** Render **bold** and *italic* (used by both the local engine and the AI) without raw HTML. */
+function renderRichText(text: string): React.ReactNode[] {
+  return text.split(/(\*\*[^*\n]+\*\*|\*[^*\n]+\*)/g).map((part, i) => {
+    if (/^\*\*[^*]+\*\*$/.test(part)) return <strong key={i}>{part.slice(2, -2)}</strong>;
+    if (/^\*[^*]+\*$/.test(part)) return <em key={i}>{part.slice(1, -1)}</em>;
+    return <React.Fragment key={i}>{part}</React.Fragment>;
+  });
+}
+
+/** Text for speech synthesis: no asterisks read aloud. */
+function stripMarkdown(text: string): string {
+  return text.replace(/\*\*([^*]+)\*\*/g, '$1').replace(/\*([^*]+)\*/g, '$1');
+}
 
 /**
  * Enhanced Grandma Sue Component
@@ -101,6 +124,7 @@ export function GrandmaSueEnhanced() {
 
   // AI provider indicator (last assistant response)
   const [aiProvider, setAiProvider] = React.useState<AIProvider | null>(null);
+  const [fallbackReason, setFallbackReason] = React.useState<string | null>(null);
 
   // Crisis state
   const [currentCrisis, setCurrentCrisis] = React.useState<CrisisAssessment | null>(null);
@@ -112,6 +136,13 @@ export function GrandmaSueEnhanced() {
   // Refs
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Latest values for callbacks registered once (voice listeners), avoiding stale closures.
+  const messagesRef = React.useRef<Message[]>([]);
+  const voiceSettingsRef = React.useRef(voiceSettings);
+  const isTypingRef = React.useRef(false);
+  messagesRef.current = state.messages;
+  voiceSettingsRef.current = voiceSettings;
 
   // Load saved state on mount
   React.useEffect(() => {
@@ -244,117 +275,36 @@ export function GrandmaSueEnhanced() {
   };
 
   /**
-   * Handle sending a voice message directly
+   * Send a message (typed, voice, or a quick-reply chip) through the RAG pipeline.
+   * Reads history from a ref so voice auto-send (registered once on mount) never
+   * works from a stale, empty conversation.
    */
-  const handleSendVoiceMessage = async (transcript: string) => {
-    const input = transcript.trim();
-    if (!input || state.isTyping) return;
+  const sendMessage = async (rawText: string, isVoice = false) => {
+    const input = rawText.trim();
+    if (!input || isTypingRef.current) return;
+    isTypingRef.current = true;
 
-    // Pre-analyze user message for emotional context
-    const userAnalysis = emotionalAnalysisService.analyze(input);
-
-    // Create user message with analysis
-    const userMessage: Message = {
-      id: `user-${Date.now()}`,
-      role: 'user',
-      content: input,
-      timestamp: new Date(),
-      isVoice: true,
-      analysis: userAnalysis
-    };
-
-    // Update state
-    setState(prev => ({
-      ...prev,
-      messages: [...prev.messages, userMessage],
-      input: '',
-      isTyping: true
-    }));
-
-    // Quick crisis check
-    const crisisCheck = crisisDetectionService.quickCheck(input);
-    if (crisisCheck) {
-      const fullAssessment = crisisDetectionService.assess(input);
-      setCurrentCrisis(fullAssessment);
-    }
-
-    try {
-      // Process through RAG pipeline
-      const conversationHistory: ConversationMessage[] = state.messages.map(m => ({
-        role: m.role,
-        content: m.content,
-        timestamp: m.timestamp,
-        analysis: m.analysis
-      }));
-
-      const ragResponse = await ragPipelineService.processMessage(input, conversationHistory);
-
-      setAiProvider(ragResponse.provider);
-
-      // Create assistant message
-      const assistantMessage: Message = {
-        id: `assistant-${Date.now()}`,
-        role: 'assistant',
-        content: ragResponse.response,
-        timestamp: new Date(),
-        analysis: ragResponse.analysis,
-        isCrisis: ragResponse.isCrisis,
-        sources: ragResponse.sources,
-        provider: ragResponse.provider
-      };
-
-      // Update messages
-      setState(prev => ({
-        ...prev,
-        messages: [...prev.messages, assistantMessage],
-        isTyping: false
-      }));
-
-      // Speak response if voice is enabled
-      if (voiceSettings.enabled && voiceSettings.autoSpeak) {
-        const emotion = ragResponse.isCrisis ? 'serious' : 
-                       ragResponse.analysis.emotionalIntensity === 'high' ? 'comfort' : 'warm';
-        voiceService.speakWithEmotion(ragResponse.response, emotion);
-      }
-
-      // Update crisis state
-      if (ragResponse.isCrisis) {
-        setCurrentCrisis(crisisDetectionService.assess(input));
-      } else {
-        setCurrentCrisis(null);
-      }
-    } catch (error) {
-      console.error('Failed to process voice message:', error);
-      setState(prev => ({ ...prev, isTyping: false }));
-    }
-  };
-
-  /**
-   * Handle sending a message
-   */
-  const handleSend = async () => {
-    const input = state.input.trim();
-    if (!input || state.isTyping) return;
-
-    // Stop listening if active
-    if (voiceState.isListening) {
+    if (voiceService.getState().isListening) {
       voiceService.stopListening();
     }
 
-    // Pre-analyze user message for emotional context
     const userAnalysis = emotionalAnalysisService.analyze(input);
-
-    // Create user message with analysis
     const userMessage: Message = {
       id: `user-${Date.now()}`,
       role: 'user',
       content: input,
       timestamp: new Date(),
-      isVoice: voiceSettings.enabled && voiceState.isListening,
+      isVoice,
       analysis: userAnalysis
     };
 
-    // Update state
+    const conversationHistory: ConversationMessage[] = messagesRef.current.map(m => ({
+      role: m.role,
+      content: m.content,
+      timestamp: m.timestamp,
+      analysis: m.analysis
+    }));
+
     setState(prev => ({
       ...prev,
       messages: [...prev.messages, userMessage],
@@ -362,28 +312,19 @@ export function GrandmaSueEnhanced() {
       isTyping: true
     }));
 
-    // Quick crisis check
-    const crisisCheck = crisisDetectionService.quickCheck(input);
-    if (crisisCheck) {
-      const fullAssessment = crisisDetectionService.assess(input);
-      setCurrentCrisis(fullAssessment);
+    if (crisisDetectionService.quickCheck(input)) {
+      setCurrentCrisis(crisisDetectionService.assess(input));
     }
 
+    const startedAt = Date.now();
+    let assistantMessage: Message;
+    let ragResponse: RAGResponse | null = null;
+
     try {
-      // Process through RAG pipeline
-      const conversationHistory: ConversationMessage[] = state.messages.map(m => ({
-        role: m.role,
-        content: m.content,
-        timestamp: m.timestamp,
-        analysis: m.analysis
-      }));
-
-      const ragResponse = await ragPipelineService.processMessage(input, conversationHistory);
-
+      ragResponse = await ragPipelineService.processMessage(input, conversationHistory);
       setAiProvider(ragResponse.provider);
-
-      // Create assistant message
-      const assistantMessage: Message = {
+      setFallbackReason(ragResponse.fallbackReason ?? null);
+      assistantMessage = {
         id: `assistant-${Date.now()}`,
         role: 'assistant',
         content: ragResponse.response,
@@ -393,49 +334,45 @@ export function GrandmaSueEnhanced() {
         sources: ragResponse.sources,
         provider: ragResponse.provider
       };
-
-      // Update messages
-      setState(prev => ({
-        ...prev,
-        messages: [...prev.messages, assistantMessage],
-        isTyping: false
-      }));
-
-      // Speak response if voice is enabled
-      if (voiceSettings.enabled && voiceSettings.autoSpeak) {
-        const emotion = ragResponse.isCrisis ? 'serious' : 
-                       ragResponse.analysis.emotionalIntensity === 'high' ? 'comfort' : 'warm';
-        voiceService.speakWithEmotion(ragResponse.response, emotion);
-      }
-
-      // Update crisis state
-      if (ragResponse.isCrisis) {
-        setCurrentCrisis(crisisDetectionService.assess(input));
-      } else {
-        setCurrentCrisis(null);
-      }
-
     } catch (error) {
       console.error('Failed to process message:', error);
-
       setAiProvider('local');
-      
-      // Fallback response
-      const fallbackMessage: Message = {
+      assistantMessage = {
         id: `assistant-${Date.now()}`,
         role: 'assistant',
         content: "I'm here with you, dear one. Sometimes technology has hiccups, but my care for you doesn't change. Please, tell me more about what's on your heart.",
         timestamp: new Date(),
         provider: 'local'
       };
+    }
 
-      setState(prev => ({
-        ...prev,
-        messages: [...prev.messages, fallbackMessage],
-        isTyping: false
-      }));
+    // Instant replies feel robotic; give Grandma Sue a moment to "think" (crisis replies skip this).
+    if (!ragResponse?.isCrisis) {
+      const natural = Math.min(1800, 500 + assistantMessage.content.length * 4);
+      const remaining = natural - (Date.now() - startedAt);
+      if (remaining > 0) await new Promise(resolve => setTimeout(resolve, remaining));
+    }
+
+    isTypingRef.current = false;
+    setState(prev => ({
+      ...prev,
+      messages: [...prev.messages, assistantMessage],
+      isTyping: false
+    }));
+
+    if (ragResponse) {
+      if (voiceSettingsRef.current.enabled && voiceSettingsRef.current.autoSpeak) {
+        const emotion = ragResponse.isCrisis ? 'serious' :
+                       ragResponse.analysis.emotionalIntensity === 'high' ? 'comfort' : 'warm';
+        voiceService.speakWithEmotion(stripMarkdown(ragResponse.response), emotion);
+      }
+      setCurrentCrisis(ragResponse.isCrisis ? crisisDetectionService.assess(input) : null);
     }
   };
+
+  const handleSendVoiceMessage = (transcript: string) => sendMessage(transcript, true);
+
+  const handleSend = () => sendMessage(state.input, voiceSettings.enabled && voiceState.isListening);
 
   /**
    * Handle keyboard input
@@ -579,7 +516,7 @@ export function GrandmaSueEnhanced() {
    * Replay a message
    */
   const replayMessage = (content: string) => {
-    voiceService.speakWithEmotion(content, 'warm');
+    voiceService.speakWithEmotion(stripMarkdown(content), 'warm');
   };
 
   // Render floating button when closed
@@ -620,7 +557,13 @@ export function GrandmaSueEnhanced() {
                     </Badge>
                   )}
                   {aiProvider && (
-                    <Badge variant="secondary" className="text-xs">
+                    <Badge
+                      variant="secondary"
+                      className="text-xs"
+                      title={aiProvider === 'local' && fallbackReason
+                        ? `Cloud AI unavailable, using Grandma Sue's built-in brain.\n${fallbackReason}`
+                        : undefined}
+                    >
                       AI: {aiProvider === 'huggingface' ? 'Hugging Face' : aiProvider === 'claude' ? 'Claude' : aiProvider === 'gemini' ? 'Gemini' : 'Lokal'}
                     </Badge>
                   )}
@@ -756,7 +699,7 @@ export function GrandmaSueEnhanced() {
                           <span>Voice message</span>
                         </div>
                       )}
-                      <p className="whitespace-pre-wrap text-sm leading-relaxed break-words">{message.content}</p>
+                      <p className="whitespace-pre-wrap text-sm leading-relaxed break-words">{renderRichText(message.content)}</p>
                       
                       {/* Sources attribution */}
                       {message.sources && message.sources.length > 0 && (
@@ -860,6 +803,22 @@ export function GrandmaSueEnhanced() {
               </div>
             )}
 
+            {/* Conversation starters (outside the scroll area so they're always fully visible) */}
+            {!state.isTyping && state.messages.length <= 1 && (
+              <div className="flex flex-wrap gap-1.5">
+                {QUICK_STARTS.map(starter => (
+                  <button
+                    key={starter}
+                    type="button"
+                    onClick={() => sendMessage(starter)}
+                    className="text-xs px-3 py-1.5 rounded-full border border-purple-200 dark:border-purple-800 bg-white dark:bg-gray-900 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors"
+                  >
+                    {starter}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {/* Input area */}
             <div className="flex gap-2">
               <Textarea
@@ -906,7 +865,7 @@ export function GrandmaSueEnhanced() {
             {/* Footer */}
             <div className="flex justify-between items-center gap-2">
               <p className="text-xs text-gray-500 flex-1 flex items-center gap-2">
-                💜 {state.messages.length} messages
+                💜 {state.messages.length} {state.messages.length === 1 ? 'message' : 'messages'}
                 {voiceSettings.enabled && <span className="text-purple-500">🎤 Voice enabled</span>}
               </p>
               <Button 
