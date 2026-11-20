@@ -548,23 +548,57 @@ const PROBLEM_KEYWORDS: Record<ProblemType, string[]> = {
     'marriage decision', 'having kids', 'going back to school'
   ],
   'general': [],
+  // Matched as whole phrases (see matchesPhrase), never as substrings: bare words like
+  // "goodbye", "note", "rope" or "plan to" used to fire on "Europe", "notebook",
+  // "I plan to visit her grave"... and drop people into the crisis reply by mistake.
+  // Apostrophes are optional when matching ("dont" == "don't").
   'crisis': [
     // Suicidal ideation
-    'suicide', 'suicidal', 'kill myself', 'end my life', 'take my life',
-    'end it', 'end it all', 'not want to live', 'don\'t want to live',
-    'want to die', 'wish i was dead', 'better off dead',
-    'no reason to live', 'can\'t go on', 'can\'t do this anymore',
+    'suicide', 'suicidal', 'kill myself', 'kill my self', 'end my life', 'take my life', 'take my own life',
+    'end it all', 'want to end it', 'going to end it', 'gonna end it', 'end things tonight',
+    'not want to live', 'don\'t want to live', 'want to die', 'wanna die', 'want to be dead',
+    'wish i was dead', 'wish i were dead', 'better off dead', 'better off without me',
+    'don\'t want to be here anymore', 'don\'t want to be alive', 'don\'t want to wake up',
+    'no reason to live', 'no point in living', 'no point living',
+    'can\'t go on', 'can\'t do this anymore', 'shoot myself', 'hang myself', 'drown myself',
     // Self-harm
-    'self-harm', 'self harm', 'hurt myself', 'cutting', 'cut myself',
-    'burn myself', 'injure myself', 'pain to cope',
+    'self-harm', 'self harm', 'hurt myself', 'harm myself', 'cutting myself', 'cut myself',
+    'burn myself', 'burning myself', 'injure myself', 'pain to cope',
     // Plans/means
-    'plan to', 'have a plan', 'method', 'pills', 'overdose', 'jump',
-    'gun', 'rope', 'bridge', 'goodbye', 'final goodbye', 'note',
+    'plan to kill', 'plan to end', 'have a plan to', 'made a plan to die',
+    'take all my pills', 'taking all my pills', 'take all the pills', 'bunch of pills',
+    'handful of pills', 'swallowed pills', 'overdose', 'overdosed',
+    'jump off a bridge', 'jump off the bridge', 'jump off a building', 'jump off the roof',
+    'jump in front of', 'bought a gun', 'buy a gun', 'gun to my head', 'bought a rope', 'noose',
+    'suicide note', 'goodbye note', 'goodbye letter', 'final goodbye', 'last goodbye',
+    'goodbye forever', 'saying goodbye to everyone', 'said my goodbyes',
     // Crisis states
-    'emergency', 'crisis', 'in crisis', 'need help now', 'urgent',
-    'can\'t be safe', 'not safe', 'danger to myself'
+    'in crisis', 'having a crisis', 'mental health crisis', 'need help now', 'need urgent help',
+    'this is an emergency', 'can\'t be safe', 'can\'t keep myself safe', 'i\'m not safe', 'i am not safe',
+    'not safe with myself', 'don\'t feel safe', 'do not feel safe', 'not safe at home',
+    'danger to myself'
   ]
 };
+
+const phraseRegexCache = new Map<string, RegExp>();
+
+/**
+ * Whole-phrase match: "rope" won't match "Europe", "note" won't match "notebook".
+ * Apostrophes are optional and any whitespace counts as a space.
+ */
+function matchesPhrase(message: string, phrase: string): boolean {
+  let re = phraseRegexCache.get(phrase);
+  if (!re) {
+    const body = phrase
+      .toLowerCase()
+      .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      .replace(/'/g, "['’]?")
+      .replace(/[\s-]+/g, '[\\s-]+');
+    re = new RegExp(`(?:^|[^a-z0-9])${body}(?![a-z0-9])`, 'i');
+    phraseRegexCache.set(phrase, re);
+  }
+  return re.test(message);
+}
 
 const CRISIS_PATTERNS: { pattern: RegExp; type: CrisisIndicator['type'] }[] = [
   // Suicidal ideation
@@ -697,7 +731,7 @@ export class EmotionalAnalysisService {
    */
   private detectProblemType(message: string): ProblemType {
     // Check for crisis first
-    if (PROBLEM_KEYWORDS['crisis'].some(kw => message.includes(kw))) {
+    if (PROBLEM_KEYWORDS['crisis'].some(kw => matchesPhrase(message, kw))) {
       return 'crisis';
     }
     
