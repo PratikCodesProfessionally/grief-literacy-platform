@@ -9,7 +9,7 @@ import { ArrowLeft, Play, Pause, RotateCcw } from 'lucide-react';
  * MeditationPage
  * ---------------
  * Key ideas (architecture 101):
- * - We keep UI state in React (which meditation is selected, play/pause, time).
+ * - We keep UI state in React (which meditation is selected, time). Play/pause mirrors the video's own events.
  * - A <video> element is our "player". We control it with a React ref.
  * - We listen to the video’s events (loadedmetadata, timeupdate, ended) to keep React state in sync.
  * - Progress bar uses currentTime / duration from the video (source of truth).
@@ -26,6 +26,9 @@ export function MeditationPage() {
     category: string;
     src?: string; // optional media URL if available
   }>(null);
+
+  /** True when the selected video can't be loaded (e.g. the host served a placeholder, not the file). */
+  const [loadFailed, setLoadFailed] = React.useState(false);
 
   /** The <video> DOM node we will command (play/pause/seek) */
   const videoRef = React.useRef<HTMLVideoElement | null>(null);
@@ -80,75 +83,99 @@ export function MeditationPage() {
     },
   ];
 
+  /** The player card, so we can scroll it into view when a meditation is chosen (it sits above the grid). */
+  const playerRef = React.useRef<HTMLDivElement | null>(null);
+
+  /** Set when a card's "Play" is clicked; the effect below starts the new source once it's in the DOM. */
+  const autoplayRef = React.useRef(false);
+
   /**
-   * When user clicks "Play" on a card:
-   * - Set that meditation as selected
-   * - If another was playing, we load the new source and start from 0
+   * Start playback. Called straight from click handlers (or the effect right after one), so the
+   * browser still counts it as a user gesture. AbortError just means a newer load replaced this one.
    */
-  const handlePlay = (meditation: typeof meditations[number]) => {
-    setSelectedMeditation(meditation);
-    setIsPlaying(true); // auto-start when a card is chosen
+  const startVideo = (video: HTMLVideoElement) => {
+    video.play().catch((err: DOMException) => {
+      if (err?.name !== 'AbortError') console.warn('Meditation video could not start:', err);
+    });
   };
 
   /**
-   * Sync React state whenever the <video> element changes over time.
-   * We attach event listeners once the <video> exists, and clean them up on unmount.
+   * When user clicks "Play" on a card:
+   * - Same meditation already loaded: just play it.
+   * - Otherwise select it; the effect below loads the new source and starts it.
+   */
+  const handlePlay = (meditation: typeof meditations[number]) => {
+    const video = videoRef.current;
+    if (video && selectedMeditation?.src && selectedMeditation.src === meditation.src) {
+      startVideo(video);
+    } else {
+      autoplayRef.current = Boolean(meditation.src);
+      setCurrentTime(0);
+      setDuration(0);
+      setSelectedMeditation(meditation);
+    }
+    // On phones the player opens at the top of the page, out of sight; bring it into view.
+    requestAnimationFrame(() => playerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  };
+
+  /**
+   * The <video> element is the source of truth for play/pause. We mirror its events into React
+   * state instead of keeping a separate "isPlaying" intention: that older approach got out of sync
+   * when switching meditations (new video paused, button still showing "Pause"), so it took two clicks.
    */
   React.useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
-    // When metadata is loaded (e.g., duration becomes known)
     const onLoaded = () => {
       setDuration(video.duration || 0);
       setCurrentTime(video.currentTime || 0);
     };
-
-    // Every small time step during playback
     const onTime = () => setCurrentTime(video.currentTime || 0);
-
-    // When playback ends (e.g., let’s stop and leave the progress at 100%)
-    const onEnded = () => setIsPlaying(false);
+    const onPlay = () => setIsPlaying(true);
+    const onPause = () => setIsPlaying(false); // also fires on 'ended'
+    const onError = () => setLoadFailed(true);
+    setLoadFailed(false);
+    video.addEventListener('error', onError);
 
     video.addEventListener('loadedmetadata', onLoaded);
     video.addEventListener('timeupdate', onTime);
-    video.addEventListener('ended', onEnded);
+    video.addEventListener('play', onPlay);
+    video.addEventListener('pause', onPause);
+    video.addEventListener('ended', onPause);
+    setIsPlaying(!video.paused);
+
+    if (autoplayRef.current) {
+      autoplayRef.current = false;
+      startVideo(video);
+    }
 
     return () => {
       video.removeEventListener('loadedmetadata', onLoaded);
       video.removeEventListener('timeupdate', onTime);
-      video.removeEventListener('ended', onEnded);
+      video.removeEventListener('play', onPlay);
+      video.removeEventListener('pause', onPause);
+      video.removeEventListener('ended', onPause);
+      video.removeEventListener('error', onError);
     };
-  }, [selectedMeditation]); // re-attach when a new meditation (source) is selected
+  }, [selectedMeditation?.src]); // re-attach (and autoplay) when a new source is selected
 
-  /**
-   * Actually start/stop the video element when isPlaying changes.
-   * (React state is the intention; the <video> is the performer.)
-   */
-  React.useEffect(() => {
+  /** Big round button: act on the video directly, inside the click. */
+  const handleTogglePlay = () => {
     const video = videoRef.current;
-    if (!video) return;
-
-    if (isPlaying) {
-      // If no source is present yet (e.g., user pressed play without selecting), do nothing
-      video.play().catch(() => {
-        // Some browsers require a user gesture; UI already provides one (button click),
-        // but if play() fails silently, we keep state consistent:
-        setIsPlaying(false);
-      });
-    } else {
-      video.pause();
-    }
-  }, [isPlaying]);
+    if (!video || !selectedMeditation?.src) return;
+    if (video.paused) startVideo(video);
+    else video.pause();
+  };
 
   /** Reset button: jump to start and pause */
   const handleReset = () => {
     const video = videoRef.current;
     if (video) {
+      video.pause();
       video.currentTime = 0;
     }
     setCurrentTime(0);
-    setIsPlaying(false);
   };
 
   /** Close button: hide player and stop everything */
@@ -158,6 +185,7 @@ export function MeditationPage() {
       video.pause();
       video.currentTime = 0;
     }
+    autoplayRef.current = false;
     setIsPlaying(false);
     setCurrentTime(0);
     setDuration(0);
@@ -189,7 +217,7 @@ export function MeditationPage() {
 
       {/* Player card: only shows when a meditation is chosen */}
       {selectedMeditation && (
-        <Card className="border-purple-200 bg-purple-50 dark:bg-purple-900/20">
+        <Card ref={playerRef} className="border-purple-200 bg-purple-50 dark:bg-purple-900/20 scroll-mt-24">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>{selectedMeditation.title}</span>
@@ -238,6 +266,12 @@ export function MeditationPage() {
 )}
 
 
+              {loadFailed && (
+                <p className="text-sm text-center text-red-700 dark:text-red-300" role="alert">
+                  Sorry, this meditation couldn't be loaded right now. Please try again later.
+                </p>
+              )}
+
               <Progress value={progress} className="h-2" />
 
               {/* Time readout: current / total */}
@@ -253,11 +287,7 @@ export function MeditationPage() {
 
                 <Button
                   size="lg"
-                  onClick={() => {
-                    // If there is no real media for this meditation, do nothing
-                    if (!selectedMeditation.src) return;
-                    setIsPlaying((p) => !p);
-                  }}
+                  onClick={handleTogglePlay}
                   className="rounded-full w-16 h-16"
                   aria-label={isPlaying ? 'Pause' : 'Play'}
                   disabled={!selectedMeditation.src} // disable if no media yet

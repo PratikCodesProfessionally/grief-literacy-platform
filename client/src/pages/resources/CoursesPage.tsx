@@ -22,6 +22,77 @@ import { ArrowLeft, Play, Lock, CheckCircle, Clock, BookOpen, Award, AlertTriang
  * - Die Seite ist so gestaltet, dass sie einfach erweiterbar ist (z.B. für echte Kursdaten, API-Anbindung).
  */
 
+/** Lesson title → video file in /public/videos. */
+const LESSON_VIDEOS: Record<string, string> = {
+  'Introduction to Grief Science': '/videos/IntroductionToGriefScience.mp4',
+  'The Kübler-Ross Model Explained': '/videos/TheKueblerRossModelExplained.mp4',
+  'Beyond the 5 Stages: Modern Understanding': '/videos/BeyondThe5Stages.mp4',
+  'Anticipatory Grief': '/videos/Lesson4 AnticipatoryGrief.mp4',
+  'Complicated vs Normal Grief': '/videos/NormalvscomplicatedGrief.mp4',
+  'Cultural Perspectives on Grief': '/videos/CulturalPerspectivesOnGrief.mp4',
+  'Building Your Support Network': '/videos/BuildingYourSupportNetwork.mp4',
+  'Creating Your Personal Grief Plan': '/videos/Creating Your Personal Grief Plan.mp4',
+};
+
+/**
+ * Lesson video with a one-tap start.
+ *
+ * With only native controls, the first tap on a phone just reveals the controls (and the video
+ * hasn't loaded yet), so lessons needed two taps. A big play button calls play() directly inside
+ * the tap; native controls take over once playback has started.
+ */
+function LessonVideo({ src, title }: { src: string; title: string }) {
+  const videoRef = React.useRef<HTMLVideoElement | null>(null);
+  const [started, setStarted] = React.useState(false);
+  const [failed, setFailed] = React.useState(false);
+
+  const start = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    setStarted(true);
+    video.play().catch((err: DOMException) => {
+      if (err?.name === 'NotSupportedError') setFailed(true);
+      else if (err?.name !== 'AbortError') setStarted(false); // e.g. blocked: show the button again
+    });
+  };
+
+  return (
+    <div className="relative w-full h-full">
+      <video
+        ref={videoRef}
+        src={encodeURI(src)}
+        className="w-full h-full rounded-lg object-contain bg-black"
+        controls={started && !failed}
+        preload="metadata"
+        playsInline
+        onPlay={() => setStarted(true)}
+        onError={() => setFailed(true)}
+      >
+        Your browser does not support the video tag.
+      </video>
+
+      {!started && !failed && (
+        <button
+          type="button"
+          onClick={start}
+          aria-label={`Play lesson: ${title}`}
+          className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/20 hover:bg-black/30 transition-colors focus:outline-none focus-visible:ring-4 focus-visible:ring-purple-400/60"
+        >
+          <span className="flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/90 shadow-lg">
+            <Play className="w-8 h-8 sm:w-10 sm:h-10 text-purple-700 translate-x-0.5" fill="currentColor" />
+          </span>
+        </button>
+      )}
+
+      {failed && (
+        <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-gray-900 p-6 text-center text-sm text-gray-200">
+          Sorry, this lesson video couldn't be loaded right now. Please try again later.
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function CoursesPage() {
   // State: Welche Kurse sind eingeschrieben?
   const [enrolledCourses, setEnrolledCourses] = React.useState<Set<number>>(new Set());
@@ -333,130 +404,19 @@ export function CoursesPage() {
             </CardHeader>
             <CardContent>
               <div className="bg-gray-900 rounded-lg aspect-video flex items-center justify-center mb-6">
-                {(() => {
-                  console.log('Current Lesson Content:', currentLessonContent);
-                  if (currentLessonContent === 'Introduction to Grief Science') {
-                    return (
-                      <div className="w-full">
-                        <video
-                          key={currentLessonContent}
-                          className="w-full h-full rounded-lg mb-4"
-                          controls
-                          poster="/assets/lesson1-poster.png"
-                        >
-                          <source src="/videos/IntroductionToGriefScience.mp4" type="video/mp4" />
-                          Your browser does not support the video tag.
-                        </video>
-                      </div>
-                    );
-                  } else if (currentLessonContent === 'The Kübler-Ross Model Explained') {
-                    return (
-                      <div className="w-full">
-                        <video
-                          key={currentLessonContent}
-                          className="w-full h-full rounded-lg mb-4"
-                          controls
-                          poster="/assets/lesson2-poster.png"
-                        >
-                          <source src="/videos/TheKueblerRossModelExplained.mp4" type="video/mp4" />
-                          Your browser does not support the video tag.
-                        </video>
-                      </div>
-                    );
-                  } else if (currentLessonContent === 'Beyond the 5 Stages: Modern Understanding') {
-                    return (
-                      <div className="w-full">
-                        <video
-                          key={currentLessonContent}
-                          className="w-full h-full rounded-lg mb-4"
-                          controls
-                          poster="/assets/lesson3-poster.png"
-                        >
-                          <source src="/videos/BeyondThe5Stages.mp4" type="video/mp4" />
-                          Your browser does not support the video tag.
-                        </video>
-                      </div>
-                    );
-                  } else if (currentLessonContent === 'Anticipatory Grief') {
-                    return (
-                      <div className="w-full">
-                        <video
-                          key={currentLessonContent}
-                          className="w-full h-full rounded-lg mb-4"
-                          controls
-                          poster="/assets/lesson4-poster.png"
-                        >
-                          <source src="/videos/Lesson4 AnticipatoryGrief.mp4" type="video/mp4" />
-                          Your browser does not support the video tag.
-                        </video>
-                      </div>
-                    );
-                  } else if (currentLessonContent === 'Complicated vs Normal Grief') {
-                    return (
-                      <div className="w-full">
-                        <video
-                          key={currentLessonContent}
-                          className="w-full h-full rounded-lg mb-4"
-                          controls
-                          poster="/assets/lesson5-poster.png"
-                        >
-                          <source src="/videos/NormalvscomplicatedGrief.mp4" type="video/mp4" />
-                          Your browser does not support the video tag.
-                        </video>
-                      </div>
-                    );
-                  } else if (currentLessonContent === 'Cultural Perspectives on Grief') {
-                    return (
-                      <div className="w-full">
-                        <video
-                          key={currentLessonContent}
-                          className="w-full h-full rounded-lg mb-4"
-                          controls
-                          poster="/assets/lesson6-poster.png"
-                        >
-                          <source src="/videos/CulturalPerspectivesOnGrief.mp4" type="video/mp4" />
-                          Your browser does not support the video tag.
-                        </video>
-                      </div>
-                    );
-                  } else if (currentLessonContent === 'Building Your Support Network') {
-                    return (
-                      <div className="w-full">
-                        <video
-                          key={currentLessonContent}
-                          className="w-full h-full rounded-lg mb-4"
-                          controls
-                          poster="/assets/lesson7-poster.png"
-                        >
-                          <source src="/videos/BuildingYourSupportNetwork.mp4" type="video/mp4" />
-                          Your browser does not support the video tag.
-                        </video>
-                      </div>
-                    );
-                  } else if (currentLessonContent === 'Creating Your Personal Grief Plan') {
-                    return (
-                      <div className="w-full">
-                        <video
-                          key={currentLessonContent}
-                          className="w-full h-full rounded-lg mb-4"
-                          controls
-                          poster="/assets/lesson8-poster.png"
-                        >
-                          <source src="/videos/Creating Your Personal Grief Plan.mp4" type="video/mp4" />
-                          Your browser does not support the video tag.
-                        </video>
-                      </div>
-                    );
-                  } else {
-                    return (
-                      <div className="text-center text-white">
-                        <Play className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                        <p className="text-lg">AI Generated Lesson: {currentLessonContent}</p>
-                        <p className="text-xs opacity-60 mt-2">This is a demonstration of AI-generated educational content</p>
-                      </div>
-                    );
-                  }
-                })()}
+                {LESSON_VIDEOS[currentLessonContent] ? (
+                  <LessonVideo
+                    key={currentLessonContent}
+                    src={LESSON_VIDEOS[currentLessonContent]}
+                    title={currentLessonContent}
+                  />
+                ) : (
+                  <div className="text-center text-white">
+                    <Play className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                    <p className="text-lg">AI Generated Lesson: {currentLessonContent}</p>
+                    <p className="text-xs opacity-60 mt-2">This is a demonstration of AI-generated educational content</p>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-6">
