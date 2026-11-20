@@ -59,13 +59,14 @@ export class HuggingFaceService {
       topics: string[];
       sentiment: string;
       previousTopics: string[];
-    }
+    },
+    systemPromptOverride?: string
   ): Promise<string> {
     if (!this.isConfigured()) {
       throw new Error('Hugging Face API key not configured');
     }
 
-    const systemPrompt = this.buildSystemPrompt(context);
+    const systemPrompt = systemPromptOverride || this.buildSystemPrompt(context);
     
     // Build messages array with system prompt
     const apiMessages: HuggingFaceMessage[] = [
@@ -90,7 +91,6 @@ export class HuggingFaceService {
             ? {
                 messages,
                 systemPrompt,
-                model: this.model,
               }
             : {
                 model: this.model,
@@ -103,9 +103,9 @@ export class HuggingFaceService {
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        const error: any = await response.json().catch(() => ({}));
         console.error('Hugging Face API error:', error);
-        throw new Error(`Hugging Face API error: ${response.status} - ${error.error || 'Unknown error'}`);
+        throw new Error(`Hugging Face API error: ${response.status} - ${error.detail || error.error || 'Unknown error'}`);
       }
 
       const data: any = await response.json();
@@ -113,7 +113,7 @@ export class HuggingFaceService {
       if (this.useBackendProxy) {
         const text = typeof data?.text === 'string' ? data.text.trim() : '';
         if (text) return text;
-        return this.getFallbackResponse();
+        throw new Error('Hugging Face returned an empty response');
       }
 
       const typed: ChatCompletionResponse = data;

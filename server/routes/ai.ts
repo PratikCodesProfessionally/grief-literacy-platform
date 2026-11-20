@@ -14,16 +14,74 @@ const aiLimiter = rateLimit({
 
 router.use(aiLimiter);
 
+// Models are chosen server-side (overridable via env) so a browser can't spend
+// our keys on arbitrary/expensive models, and so retired defaults are easy to swap.
+const MODELS = {
+  claude: process.env.ANTHROPIC_MODEL || 'claude-opus-5-5',
+  huggingface: process.env.HUGGINGFACE_MODEL || 'meta-llama/Llama-3.1-8B-Instruct',
+  // The "-latest" alias tracks Google's current Flash model so it doesn't silently retire.
+  gemini: (process.env.GEMINI_MODEL || 'gemini-flash-latest,gemini-2.5-flash')
+    .split(',')
+    .map((m) => m.trim())
+    .filter(Boolean),
+};
+
+const MAX_HISTORY = 20;
+const MAX_SYSTEM_PROMPT = 12000;
+
+/**
+ * Clean chat history for upstream APIs:
+ * - only user/assistant turns with text
+ * - drop leading assistant turns (the canned greeting): Claude/Gemini expect a user turn first
+ * - merge consecutive same-role turns (Gemini rejects non-alternating history)
+ * - keep only the most recent turns
+ */
 function normalizeMessages(messages: any) {
   if (!Array.isArray(messages)) return null;
-  const normalized = messages
+  const cleaned = messages
     .filter((m) => m && typeof m === 'object')
     .map((m) => ({
       role: m.role,
-      content: typeof m.content === 'string' ? m.content : '',
+      content: typeof m.content === 'string' ? m.content.slice(0, 4000) : '',
     }))
     .filter((m) => (m.role === 'user' || m.role === 'assistant') && m.content.trim().length > 0);
-  return normalized.length ? normalized : null;
+
+  const merged = [];
+  for (const m of cleaned) {
+    const last = merged[merged.length - 1];
+    if (last && last.role === m.role) last.content += `\n\n${m.content}`;
+    else merged.push({ ...m });
+  }
+
+  let recent = merged.slice(-MAX_HISTORY);
+  while (recent.length && recent[0].role !== 'user') recent = recent.slice(1);
+  return recent.length && recent[recent.length - 1].role === 'user' ? recent : null;
+}
+
+function readSystemPrompt(body: any) {
+  return typeof body?.systemPrompt === 'string' ? body.systemPrompt.slice(0, MAX_SYSTEM_PROMPT) : '';
+}
+
+/** Pull a short human-readable reason out of an upstream error body. */
+async function upstreamDetail(response: Response) {
+  let raw = '';
+  try {
+    raw = await response.text();
+  } catch {
+    return '';
+  }
+  try {
+    const json = JSON.parse(raw);
+    const msg = json?.error?.message || json?.error || json?.message || raw;
+    return String(typeof msg === 'string' ? msg : JSON.stringify(msg)).slice(0, 300);
+  } catch {
+    return raw.slice(0, 300);
+  }
+}
+
+function upstreamFailure(res, provider: string, status: number, detail: string) {
+  console.error(`${provider} upstream error:`, status, detail);
+  return res.status(502).json({ error: `${provider} upstream error`, status, detail });
 }
 
 router.get('/status', (req, res) => {
@@ -42,10 +100,7 @@ router.post('/claude', async (req, res) => {
   }
 
   const messages = normalizeMessages(req.body?.messages);
-  const system = typeof req.body?.systemPrompt === 'string' ? req.body.systemPrompt : '';
-  const model = typeof req.body?.model === 'string' ? req.body.model : 'claude-3-5-sonnet-20241022';
-  const max_tokens = typeof req.body?.max_tokens === 'number' ? req.body.max_tokens : 1024;
-
+  const system = readSystemPrompt(req.body);
   if (!messages) {
     return res.status(400).json({ error: 'Invalid messages' });
   }
@@ -59,27 +114,25 @@ router.post('/claude', async (req, res) => {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model,
-        max_tokens,
+        model: MODELS.claude,
+        max_tokens: 1024,
         system,
-        messages: messages.map((m) => ({ role: m.role, content: m.content })),
+        messages,
       }),
     });
 
     if (!response.ok) {
-      let errorText = '';
-      try {
-        errorText = JSON.stringify(await response.json());
-      } catch {
-        errorText = await response.text();
-      }
-      console.error('Claude upstream error:', response.status, errorText);
-      return res.status(502).json({ error: 'Claude upstream error', status: response.status });
+      return upstreamFailure(res, 'Claude', response.status, await upstreamDetail(response));
     }
 
     const data: any = await response.json();
-    const text = data?.content?.[0]?.text;
-    return res.json({ text: typeof text === 'string' ? text : '' });
+    const text = (data?.content || [])
+      .filter((b: any) => b?.type === 'text')
+      .map((b: any) => b.text)
+      .join('')
+      .trim();
+    if (!text) return upstreamFailure(res, 'Claude', 200, `Empty response (stop_reason: ${data?.stop_reason})`);
+    return res.json({ text });
   } catch (err) {
     console.error('Claude proxy failed:', err);
     return res.status(500).json({ error: 'Claude proxy failed' });
@@ -94,17 +147,10 @@ router.post('/huggingface', async (req, res) => {
   }
 
   const messages = normalizeMessages(req.body?.messages);
-  const systemPrompt = typeof req.body?.systemPrompt === 'string' ? req.body.systemPrompt : '';
-  const model = typeof req.body?.model === 'string' ? req.body.model : 'meta-llama/Llama-3.1-8B-Instruct';
-
+  const systemPrompt = readSystemPrompt(req.body);
   if (!messages) {
     return res.status(400).json({ error: 'Invalid messages' });
   }
-
-  const apiMessages = [
-    ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
-    ...messages.map((m) => ({ role: m.role, content: m.content })),
-  ];
 
   try {
     const response = await fetch('https://router.huggingface.co/v1/chat/completions', {
@@ -114,28 +160,27 @@ router.post('/huggingface', async (req, res) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model,
-        messages: apiMessages,
-        max_tokens: 512,
-        temperature: 0.7,
+        model: MODELS.huggingface,
+        messages: [...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []), ...messages],
+        max_tokens: 600,
+        temperature: 0.85,
         top_p: 0.9,
       }),
     });
 
     if (!response.ok) {
-      let errorText = '';
-      try {
-        errorText = JSON.stringify(await response.json());
-      } catch {
-        errorText = await response.text();
+      let detail = await upstreamDetail(response);
+      if (response.status === 402) {
+        detail = `Monthly Hugging Face inference credits are used up (402). ${detail}`.trim();
       }
-      console.error('HF upstream error:', response.status, errorText);
-      return res.status(502).json({ error: 'Hugging Face upstream error', status: response.status });
+      return upstreamFailure(res, 'Hugging Face', response.status, detail);
     }
 
     const data: any = await response.json();
-    const text = data?.choices?.[0]?.message?.content;
-    return res.json({ text: typeof text === 'string' ? text : '' });
+    const content = data?.choices?.[0]?.message?.content;
+    const text = typeof content === 'string' ? content.trim() : '';
+    if (!text) return upstreamFailure(res, 'Hugging Face', 200, 'Empty response');
+    return res.json({ text });
   } catch (err) {
     console.error('HF proxy failed:', err);
     return res.status(500).json({ error: 'Hugging Face proxy failed' });
@@ -150,9 +195,7 @@ router.post('/gemini', async (req, res) => {
   }
 
   const messages = normalizeMessages(req.body?.messages);
-  const systemPrompt = typeof req.body?.systemPrompt === 'string' ? req.body.systemPrompt : '';
-  const model = typeof req.body?.model === 'string' ? req.body.model : 'gemini-1.5-flash';
-
+  const systemPrompt = readSystemPrompt(req.body);
   if (!messages) {
     return res.status(400).json({ error: 'Invalid messages' });
   }
@@ -162,48 +205,62 @@ router.post('/gemini', async (req, res) => {
     parts: [{ text: m.content }],
   }));
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+  let lastStatus = 0;
+  let lastDetail = '';
 
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        systemInstruction: systemPrompt ? { parts: [{ text: systemPrompt }] } : undefined,
-        contents,
-        generationConfig: {
-          maxOutputTokens: 512,
-          temperature: 0.7,
-          topP: 0.9,
+  // Try each configured model; move on only when the model itself is unavailable.
+  for (const model of MODELS.gemini) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': apiKey,
         },
-      }),
-    });
+        body: JSON.stringify({
+          ...(systemPrompt ? { systemInstruction: { parts: [{ text: systemPrompt }] } } : {}),
+          contents,
+          generationConfig: {
+            // Newer Flash models "think", and that counts against this limit,
+            // so leave headroom or replies come back empty.
+            maxOutputTokens: 2048,
+            temperature: 0.85,
+            topP: 0.9,
+          },
+        }),
+      });
 
-    if (!response.ok) {
-      let errorText = '';
-      try {
-        errorText = JSON.stringify(await response.json());
-      } catch {
-        errorText = await response.text();
+      if (!response.ok) {
+        lastStatus = response.status;
+        lastDetail = `[${model}] ${await upstreamDetail(response)}`;
+        if (response.status === 404) continue; // model retired/unknown: try the next one
+        return upstreamFailure(res, 'Gemini', lastStatus, lastDetail);
       }
-      console.error('Gemini upstream error:', response.status, errorText);
-      return res.status(502).json({ error: 'Gemini upstream error', status: response.status });
+
+      const data: any = await response.json();
+      const text = (data?.candidates?.[0]?.content?.parts || [])
+        .filter((p: any) => !p?.thought && typeof p?.text === 'string')
+        .map((p: any) => p.text)
+        .join('')
+        .trim();
+
+      if (!text) {
+        return upstreamFailure(
+          res,
+          'Gemini',
+          200,
+          `[${model}] Empty response (finishReason: ${data?.candidates?.[0]?.finishReason})`
+        );
+      }
+      return res.json({ text });
+    } catch (err) {
+      console.error('Gemini proxy failed:', err);
+      return res.status(500).json({ error: 'Gemini proxy failed' });
     }
-
-    const data: any = await response.json();
-    const text = data?.candidates?.[0]?.content?.parts
-      ?.map((p: any) => p?.text)
-      .filter(Boolean)
-      .join('')
-      ?.trim();
-
-    return res.json({ text: typeof text === 'string' ? text : '' });
-  } catch (err) {
-    console.error('Gemini proxy failed:', err);
-    return res.status(500).json({ error: 'Gemini proxy failed' });
   }
+
+  return upstreamFailure(res, 'Gemini', lastStatus || 404, lastDetail || 'No Gemini model available');
 });
 
 export default router;
