@@ -4,6 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ArrowLeft, Play, Pause, RotateCcw } from 'lucide-react';
+import { DailyReminderCard } from '@/components/meditation/DailyReminderCard';
+import {
+  MEDITATION_COUNTS_AFTER_SECONDS,
+  loadMeditationDays,
+  recordMeditationToday,
+} from '@/lib/meditationReminder';
 
 /**
  * MeditationPage
@@ -29,6 +35,17 @@ export function MeditationPage() {
 
   /** True when the selected video can't be loaded (e.g. the host served a placeholder, not the file). */
   const [loadFailed, setLoadFailed] = React.useState(false);
+
+  /** Days (local "YYYY-MM-DD") with a meditation, for the streak in the reminder card. */
+  const [meditationDays, setMeditationDays] = React.useState<string[]>(() => loadMeditationDays());
+
+  /** Count today once: after a minute of listening, or when a meditation finishes. */
+  const markMeditatedToday = React.useCallback(() => {
+    setMeditationDays((prev) => {
+      const updated = recordMeditationToday();
+      return updated.length === prev.length ? prev : updated;
+    });
+  }, []);
 
   /** The <video> DOM node we will command (play/pause/seek) */
   const videoRef = React.useRef<HTMLVideoElement | null>(null);
@@ -131,7 +148,12 @@ export function MeditationPage() {
       setDuration(video.duration || 0);
       setCurrentTime(video.currentTime || 0);
     };
-    const onTime = () => setCurrentTime(video.currentTime || 0);
+    const onTime = () => {
+      setCurrentTime(video.currentTime || 0);
+      if (video.currentTime >= MEDITATION_COUNTS_AFTER_SECONDS) markMeditatedToday();
+    };
+    const onEnded = () => markMeditatedToday();
+    video.addEventListener('ended', onEnded);
     const onPlay = () => setIsPlaying(true);
     const onPause = () => setIsPlaying(false); // also fires on 'ended'
     const onError = () => setLoadFailed(true);
@@ -157,6 +179,7 @@ export function MeditationPage() {
       video.removeEventListener('pause', onPause);
       video.removeEventListener('ended', onPause);
       video.removeEventListener('error', onError);
+      video.removeEventListener('ended', onEnded);
     };
   }, [selectedMeditation?.src]); // re-attach (and autoplay) when a new source is selected
 
@@ -338,16 +361,8 @@ export function MeditationPage() {
         ))}
       </div>
 
-      {/* (Static) Reminder card — unchanged */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Daily Meditation Reminder</CardTitle>
-          <CardDescription>Set a gentle reminder to practice mindfulness each day</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button variant="outline">Set Daily Reminder</Button>
-        </CardContent>
-      </Card>
+      {/* Daily reminder (in the user's own calendar) + on-device streak */}
+      <DailyReminderCard meditationDays={meditationDays} />
     </div>
   );
 }
