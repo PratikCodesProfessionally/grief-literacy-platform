@@ -11,6 +11,20 @@ import { journalStorage, type StorageType, type JournalEntry } from '@/services/
 import { StorageSelector } from '@/components/StorageSelector';
 import { useAuth } from '@/contexts/AuthContext';
 
+/** Reject if a cloud operation hangs, so the UI never spins forever. */
+function withTimeout<T>(promise: Promise<T>, ms = 30_000): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = window.setTimeout(
+      () => reject(new Error('The server took too long to respond. Check your connection and try again.')),
+      ms
+    );
+    promise.then(
+      (value) => { window.clearTimeout(timer); resolve(value); },
+      (error) => { window.clearTimeout(timer); reject(error); }
+    );
+  });
+}
+
 export function JournalingPage() {
   const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [isUnlocked, setIsUnlocked] = React.useState(false);
@@ -76,7 +90,7 @@ export function JournalingPage() {
     setIsSyncing(true);
     setSyncError(null);
     try {
-      await journalStorage.forceSync();
+      await withTimeout(journalStorage.forceSync(), 60_000);
       await refreshFromStorage(new Date());
     } catch (error) {
       console.error('Sync failed:', error);
@@ -128,7 +142,7 @@ export function JournalingPage() {
     setIsUnlocking(true);
     setUnlockError(null);
     try {
-      await journalStorage.unlock(user.id, unlockPassword);
+      await withTimeout(journalStorage.unlock(user.id, unlockPassword));
       setUnlockPassword('');
       setIsUnlocked(true);
     } catch (error) {

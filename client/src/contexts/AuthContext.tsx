@@ -18,6 +18,27 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+/** Create the user's profile row if it doesn't exist yet (journal entries reference it). */
+async function ensureProfile(user: User): Promise<void> {
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (profile) return;
+
+  const { error: insertError } = await supabase.from('profiles').insert({
+    id: user.id,
+    email: user.email!,
+    display_name: user.user_metadata?.display_name || null,
+    storage_preference: 'hybrid',
+    encryption_enabled: import.meta.env.VITE_ENABLE_ENCRYPTION === 'true',
+  });
+  if (insertError) throw insertError;
+}
+
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -39,38 +60,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(false);
     });
 
-    // Listen for auth changes
+    // Listen for auth changes.
+    // The callback must NOT await other Supabase calls: supabase-js runs it while
+    // holding its auth lock (e.g. while restoring the session on page load), and
+    // any query inside waits for that lock -> every request hangs forever.
+    // So update state synchronously and defer the profile check.
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
-
-      // Ensure profile exists when user signs in
-      if (session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('id', session.user.id)
-          .single();
-
-        if (!profile) {
-          // Create profile if it doesn't exist
-          const { error: profileError } = await supabase.from('profiles').insert({
-            id: session.user.id,
-            email: session.user.email!,
-            display_name: session.user.user_metadata?.display_name || null,
-            storage_preference: 'hybrid',
-            encryption_enabled: import.meta.env.VITE_ENABLE_ENCRYPTION === 'true',
-          });
-
-          if (profileError) {
-            console.error('Failed to create profile on login:', profileError);
-          }
-        }
-      }
-
       setLoading(false);
+
+      if (session?.user) {
+        const sessionUser = session.user;
+        setTimeout(() => {
+          ensureProfile(sessionUser).catch((err) =>
+            console.error('Failed to ensure profile on login:', err)
+          );
+        }, 0);
+      }
     });
 
     return () => subscription.unsubscribe();
