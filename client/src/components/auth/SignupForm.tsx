@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { EncryptionService } from '../../services/EncryptionService';
+import { ENCRYPTION_HASH_KEY } from '../../services/JournalStorageService';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -82,28 +83,32 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onSwitchToLog
 
     setLoading(true);
 
-    const { error, user, needsEmailConfirmation } = await signUp(email, password, displayName);
+    try {
+      const { error, needsEmailConfirmation } = await signUp(email, password, displayName);
 
-    if (error) {
-      setError(error.message);
+      if (error) {
+        setError(error.message);
+        return;
+      }
+
+      // Handle email confirmation requirement
+      if (needsEmailConfirmation) {
+        setEmailSent(true);
+        // Don't call onSuccess yet - user needs to confirm email first
+        return;
+      }
+
+      // Store encryption password hash for verification (not for encryption!)
+      const passwordHash = await EncryptionService.hashPassword(encryptionPassword);
+      localStorage.setItem(ENCRYPTION_HASH_KEY, passwordHash);
+
+      onSuccess?.();
+    } catch (err) {
+      console.error('Signup failed:', err);
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+    } finally {
       setLoading(false);
-      return;
     }
-
-    // Handle email confirmation requirement
-    if (needsEmailConfirmation) {
-      setEmailSent(true);
-      setLoading(false);
-      // Don't call onSuccess yet - user needs to confirm email first
-      return;
-    }
-
-    // Store encryption password hash for verification (not for encryption!)
-    const passwordHash = await EncryptionService.hashPassword(encryptionPassword);
-    localStorage.setItem('grief-platform-encryption-hash', passwordHash);
-
-    onSuccess?.();
-    setLoading(false);
   };
 
   if (emailSent) {

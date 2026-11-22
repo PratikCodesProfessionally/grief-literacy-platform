@@ -12,7 +12,12 @@ import { StorageSelector } from '@/components/StorageSelector';
 import { useAuth } from '@/contexts/AuthContext';
 
 export function JournalingPage() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const [isUnlocked, setIsUnlocked] = React.useState(false);
+  const [unlockPassword, setUnlockPassword] = React.useState('');
+  const [unlockError, setUnlockError] = React.useState<string | null>(null);
+  const [isUnlocking, setIsUnlocking] = React.useState(false);
+  const [syncError, setSyncError] = React.useState<string | null>(null);
   const [selectedPrompt, setSelectedPrompt] = React.useState('');
   const [journalEntry, setJournalEntry] = React.useState('');
   const [entries, setEntries] = React.useState<JournalEntry[]>([]);
@@ -56,16 +61,82 @@ export function JournalingPage() {
     loadEntries();
   }, []);
 
-  // Set user context for cloud sync when authenticated
+  const refreshFromStorage = React.useCallback(async (lastSync?: Date) => {
+    const storedEntries = await journalStorage.getAllEntries();
+    setEntries(storedEntries.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)));
+    const status = await journalStorage.getSyncStatus();
+    setSyncStatus({ pending: status.pending, synced: status.synced, lastSync: lastSync ?? status.lastSync });
+  }, []);
+
+  const syncInFlight = React.useRef(false);
+  const syncNow = React.useCallback(async () => {
+    if (storageType === 'local' || !journalStorage.hasCredentials() || syncInFlight.current) return;
+
+    syncInFlight.current = true;
+    setIsSyncing(true);
+    setSyncError(null);
+    try {
+      await journalStorage.forceSync();
+      await refreshFromStorage(new Date());
+    } catch (error) {
+      console.error('Sync failed:', error);
+      setSyncError(error instanceof Error ? error.message : 'Sync failed. Please try again.');
+      await refreshFromStorage().catch(() => {});
+    } finally {
+      syncInFlight.current = false;
+      setIsSyncing(false);
+    }
+  }, [storageType, refreshFromStorage]);
+
+  // Cloud sync needs the encryption password for this session. Restore it
+  // within the same tab; otherwise the unlock prompt below asks for it.
   React.useEffect(() => {
+    if (authLoading) return;
     if (isAuthenticated && user?.id) {
-      // In production, get encryption password from user input or secure storage
+      const savedUserId = sessionStorage.getItem('grief-platform-user-id');
       const encryptionPassword = sessionStorage.getItem('grief-platform-encryption-password');
-      if (encryptionPassword) {
+      if (encryptionPassword && savedUserId === user.id) {
         journalStorage.setUserContext(user.id, encryptionPassword);
+        setIsUnlocked(true);
+        return;
       }
     }
-  }, [isAuthenticated, user?.id]);
+    journalStorage.clearUserContext();
+    setIsUnlocked(false);
+  }, [authLoading, isAuthenticated, user?.id]);
+
+  // Sync when unlocked, every few minutes, and when the tab regains focus
+  React.useEffect(() => {
+    if (!isUnlocked || storageType === 'local') return;
+    syncNow();
+    const interval = window.setInterval(syncNow, 5 * 60 * 1000);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') syncNow();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('online', syncNow);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('online', syncNow);
+    };
+  }, [isUnlocked, storageType, syncNow]);
+
+  const unlockJournal = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user?.id || !unlockPassword) return;
+    setIsUnlocking(true);
+    setUnlockError(null);
+    try {
+      await journalStorage.unlock(user.id, unlockPassword);
+      setUnlockPassword('');
+      setIsUnlocked(true);
+    } catch (error) {
+      setUnlockError(error instanceof Error ? error.message : 'Could not unlock your journal.');
+    } finally {
+      setIsUnlocking(false);
+    }
+  };
 
   const journalPrompts = [
     "How are you feeling today? Don't judge it, just notice it.",
@@ -112,24 +183,6 @@ export function JournalingPage() {
       setSyncStatus({ pending: status.pending, synced: status.synced, lastSync: status.lastSync });
     } catch (error) {
       console.error('Failed to save entry:', error);
-    }
-  };
-
-  const syncNow = async () => {
-    if (storageType === 'local') return;
-    
-    setIsSyncing(true);
-    try {
-      await journalStorage.forceSync();
-      const storedEntries = await journalStorage.getAllEntries();
-      setEntries(storedEntries.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)));
-      
-      const status = await journalStorage.getSyncStatus();
-      setSyncStatus({ pending: status.pending, synced: status.synced, lastSync: new Date() });
-    } catch (error) {
-      console.error('Sync failed:', error);
-    } finally {
-      setIsSyncing(false);
     }
   };
 
@@ -184,9 +237,14 @@ export function JournalingPage() {
     journalStorage.updateSettings({ storageType: type });
     setShowStorageSelector(false);
     
-    // Migrate existing entries if switching to cloud
+    // Mark existing entries for upload if switching to cloud
     if (type === 'cloud' || type === 'hybrid') {
-      await journalStorage.migrateStorage(type);
+      try {
+        await journalStorage.migrateStorage(type);
+      } catch (error) {
+        setSyncError(error instanceof Error ? error.message : 'Sync failed. Please try again.');
+      }
+      await refreshFromStorage().catch(() => {});
     }
   };
 
@@ -270,7 +328,8 @@ export function JournalingPage() {
                 variant="outline"
                 size="sm"
                 onClick={syncNow}
-                disabled={isSyncing || !navigator.onLine}
+                disabled={isSyncing || !navigator.onLine || !isUnlocked}
+                title={isUnlocked ? 'Sync with your other devices' : 'Unlock your journal to sync'}
                 className="flex items-center gap-1"
               >
                 {isSyncing ? (
@@ -313,6 +372,57 @@ export function JournalingPage() {
           )}
         </div>
       </div>
+
+      {/* Cloud sync: sign in / unlock / errors */}
+      {storageType !== 'local' && !authLoading && !isAuthenticated && (
+        <Card className="border-blue-300 dark:border-blue-700">
+          <CardContent className="py-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+            <p className="text-sm text-gray-700 dark:text-gray-200">
+              Sign in to sync your journal across your devices. Until then, entries are saved on this device only.
+            </p>
+            <Button size="sm" onClick={() => setShowStorageSelector(true)}>Sign in</Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {storageType !== 'local' && isAuthenticated && !isUnlocked && (
+        <Card className="border-blue-300 dark:border-blue-700">
+          <CardContent className="py-4">
+            <form onSubmit={unlockJournal} className="space-y-3">
+              <div>
+                <p className="font-semibold text-gray-800 dark:text-gray-100">Unlock your journal to sync</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  Enter your encryption password. Use the same one on every device, or your devices won't be able to read each other's entries.
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Input
+                  type="password"
+                  autoComplete="current-password"
+                  value={unlockPassword}
+                  onChange={(e) => setUnlockPassword(e.target.value)}
+                  placeholder="Encryption password"
+                  aria-label="Encryption password"
+                  className="sm:max-w-xs"
+                />
+                <Button type="submit" size="sm" disabled={isUnlocking || !unlockPassword}>
+                  {isUnlocking ? 'Unlocking...' : 'Unlock'}
+                </Button>
+              </div>
+              {unlockError && <p className="text-sm text-red-600 dark:text-red-400">{unlockError}</p>}
+            </form>
+          </CardContent>
+        </Card>
+      )}
+
+      {syncError && (
+        <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-md flex items-start justify-between gap-3">
+          <p className="text-sm text-red-800 dark:text-red-200">{syncError}</p>
+          <button type="button" onClick={() => setSyncError(null)} aria-label="Dismiss" className="text-red-700 dark:text-red-300">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       {/* Analytics Dashboard */}
       {showAnalytics && (

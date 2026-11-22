@@ -24,7 +24,138 @@ export interface SyncStatus {
   online: boolean;
 }
 
+/** Row shape of public.journal_entries */
+export interface CloudJournalRow {
+  id: string;
+  user_id: string;
+  encrypted_content: string;
+  encrypted_title: string | null;
+  encryption_iv: string;
+  encryption_salt: string;
+  mood: string | null;
+  tags: string[];
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string | null;
+  version: number;
+  device_id: string;
+  sync_status: 'pending' | 'synced' | 'conflict';
+}
+
+/**
+ * Everything private about an entry goes inside one encrypted payload.
+ * (The old format encrypted the title with its own IV/salt but only stored
+ * the content's, so titles could never be decrypted.)
+ */
+interface EncryptedPayload {
+  v: 1;
+  content: string;
+  title?: string;
+  prompt?: string;
+  isFavorite?: boolean;
+}
+
 export class SyncService {
+  /**
+   * Build an encrypted cloud row from a local entry
+   */
+  static async toCloudRow(
+    entry: JournalEntry,
+    userId: string,
+    encryptionPassword: string
+  ): Promise<CloudJournalRow> {
+    const payload: EncryptedPayload = {
+      v: 1,
+      content: entry.content,
+      title: entry.title,
+      prompt: entry.prompt,
+      isFavorite: entry.isFavorite,
+    };
+    const encrypted = await EncryptionService.encrypt(JSON.stringify(payload), encryptionPassword);
+
+    return {
+      id: entry.id,
+      user_id: userId,
+      encrypted_content: encrypted.ciphertext,
+      encrypted_title: null,
+      encryption_iv: encrypted.iv,
+      encryption_salt: encrypted.salt,
+      mood: entry.mood || null,
+      tags: entry.tags || [],
+      created_at: entry.createdAt,
+      updated_at: entry.updatedAt || new Date().toISOString(),
+      version: entry.version || 1,
+      device_id: EncryptionService.generateDeviceId(),
+      sync_status: 'synced',
+    };
+  }
+
+  /**
+   * Decrypt a cloud row into a local entry. Throws if the password is wrong.
+   */
+  static async fromCloudRow(row: CloudJournalRow, encryptionPassword: string): Promise<JournalEntry> {
+    const decrypted = await EncryptionService.decrypt(
+      { ciphertext: row.encrypted_content, iv: row.encryption_iv, salt: row.encryption_salt },
+      encryptionPassword
+    );
+
+    let payload: Omit<EncryptedPayload, 'v'> = { content: decrypted };
+    try {
+      const parsed = JSON.parse(decrypted);
+      if (parsed && parsed.v === 1 && typeof parsed.content === 'string') payload = parsed;
+    } catch {
+      // Plain-text content from the old format
+    }
+
+    const createdMs = Date.parse(row.created_at) || Date.now();
+    return {
+      id: row.id,
+      content: payload.content,
+      title: payload.title,
+      prompt: payload.prompt,
+      isFavorite: payload.isFavorite ?? false,
+      mood: row.mood || undefined,
+      tags: row.tags || [],
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      version: row.version,
+      syncStatus: 'synced',
+      timestamp: createdMs,
+      lastModified: Date.parse(row.updated_at) || createdMs,
+      date: new Date(createdMs).toISOString().split('T')[0],
+      wordCount: payload.content.split(/\s+/).filter((w) => w.length > 0).length,
+      charCount: payload.content.length,
+    };
+  }
+
+  /**
+   * Fetch every cloud row for the user, including soft-deleted ones
+   * (so deletions made on another device can be applied here).
+   */
+  static async fetchAllRows(userId: string): Promise<CloudJournalRow[]> {
+    const { data, error } = await supabase
+      .from('journal_entries')
+      .select('*')
+      .eq('user_id', userId)
+      .order('updated_at', { ascending: false });
+
+    if (error) throw new Error(`Could not load entries from the cloud: ${error.message}`);
+    return (data || []) as CloudJournalRow[];
+  }
+
+  /**
+   * Upload one entry. Returns an error message, or null on success.
+   */
+  static async uploadEntry(
+    entry: JournalEntry,
+    userId: string,
+    encryptionPassword: string
+  ): Promise<string | null> {
+    const row = await this.toCloudRow(entry, userId, encryptionPassword);
+    const { error } = await supabase.from('journal_entries').upsert(row);
+    return error ? error.message : null;
+  }
+
   private static DB_NAME = 'grief-platform-sync';
   private static DB_VERSION = 1;
   private static SYNC_QUEUE_STORE = 'sync_queue';
@@ -149,43 +280,17 @@ export class SyncService {
     }
 
     const queue = await this.getQueue();
-    const deviceId = EncryptionService.generateDeviceId();
 
     for (const item of queue) {
       try {
         if (item.operation === 'create' || item.operation === 'update') {
-          // Encrypt content before upload
-          const encryptedContent = await EncryptionService.encrypt(
-            item.data.content,
-            encryptionPassword
-          );
-          const encryptedTitle = item.data.title
-            ? await EncryptionService.encrypt(item.data.title, encryptionPassword)
-            : null;
-
-          const cloudData = {
-            id: item.data.id,
-            user_id: userId,
-            encrypted_content: encryptedContent.ciphertext,
-            encrypted_title: encryptedTitle?.ciphertext || null,
-            encryption_iv: encryptedContent.iv,
-            encryption_salt: encryptedContent.salt,
-            mood: item.data.mood || null,
-            tags: item.data.tags || [],
-            created_at: item.data.createdAt,
-            updated_at: new Date().toISOString(),
-            version: item.data.version || 1,
-            device_id: deviceId,
-            sync_status: 'synced' as const,
-          };
-
           // Check for conflicts (version mismatch)
           const { data: existing } = await supabase
             .from('journal_entries')
             .select('version, updated_at')
             .eq('id', item.data.id)
             .eq('user_id', userId)
-            .single();
+            .maybeSingle();
 
           if (existing && existing.version > (item.data.version || 1)) {
             // Conflict detected
@@ -194,8 +299,7 @@ export class SyncService {
             continue;
           }
 
-          // Upsert to Supabase
-          const { error } = await supabase.from('journal_entries').upsert(cloudData);
+          const error = await this.uploadEntry(item.data, userId, encryptionPassword);
 
           if (error) {
             console.error('Sync error:', error);
@@ -229,89 +333,6 @@ export class SyncService {
 
     // Update last sync time
     await this.updateSyncStatus();
-  }
-
-  /**
-   * Download changes from cloud to local
-   */
-  static async downloadFromCloud(
-    userId: string,
-    encryptionPassword: string,
-    lastSyncAt: Date | null
-  ): Promise<JournalEntry[]> {
-    if (!this.isOnline) {
-      return [];
-    }
-
-    try {
-      let query = supabase
-        .from('journal_entries')
-        .select('*')
-        .eq('user_id', userId)
-        .is('deleted_at', null)
-        .order('updated_at', { ascending: false });
-
-      if (lastSyncAt) {
-        query = query.gt('updated_at', lastSyncAt.toISOString());
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error('Download error:', error);
-        return [];
-      }
-
-      if (!data || data.length === 0) {
-        return [];
-      }
-
-      // Decrypt entries
-      const decryptedEntries: JournalEntry[] = [];
-      for (const cloudEntry of data) {
-        try {
-          const content = await EncryptionService.decrypt(
-            {
-              ciphertext: cloudEntry.encrypted_content,
-              iv: cloudEntry.encryption_iv,
-              salt: cloudEntry.encryption_salt,
-            },
-            encryptionPassword
-          );
-
-          const title = cloudEntry.encrypted_title
-            ? await EncryptionService.decrypt(
-                {
-                  ciphertext: cloudEntry.encrypted_title,
-                  iv: cloudEntry.encryption_iv,
-                  salt: cloudEntry.encryption_salt,
-                },
-                encryptionPassword
-              )
-            : undefined;
-
-          decryptedEntries.push({
-            id: cloudEntry.id,
-            content,
-            title,
-            mood: cloudEntry.mood || undefined,
-            tags: cloudEntry.tags || [],
-            createdAt: cloudEntry.created_at,
-            updatedAt: cloudEntry.updated_at,
-            version: cloudEntry.version,
-            syncStatus: 'synced',
-          });
-        } catch (error) {
-          console.error('Failed to decrypt entry:', cloudEntry.id, error);
-        }
-      }
-
-      await this.updateSyncStatus();
-      return decryptedEntries;
-    } catch (error) {
-      console.error('Download from cloud failed:', error);
-      return [];
-    }
   }
 
   /**
@@ -390,7 +411,7 @@ export class SyncService {
   /**
    * Update sync status
    */
-  private static async updateSyncStatus(): Promise<void> {
+  static async updateSyncStatus(): Promise<void> {
     if (!this.db) return;
 
     const queue = await this.getQueue();
@@ -463,7 +484,7 @@ export class SyncService {
     }
 
     this.syncInterval = window.setInterval(() => {
-      const userId = localStorage.getItem('grief-platform-user-id');
+      const userId = sessionStorage.getItem('grief-platform-user-id');
       const encryptionPassword = sessionStorage.getItem('grief-platform-encryption-password');
 
       if (userId && encryptionPassword && this.isOnline) {
@@ -503,14 +524,6 @@ export class SyncService {
   private static async notifyListeners(): Promise<void> {
     const status = await this.getSyncStatus();
     this.listeners.forEach((listener) => listener(status));
-  }
-
-  /**
-   * Force immediate sync
-   */
-  static async forceSync(userId: string, encryptionPassword: string): Promise<void> {
-    await this.processQueue(userId, encryptionPassword);
-    await this.downloadFromCloud(userId, encryptionPassword, null);
   }
 
   /**

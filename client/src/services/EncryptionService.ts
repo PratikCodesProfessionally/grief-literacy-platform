@@ -158,9 +158,30 @@ export class EncryptionService {
    */
   static async hashPassword(password: string): Promise<string> {
     const salt = this.generateRandomBytes(this.SALT_LENGTH);
-    const key = await this.deriveKey(password, salt);
-    const keyBytes = await crypto.subtle.exportKey('raw', key);
-    return this.arrayBufferToBase64(salt) + ':' + this.arrayBufferToBase64(keyBytes);
+    const hashBytes = await this.deriveVerifierBits(password, salt);
+    return this.arrayBufferToBase64(salt) + ':' + this.arrayBufferToBase64(hashBytes);
+  }
+
+  /**
+   * PBKDF2 bits for the password verifier. deriveKey() makes a
+   * non-extractable key on purpose, so it can't be exported for this.
+   */
+  private static async deriveVerifierBits(
+    password: string,
+    salt: Uint8Array
+  ): Promise<ArrayBuffer> {
+    const passwordKey = await crypto.subtle.importKey(
+      'raw',
+      this.encoder.encode(password),
+      'PBKDF2',
+      false,
+      ['deriveBits']
+    );
+    return crypto.subtle.deriveBits(
+      { name: 'PBKDF2', salt: salt as BufferSource, iterations: this.ITERATIONS, hash: 'SHA-256' },
+      passwordKey,
+      this.KEY_LENGTH
+    );
   }
 
   /**
@@ -170,9 +191,8 @@ export class EncryptionService {
     try {
       const [saltBase64, expectedKeyBase64] = hash.split(':');
       const salt = this.base64ToArrayBuffer(saltBase64);
-      const key = await this.deriveKey(password, salt);
-      const keyBytes = await crypto.subtle.exportKey('raw', key);
-      const actualKeyBase64 = this.arrayBufferToBase64(keyBytes);
+      const hashBytes = await this.deriveVerifierBits(password, salt);
+      const actualKeyBase64 = this.arrayBufferToBase64(hashBytes);
       return actualKeyBase64 === expectedKeyBase64;
     } catch {
       return false;
